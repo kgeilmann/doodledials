@@ -2,6 +2,14 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { combineDoodledial } from '$lib/utils/doodledial';
 
+	const DPI = 72;
+	const MM_PER_INCH = 25.4;
+	const VIEWBOX_PADDING = 1.1;
+
+	const paddedPixelSize = $derived(
+		((doodledialStore.config.maxDiameter * DPI) / MM_PER_INCH) * VIEWBOX_PADDING
+	);
+
 	function updatePreview() {
 		if (doodledialStore.svgContent) {
 			try {
@@ -22,7 +30,6 @@
 	});
 </script>
 
-
 <div class="w-full h-full flex items-center justify-center relative">
 	<div
 		class="absolute inset-0 opacity-10"
@@ -31,7 +38,8 @@
 
 	{#if doodledialStore.svgContent}
 		<div
-			class="bg-white rounded-xl shadow-lg p-4 aspect-square max-h-[calc(100vh-8rem)] max-w-[calc(100vh-8rem)] flex items-center justify-center overflow-hidden relative z-10"
+			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10"
+			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px;"
 		>
 			<div class="max-w-full max-h-full flex items-center justify-center">
 				{@html doodledialStore.combinedSvg || ''}
