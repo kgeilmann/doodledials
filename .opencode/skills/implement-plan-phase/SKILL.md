@@ -1,6 +1,7 @@
 ---
 name: implement-plan-phase
-description: 'Implement a single phase of an implementation plan'
+description: 'Implement a single phase of an implementation plan, use when user asks to implement a plan or a phase '
+
 ---
 
 You are supposed to implement exactly one phase of an implementation plan.
