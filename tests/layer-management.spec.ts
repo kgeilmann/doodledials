@@ -81,27 +81,31 @@ test.describe('Layer Management', () => {
 		await expect(layerItems).toHaveCount(4);
 	});
 
-	test('toggle all button shows all layers when hidden', async ({ page }) => {
+	test('Show All button makes all layers visible', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const toggleAllButton = page.locator('button').first();
+		const layerListButtons = page.locator('.max-h-48 button:has(svg)');
+		await layerListButtons.first().click();
+		await layerListButtons.nth(1).click();
 
-		await toggleAllButton.click();
+		const visibleBefore = page.locator('.max-w-full svg path[visibility="visible"]');
+		await expect(visibleBefore).toHaveCount(1);
 
-		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
-		await expect(visiblePaths).toHaveCount(0);
+		await page.locator('button:has-text("Show All")').click();
+
+		await expect(visibleBefore).toHaveCount(3);
 	});
 
-	test('toggle all button hides all layers when shown', async ({ page }) => {
+	test('Hide All button makes all layers hidden', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const toggleAllButton = page.locator('button').first();
+		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
+		await expect(visiblePaths).toHaveCount(3);
 
-		await toggleAllButton.click();
+		await page.locator('button:has-text("Hide All")').click();
 
-		const hiddenPaths = page.locator('.max-w-full svg path[visibility="hidden"]');
-		await expect(hiddenPaths).toHaveCount(3);
+		await expect(visiblePaths).toHaveCount(0);
 	});
 });
