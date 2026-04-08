@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { parseSvgPaths } from '$lib/utils/doodledial';
 
 	let isDragging = $state(false);
 	let fileInput: HTMLInputElement;
@@ -41,9 +42,15 @@
 
 		try {
 			const raw = await file.text();
+			const parsedLayers = parseSvgPaths(raw);
+
+			doodledialStore.clearLayers();
+			parsedLayers.forEach((layer) => {
+				doodledialStore.addLayer(layer.svgElementId, layer.name);
+			});
 
 			doodledialStore.setSvgContent({
-				raw,
+				raw: parsedLayers[0]?.updatedSvg || raw,
 				filename: file.name
 			});
 		} catch (err) {

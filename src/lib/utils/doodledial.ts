@@ -5,6 +5,34 @@ const DPI = 96;
 const MM_PER_INCH = 25.4;
 const DISC_PADDING_PX = 10;
 
+export function parseSvgPaths(
+	svgContent: string
+): { svgElementId: string; name: string; updatedSvg: string }[] {
+	const doc = SVG(svgContent) as Svg;
+	const paths = doc.find('path');
+	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
+
+	paths.forEach((path, index) => {
+		let id = path.attr('id');
+		if (!id) {
+			id = `path-${index}`;
+			path.attr('id', id);
+		}
+		layers.push({
+			svgElementId: id,
+			name: path.attr('id') || `Layer ${index + 1}`,
+			updatedSvg: ''
+		});
+	});
+
+	const updatedSvg = doc.svg();
+	layers.forEach((layer, index) => {
+		layers[index] = { ...layer, updatedSvg };
+	});
+
+	return layers;
+}
+
 export function combineDoodledial(content: SVGContent, config: DialConfig): string {
 	const ct = SVG(content.raw) as Svg;
 	const vw = ct.viewbox().width;
