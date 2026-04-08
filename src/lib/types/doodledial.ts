@@ -26,6 +26,7 @@ export interface DoodledialState {
 	isLoading: boolean;
 	error: string | null;
 	layers: Layer[];
+	highlightedLayer: string | null;
 }
 
 export const DEFAULT_DIAL_CONFIG: DialConfig = {

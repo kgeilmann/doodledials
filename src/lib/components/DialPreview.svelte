@@ -41,8 +41,9 @@
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
 		});
-		void doodledialStore.highlightedLayer;
+		const hl = doodledialStore.highlightedLayer;
 		if (doodledialStore.svgContent) {
+			console.log('Highlighted layer:', hl);
 			updatePreview();
 		}
 	});
