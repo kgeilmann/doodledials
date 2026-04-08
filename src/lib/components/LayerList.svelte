@@ -100,6 +100,7 @@
 									value={layer.rotation}
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
+									disabled={!layer.visible}
 								/>
 							</div>
 						</div>
