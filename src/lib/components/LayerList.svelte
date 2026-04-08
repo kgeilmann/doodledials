@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
-	let selectedLayerId = $state<string | null>(null);
-
 	function handleToggle(layerId: string) {
 		doodledialStore.toggleVisibility(layerId);
 	}
@@ -16,13 +14,11 @@
 	}
 
 	function handleSelect(layerId: string) {
-		const layer = doodledialStore.layers.find((l) => l.id === layerId);
-		if (selectedLayerId === layerId) {
-			selectedLayerId = null;
-			doodledialStore.setHighlightedLayer(null);
+		const currentSelected = doodledialStore.selectedLayer;
+		if (currentSelected === layerId) {
+			doodledialStore.setSelectedLayer(null);
 		} else {
-			selectedLayerId = layerId;
-			doodledialStore.setHighlightedLayer(layer?.svgElementId || null);
+			doodledialStore.setSelectedLayer(layerId);
 		}
 	}
 
@@ -31,7 +27,13 @@
 	}
 
 	function handleMouseLeave() {
-		doodledialStore.setHighlightedLayer(null);
+		const currentSelected = doodledialStore.selectedLayer;
+		if (currentSelected) {
+			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
+			doodledialStore.setHighlightedLayer(selectedLayer?.svgElementId || null);
+		} else {
+			doodledialStore.setHighlightedLayer(null);
+		}
 	}
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
@@ -75,7 +77,7 @@
 					<li
 						role="button"
 						tabindex="0"
-						class="flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer {selectedLayerId ===
+						class="flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer {doodledialStore.selectedLayer ===
 						layer.id
 							? 'bg-indigo-50 border-l-2 border-indigo-500'
 							: 'hover:bg-gray-50'}"
