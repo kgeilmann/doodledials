@@ -31,11 +31,11 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-001: Extend types and store to support layer management
 
-| Task     | Description                                                                     | Completed | Date       |
-| -------- | ------------------------------------------------------------------------------- | --------- | ---------- |
-| TASK-001 | Add `Layer` interface to types/doodledial.ts with id, name, visible, pathData   | ✓         | 2026-04-08 |
-| TASK-002 | Add `layers` state to doodledial.svelte.ts store                                | ✓         | 2026-04-08 |
-| TASK-003 | Add layer management methods to store (addLayer, removeLayer, toggleVisibility) | ✓         | 2026-04-08 |
+| Task     | Description                                                                       | Completed | Date       |
+| -------- | --------------------------------------------------------------------------------- | --------- | ---------- |
+| TASK-001 | Add `Layer` interface to types/doodledial.ts with id, name, visible, svgElementId | ✓         | 2026-04-08 |
+| TASK-002 | Add `layers` state to doodledial.svelte.ts store                                  | ✓         | 2026-04-08 |
+| TASK-003 | Add layer management methods to store (addLayer, removeLayer, toggleVisibility)   | ✓         | 2026-04-08 |
 
 **Validation:** Store has layers array with add/toggle/reorder methods available
 
@@ -43,11 +43,11 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-002: Parse SVG paths into layer data on upload
 
-| Task     | Description                                                                  | Completed | Date |
-| -------- | ---------------------------------------------------------------------------- | --------- | ---- |
-| TASK-004 | Add SVG parsing function in utils/doodledial.ts to extract all path elements |           |      |
-| TASK-005 | Modify FileUpload.svelte to parse layers after SVG upload                    |           |      |
-| TASK-006 | Update store to call layer parsing when SVG content changes                  |           |      |
+| Task     | Description                                                                  | Completed | Date       |
+| -------- | ---------------------------------------------------------------------------- | --------- | ---------- |
+| TASK-004 | Add SVG parsing function in utils/doodledial.ts to extract all path elements | ✓         | 2026-04-08 |
+| TASK-005 | Modify FileUpload.svelte to parse layers after SVG upload                    | ✓         | 2026-04-08 |
+| TASK-006 | Update store to call layer parsing when SVG content changes                  | ✓         | 2026-04-08 |
 
 **Validation:** Uploaded SVG with 3 paths creates 3 layer entries in store
 
