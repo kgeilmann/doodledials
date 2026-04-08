@@ -22,7 +22,7 @@ export function parseSvgPaths(
 			name = existingId;
 		} else {
 			id = `path-${index}`;
-			name = `Layer ${index+1}`;
+			name = `Layer ${index + 1}`;
 			path.attr('id', id);
 		}
 		layers.push({
