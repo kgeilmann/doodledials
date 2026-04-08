@@ -13,8 +13,8 @@ You are supposed to implement exactly one phase of an implementation plan.
 - commit your changes (use skill git-commit) then ask user for approval
 - if the user has change requests, implement, validate and commit them. 
 - if the user approves the implementation mark the phase as completed
-- ask user if he wants you to continue with the next phase
-- if yes: continue with the next phase (only that one)
+
+*NEVER* work on different phases without explicit command by the user
 
 # Implementation 
 
@@ -23,3 +23,4 @@ You are supposed to implement exactly one phase of an implementation plan.
 - Use the todo tool to show progress to the user.
 - Update the plan status during progress.
 - Always check your implementation by building, typechecking, executing all tests. Do not accept errors or warnings. If a warning already existed before your changes, ask the user if you should fix or keep it.
+

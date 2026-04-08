@@ -55,11 +55,11 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-003: Create LayerList UI component
 
-| Task     | Description                                                  | Completed | Date |
-| -------- | ------------------------------------------------------------ | --------- | ---- |
-| TASK-007 | Create LayerList.svelte component in lib/components/         |           |      |
-| TASK-008 | Display layer list with visibility toggle checkbox per layer |           |      |
-| TASK-009 | Add "Show All" / "Hide All" bulk actions                     |           |      |
+| Task     | Description                                                  | Completed | Date       |
+| -------- | ------------------------------------------------------------ | --------- | ---------- |
+| TASK-007 | Create LayerList.svelte component in lib/components/         | ✓         | 2026-04-08 |
+| TASK-008 | Display layer list with visibility toggle checkbox per layer | ✓         | 2026-04-08 |
+| TASK-009 | Add "Show All" / "Hide All" bulk actions                     | ✓         | 2026-04-08 |
 
 **Validation:** LayerList renders in control panel and shows correct layer count
 
@@ -67,10 +67,10 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-004: Integrate layer visibility into SVG rendering
 
-| Task     | Description                                                   | Completed | Date |
-| -------- | ------------------------------------------------------------- | --------- | ---- |
-| TASK-010 | Modify combineDoodledial in utils to respect layer visibility |           |      |
-| TASK-011 | Update DialPreview to re-render when layer visibility changes |           |      |
+| Task     | Description                                                   | Completed | Date       |
+| -------- | ------------------------------------------------------------- | --------- | ---------- |
+| TASK-010 | Modify combineDoodledial in utils to respect layer visibility | ✓         | 2026-04-08 |
+| TASK-011 | Update DialPreview to re-render when layer visibility changes | ✓         | 2026-04-08 |
 
 **Validation:** Toggling layer visibility updates preview correctly
 
@@ -78,9 +78,9 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-005: Add LayerList to main page layout
 
-| Task     | Description                                             | Completed | Date |
-| -------- | ------------------------------------------------------- | --------- | ---- |
-| TASK-012 | Add LayerList component to +page.svelte control section |           |      |
+| Task     | Description                                             | Completed | Date       |
+| -------- | ------------------------------------------------------- | --------- | ---------- |
+| TASK-012 | Add LayerList component to +page.svelte control section | ✓         | 2026-04-08 |
 
 **Validation:** LayerList visible when SVG is uploaded
 

@@ -3,6 +3,7 @@
 	import DiameterControl from '$lib/components/DiameterControl.svelte';
 	import DialPreview from '$lib/components/DialPreview.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
+	import LayerList from '$lib/components/LayerList.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 </script>
 
@@ -83,6 +84,31 @@
 			</div>
 			<DiameterControl />
 		</section>
+
+		{#if doodledialStore.svgContent}
+			<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="p-2 bg-indigo-100 rounded-lg">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-5 w-5 text-indigo-600"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+							/>
+						</svg>
+					</div>
+					<h2 class="text-lg font-semibold text-gray-800">Layer Management</h2>
+				</div>
+				<LayerList />
+			</section>
+		{/if}
 	</div>
 
 	<div class="flex-1 flex flex-col">

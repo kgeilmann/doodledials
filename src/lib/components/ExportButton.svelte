@@ -6,7 +6,11 @@
 		if (!doodledialStore.svgContent) return;
 
 		try {
-			const svg = exportDoodledial(doodledialStore.svgContent, doodledialStore.config);
+			const svg = exportDoodledial(
+				doodledialStore.svgContent,
+				doodledialStore.config,
+				doodledialStore.layers
+			);
 			const blob = new Blob([svg], { type: 'image/svg+xml' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
