@@ -39,10 +39,10 @@ export function combineDoodledial(content: SVGContent, config: DialConfig): stri
 	}
 
 	ct.viewbox(
-		-(discSizeToFitEverything-max)/2-DISC_PADDING_PX,
-		-(discSizeToFitEverything-max)/2-DISC_PADDING_PX,
-		discSizeToFitEverything+2*DISC_PADDING_PX,
-		discSizeToFitEverything+2*DISC_PADDING_PX
+		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
+		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
+		discSizeToFitEverything + 2 * DISC_PADDING_PX,
+		discSizeToFitEverything + 2 * DISC_PADDING_PX
 	);
 	ct.width(pixelDiameter);
 	ct.height(pixelDiameter);

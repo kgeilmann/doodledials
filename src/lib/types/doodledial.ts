@@ -1,3 +1,10 @@
+export interface Layer {
+	id: string;
+	name: string;
+	visible: boolean;
+	pathData: string;
+}
+
 export interface DialConfig {
 	diameter: number;
 	minDiameter: number;
@@ -18,6 +25,7 @@ export interface DoodledialState {
 	combinedSvg: string | null;
 	isLoading: boolean;
 	error: string | null;
+	layers: Layer[];
 }
 
 export const DEFAULT_DIAL_CONFIG: DialConfig = {
