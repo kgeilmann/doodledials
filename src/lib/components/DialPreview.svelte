@@ -14,10 +14,12 @@
 		if (doodledialStore.svgContent) {
 			try {
 				const layers = doodledialStore.layers;
+				const highlightedLayer = doodledialStore.highlightedLayer;
 				const combined = combineDoodledial(
 					doodledialStore.svgContent,
 					doodledialStore.config,
-					layers
+					layers,
+					highlightedLayer
 				);
 				doodledialStore.setCombinedSvg(combined);
 				doodledialStore.setError(null);
@@ -39,6 +41,7 @@
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
 		});
+		void doodledialStore.highlightedLayer;
 		if (doodledialStore.svgContent) {
 			updatePreview();
 		}

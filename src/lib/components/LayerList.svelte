@@ -19,6 +19,14 @@
 		selectedLayerId = selectedLayerId === layerId ? null : layerId;
 	}
 
+	function handleMouseEnter(layerId: string) {
+		doodledialStore.setHighlightedLayer(layerId);
+	}
+
+	function handleMouseLeave() {
+		doodledialStore.setHighlightedLayer(null);
+	}
+
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
 	const totalCount = $derived(doodledialStore.layers.length);
 </script>
@@ -58,10 +66,12 @@
 			<ul class="divide-y divide-gray-100">
 				{#each doodledialStore.layers as layer (layer.id)}
 					<li
-						class="flex items-center justify-between px-3 py-2.5 transition-colors {selectedLayerId ===
+						class="flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer {selectedLayerId ===
 						layer.id
 							? 'bg-indigo-50 border-l-2 border-indigo-500'
 							: 'hover:bg-gray-50'}"
+						onmouseenter={() => handleMouseEnter(layer.svgElementId)}
+						onmouseleave={handleMouseLeave}
 					>
 						<button
 							type="button"
