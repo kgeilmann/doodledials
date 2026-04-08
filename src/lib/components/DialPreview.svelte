@@ -2,7 +2,7 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { combineDoodledial } from '$lib/utils/doodledial';
 
-	const DPI = 72;
+	const DPI = 96;
 	const MM_PER_INCH = 25.4;
 	const VIEWBOX_PADDING = 1.1;
 
