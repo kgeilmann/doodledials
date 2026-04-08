@@ -62,9 +62,8 @@ export function combineDoodledial(
 			}
 		}
 		if (highlightedLayerId && childId === highlightedLayerId) {
-			child.attr('stroke', '#6366f1');
-			child.attr('stroke-width', '3');
-			child.attr('fill', '#6366f1');
+			child.css('stroke', '#6366f1');
+			child.css('stroke-width', '5');
 		}
 	});
 
