@@ -43,7 +43,8 @@ export function parseSvgPaths(
 export function combineDoodledial(
 	content: SVGContent,
 	config: DialConfig,
-	layers?: Layer[]
+	layers?: Layer[],
+	highlightedLayerId?: string | null
 ): string {
 	const ct = SVG(content.raw) as Svg;
 	const vw = ct.viewbox().width;
@@ -59,6 +60,11 @@ export function combineDoodledial(
 			if (layer) {
 				child.attr('visibility', layer.visible ? 'visible' : 'hidden');
 			}
+		}
+		if (highlightedLayerId && childId === highlightedLayerId) {
+			child.attr('stroke', '#6366f1');
+			child.attr('stroke-width', '3');
+			child.attr('fill', '#6366f1');
 		}
 	});
 
@@ -103,5 +109,5 @@ export function exportDoodledial(
 	config: DialConfig,
 	layers?: Layer[]
 ): string {
-	return combineDoodledial(content, config, layers);
+	return combineDoodledial(content, config, layers, null);
 }
