@@ -2,6 +2,8 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import RotationKnob from './RotationKnob.svelte';
 
+	let isDraggingKnob = $state(false);
+
 	function handleToggle(layerId: string) {
 		doodledialStore.toggleVisibility(layerId);
 	}
@@ -15,6 +17,7 @@
 	}
 
 	function handleSelect(layerId: string) {
+		if (isDraggingKnob) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected === layerId) {
 			doodledialStore.setSelectedLayer(null);
@@ -24,10 +27,12 @@
 	}
 
 	function handleMouseEnter(layerId: string) {
+		if (isDraggingKnob) return;
 		doodledialStore.setHighlightedLayer(layerId);
 	}
 
 	function handleMouseLeave() {
+		if (isDraggingKnob) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected) {
 			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
@@ -39,6 +44,22 @@
 
 	function handleRotationChange(layerId: string, rotation: number) {
 		doodledialStore.setLayerRotation(layerId, rotation);
+	}
+
+	function handleDragStart(svgElementId: string) {
+		isDraggingKnob = true;
+		doodledialStore.setHighlightedLayer(svgElementId);
+	}
+
+	function handleDragEnd() {
+		isDraggingKnob = false;
+		const currentSelected = doodledialStore.selectedLayer;
+		if (currentSelected) {
+			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
+			doodledialStore.setHighlightedLayer(selectedLayer?.svgElementId || null);
+		} else {
+			doodledialStore.setHighlightedLayer(null);
+		}
 	}
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
@@ -101,6 +122,8 @@
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
 									disabled={!layer.visible}
+									ondragstart={() => handleDragStart(layer.svgElementId)}
+									ondragend={handleDragEnd}
 								/>
 							</div>
 						</div>
