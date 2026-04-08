@@ -22,10 +22,10 @@ test.describe('Layer Management', () => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerCheckboxes = page.locator('input[type="checkbox"]');
-		await expect(layerCheckboxes).toHaveCount(3);
+		const layerListButtons = page.locator('.max-h-48 button:has(svg)');
+		await expect(layerListButtons).toHaveCount(3);
 
-		await layerCheckboxes.first().uncheck();
+		await layerListButtons.first().click();
 
 		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
 		const hiddenPaths = page.locator('.max-w-full svg path[visibility="hidden"]');
@@ -38,16 +38,14 @@ test.describe('Layer Management', () => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerCheckboxes = page.locator('input[type="checkbox"]');
+		const layerListButtons = page.locator('.max-h-48 button:has(svg)');
 
-		await layerCheckboxes.first().uncheck();
-		await expect(layerCheckboxes.first()).not.toBeChecked();
+		await layerListButtons.first().click();
 
 		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
 		await expect(visiblePaths).toHaveCount(2);
 
-		await layerCheckboxes.first().check();
-		await expect(layerCheckboxes.first()).toBeChecked();
+		await layerListButtons.first().click();
 		await expect(visiblePaths).toHaveCount(3);
 	});
 
@@ -55,8 +53,8 @@ test.describe('Layer Management', () => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerCheckboxes = page.locator('input[type="checkbox"]');
-		await layerCheckboxes.first().uncheck();
+		const layerListButtons = page.locator('.max-h-48 button:has(svg)');
+		await layerListButtons.first().click();
 
 		const exportButton = page.locator('button:has-text("Export SVG")');
 		await expect(exportButton).toBeEnabled();
@@ -83,35 +81,27 @@ test.describe('Layer Management', () => {
 		await expect(layerItems).toHaveCount(4);
 	});
 
-	test('Show All makes all layers visible', async ({ page }) => {
+	test('toggle all button shows all layers when hidden', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerCheckboxes = page.locator('input[type="checkbox"]');
-		await layerCheckboxes.first().uncheck();
-		await layerCheckboxes.nth(1).uncheck();
+		const toggleAllButton = page.locator('button').first();
 
-		await expect(layerCheckboxes.first()).not.toBeChecked();
-		await expect(layerCheckboxes.nth(1)).not.toBeChecked();
+		await toggleAllButton.click();
 
-		await page.locator('text=Show All').click();
-
-		await expect(layerCheckboxes.first()).toBeChecked();
-		await expect(layerCheckboxes.nth(1)).toBeChecked();
-		await expect(layerCheckboxes.nth(2)).toBeChecked();
+		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
+		await expect(visiblePaths).toHaveCount(0);
 	});
 
-	test('Hide All makes all layers hidden', async ({ page }) => {
+	test('toggle all button hides all layers when shown', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerCheckboxes = page.locator('input[type="checkbox"]');
-		await expect(layerCheckboxes.first()).toBeChecked();
+		const toggleAllButton = page.locator('button').first();
 
-		await page.locator('text=Hide All').click();
+		await toggleAllButton.click();
 
-		await expect(layerCheckboxes.first()).not.toBeChecked();
-		await expect(layerCheckboxes.nth(1)).not.toBeChecked();
-		await expect(layerCheckboxes.nth(2)).not.toBeChecked();
+		const hiddenPaths = page.locator('.max-w-full svg path[visibility="hidden"]');
+		await expect(hiddenPaths).toHaveCount(3);
 	});
 });
