@@ -88,16 +88,16 @@ This plan adds layer management functionality to the Doodledial Generator. When 
 
 - GOAL-006: Create Playwright E2E tests for layer management
 
-| Task     | Description                                                                      | Completed | Date |
-| -------- | -------------------------------------------------------------------------------- | --------- | ---- |
-| TASK-013 | Add test SVG file with 3 paths to tests/fixtures/                                |           |      |
-| TASK-014 | Add Playwright test: upload SVG, verify layer list shows 3 layers                |           |      |
-| TASK-015 | Add Playwright test: toggle layer visibility off, verify layer hidden in preview |           |      |
-| TASK-016 | Add Playwright test: toggle layer visibility on, verify layer visible in preview |           |      |
-| TASK-017 | Add Playwright test: export SVG with hidden layers, verify hidden paths excluded |           |      |
-| TASK-018 | Add Playwright test: upload new SVG, verify layers replaced with new ones        |           |      |
-| TASK-019 | Add Playwright test: click "Show All" bulk action, verify all layers visible     |           |      |
-| TASK-020 | Add Playwright test: click "Hide All" bulk action, verify all layers hidden      |           |      |
+| Task     | Description                                                                      | Completed | Date       |
+| -------- | -------------------------------------------------------------------------------- | --------- | ---------- |
+| TASK-013 | Add test SVG file with 3 paths to tests/fixtures/                                | ✓         | 2026-04-08 |
+| TASK-014 | Add Playwright test: upload SVG, verify layer list shows 3 layers                | ✓         | 2026-04-08 |
+| TASK-015 | Add Playwright test: toggle layer visibility off, verify layer hidden in preview | ✓         | 2026-04-08 |
+| TASK-016 | Add Playwright test: toggle layer visibility on, verify layer visible in preview | ✓         | 2026-04-08 |
+| TASK-017 | Add Playwright test: export SVG with hidden layers, verify hidden paths excluded | ✓         | 2026-04-08 |
+| TASK-018 | Add Playwright test: upload new SVG, verify layers replaced with new ones        | ✓         | 2026-04-08 |
+| TASK-019 | Add Playwright test: click "Show All" bulk action, verify all layers visible     | ✓         | 2026-04-08 |
+| TASK-020 | Add Playwright test: click "Hide All" bulk action, verify all layers hidden      | ✓         | 2026-04-08 |
 
 ## 3. Alternatives
 
