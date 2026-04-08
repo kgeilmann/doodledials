@@ -16,7 +16,14 @@
 	}
 
 	function handleSelect(layerId: string) {
-		selectedLayerId = selectedLayerId === layerId ? null : layerId;
+		const layer = doodledialStore.layers.find((l) => l.id === layerId);
+		if (selectedLayerId === layerId) {
+			selectedLayerId = null;
+			doodledialStore.setHighlightedLayer(null);
+		} else {
+			selectedLayerId = layerId;
+			doodledialStore.setHighlightedLayer(layer?.svgElementId || null);
+		}
 	}
 
 	function handleMouseEnter(layerId: string) {
@@ -66,23 +73,26 @@
 			<ul class="divide-y divide-gray-100">
 				{#each doodledialStore.layers as layer (layer.id)}
 					<li
+						role="button"
+						tabindex="0"
 						class="flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer {selectedLayerId ===
 						layer.id
 							? 'bg-indigo-50 border-l-2 border-indigo-500'
 							: 'hover:bg-gray-50'}"
+						onclick={() => handleSelect(layer.id)}
+						onkeydown={(e) => e.key === 'Enter' && handleSelect(layer.id)}
 						onmouseenter={() => handleMouseEnter(layer.svgElementId)}
 						onmouseleave={handleMouseLeave}
 					>
-						<button
-							type="button"
-							onclick={() => handleSelect(layer.id)}
-							class="text-sm text-gray-700 font-mono"
-						>
+						<span class="text-sm text-gray-700 font-mono">
 							{layer.name}
-						</button>
+						</span>
 						<button
 							type="button"
-							onclick={() => handleToggle(layer.id)}
+							onclick={(e) => {
+								e.stopPropagation();
+								handleToggle(layer.id);
+							}}
 							class="p-1 rounded hover:bg-gray-200 transition-colors"
 						>
 							{#if layer.visible}
