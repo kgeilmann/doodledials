@@ -13,14 +13,21 @@ export function parseSvgPaths(
 	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
 
 	paths.forEach((path, index) => {
-		let id = path.attr('id');
-		if (!id) {
+		const existingId = path.attr('id');
+		let id: string;
+		let name: string;
+
+		if (existingId) {
+			id = existingId;
+			name = existingId;
+		} else {
 			id = `path-${index}`;
+			name = `Layer ${index+1}`;
 			path.attr('id', id);
 		}
 		layers.push({
 			svgElementId: id,
-			name: path.attr('id') || `Layer ${index + 1}`,
+			name: name,
 			updatedSvg: ''
 		});
 	});
