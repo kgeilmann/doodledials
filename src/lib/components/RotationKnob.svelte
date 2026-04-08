@@ -3,9 +3,10 @@
 		value: number;
 		onchange: (value: number) => void;
 		label?: string;
+		disabled?: boolean;
 	}
 
-	let { value, onchange, label = 'Rotate' }: Props = $props();
+	let { value, onchange, label = 'Rotate', disabled = false }: Props = $props();
 
 	let dragging = $state(false);
 	let startAngle = $state(0);
@@ -70,40 +71,49 @@
 	}
 
 	const normalizedValue = $derived(((value % 360) + 360) % 360);
-	const circumference = 100.53;
+	const circumference = 2*Math.PI*16;
 	const dashOffset = $derived(circumference - (circumference * normalizedValue) / 360);
+	
 </script>
 
-<div class="flex items-center gap-2 flex-shrink-0">
+<div class="flex items-center gap-2 shrink-0">
 	<div
 		class="relative w-8 h-8 cursor-grab active:cursor-grabbing"
+		class:opacity-50={disabled}
+		class:cursor-not-allowed={disabled}
 		data-rotation-knob
 		role="slider"
 		aria-label={label}
 		aria-valuenow={Math.round(normalizedValue)}
-		tabindex="0"
-		onmousedown={handleMouseDown}
-		ondblclick={handleDoubleClick}
+		aria-disabled={disabled}
+		tabindex={disabled ? -1 : 0}
+		onmousedown={disabled ? undefined : handleMouseDown}
+		ondblclick={disabled ? undefined : handleDoubleClick}
 	>
-		<svg viewBox="0 0 40 40" class="w-8 h-8">
+		<svg
+			viewBox="0 0 40 40"
+			class="w-8 h-8"
+			style="transform-origin: 20px 20px;"
+		>
 			<circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="3" />
 			<circle
 				cx="20"
 				cy="20"
 				r="16"
 				fill="none"
-				stroke="#6366f1"
+				stroke={disabled ? '#9ca3af' : '#6366f1'}
 				stroke-width="3"
 				stroke-dasharray={circumference}
 				stroke-dashoffset={dashOffset}
 				stroke-linecap="round"
+				transform="rotate(-90, 20, 20)"
 			/>
 			<line
 				x1="20"
 				y1="20"
-				x2="34"
-				y2="20"
-				stroke="#6366f1"
+				x2="20"
+				y2="6"
+				stroke={disabled ? '#9ca3af' : '#6366f1'}
 				stroke-width="2"
 				stroke-linecap="round"
 				transform="rotate({normalizedValue}, 20, 20)"
