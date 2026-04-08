@@ -70,6 +70,15 @@ export function combineDoodledial(
 
 	const g = SVG().group();
 	ct.children().forEach((child) => {
+		const childId = child.attr('id');
+		if (layers && layers.length > 0) {
+			const layer = layers.find((l) => l.svgElementId === childId);
+			if (layer && layer.rotation !== 0) {
+				const cx = max / 2;
+				const cy = max / 2;
+				child.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
+			}
+		}
 		child.remove();
 		g.add(child);
 	});

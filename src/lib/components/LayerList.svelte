@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
+	let draggingKnob: string | null = $state(null);
+	let startAngle: number = 0;
+	let startRotation: number = 0;
+
 	function handleToggle(layerId: string) {
 		doodledialStore.toggleVisibility(layerId);
 	}
@@ -34,6 +38,60 @@
 		} else {
 			doodledialStore.setHighlightedLayer(null);
 		}
+	}
+
+	function getAngle(clientX: number, clientY: number, element: HTMLElement): number {
+		const rect = element.getBoundingClientRect();
+		const cx = rect.left + rect.width / 2;
+		const cy = rect.top + rect.height / 2;
+		const dx = clientX - cx;
+		const dy = clientY - cy;
+		const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+		return angle + 90;
+	}
+
+	function handleKnobMouseDown(e: MouseEvent, layerId: string, currentRotation: number) {
+		e.preventDefault();
+		e.stopPropagation();
+		draggingKnob = layerId;
+		startAngle = getAngle(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+		startRotation = currentRotation;
+		window.addEventListener('mousemove', handleKnobMouseMove);
+		window.addEventListener('mouseup', handleKnobMouseUp);
+	}
+
+	function handleKnobMouseMove(e: MouseEvent) {
+		if (!draggingKnob) return;
+		const element = document.querySelector(`[data-knob-id="${draggingKnob}"]`) as HTMLElement;
+		if (!element) return;
+		const currentAngle = getAngle(e.clientX, e.clientY, element);
+		const delta = currentAngle - startAngle;
+		const newRotation = startRotation + delta;
+		doodledialStore.setLayerRotation(draggingKnob, newRotation);
+		startAngle = currentAngle;
+		startRotation = newRotation;
+	}
+
+	function handleKnobMouseUp() {
+		draggingKnob = null;
+		window.removeEventListener('mousemove', handleKnobMouseMove);
+		window.removeEventListener('mouseup', handleKnobMouseUp);
+	}
+
+	function handleKnobDoubleClick(layerId: string, currentRotation: number) {
+		const normalized = ((currentRotation % 360) + 360) % 360;
+		const input = prompt('Enter rotation (degrees):', String(Math.round(normalized)));
+		if (input !== null) {
+			const value = parseFloat(input);
+			if (!isNaN(value)) {
+				doodledialStore.setLayerRotation(layerId, value);
+			}
+		}
+	}
+
+	function formatRotation(deg: number): string {
+		const normalized = ((deg % 360) + 360) % 360;
+		return `${Math.round(normalized)}°`;
 	}
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
@@ -86,9 +144,52 @@
 						onmouseenter={() => handleMouseEnter(layer.svgElementId)}
 						onmouseleave={handleMouseLeave}
 					>
-						<span class="text-sm text-gray-700 font-mono">
-							{layer.name}
-						</span>
+						<div class="flex items-center justify-between flex-1 min-w-0">
+							<span class="text-sm text-gray-700 font-mono truncate">
+								{layer.name}
+							</span>
+							<div class="flex items-center gap-2 flex-shrink-0">
+								<div
+									class="relative w-8 h-8 cursor-grab active:cursor-grabbing"
+									data-knob-id={layer.id}
+									role="slider"
+									aria-label="Rotate {layer.name}"
+									aria-valuenow={Math.round(((layer.rotation % 360) + 360) % 360)}
+									tabindex="0"
+									onmousedown={(e) => handleKnobMouseDown(e, layer.id, layer.rotation)}
+									ondblclick={() => handleKnobDoubleClick(layer.id, layer.rotation)}
+								>
+									<svg viewBox="0 0 40 40" class="w-8 h-8">
+										<circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="3" />
+										<circle
+											cx="20"
+											cy="20"
+											r="16"
+											fill="none"
+											stroke="#6366f1"
+											stroke-width="3"
+											stroke-dasharray="100.53"
+											stroke-dashoffset={100.53 -
+												(100.53 * (((layer.rotation % 360) + 360) % 360)) / 360}
+											stroke-linecap="round"
+										/>
+										<line
+											x1="20"
+											y1="20"
+											x2="34"
+											y2="20"
+											stroke="#6366f1"
+											stroke-width="2"
+											stroke-linecap="round"
+											transform="rotate({((layer.rotation % 360) + 360) % 360}, 20, 20)"
+										/>
+									</svg>
+								</div>
+								<span class="text-[10px] text-gray-500 font-mono w-8 text-center">
+									{formatRotation(layer.rotation)}
+								</span>
+							</div>
+						</div>
 						<button
 							type="button"
 							onclick={(e) => {

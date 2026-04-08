@@ -45,6 +45,7 @@
 		void doodledialStore.layers.length;
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
+			void l.rotation;
 		});
 		void doodledialStore.highlightedLayer;
 		void doodledialStore.selectedLayer;

@@ -62,7 +62,8 @@ function createDoodledialStore() {
 				id: `layer-${layers.length}`,
 				name: name || `Layer ${layers.length + 1}`,
 				visible: true,
-				svgElementId
+				svgElementId,
+				rotation: 0
 			};
 			layers = [...layers, newLayer];
 		},
@@ -73,6 +74,9 @@ function createDoodledialStore() {
 			layers = layers.map((layer) =>
 				layer.id === id ? { ...layer, visible: !layer.visible } : layer
 			);
+		},
+		setLayerRotation(id: string, rotation: number) {
+			layers = layers.map((layer) => (layer.id === id ? { ...layer, rotation } : layer));
 		},
 		showAllLayers() {
 			layers = layers.map((layer) => ({ ...layer, visible: true }));
