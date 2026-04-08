@@ -2,7 +2,7 @@ export interface Layer {
 	id: string;
 	name: string;
 	visible: boolean;
-	pathData: string;
+	svgElementId: string;
 }
 
 export interface DialConfig {
