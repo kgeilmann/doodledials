@@ -1,34 +1,33 @@
-import { SVG, Container } from '@svgdotjs/svg.js';
+import { SVG, Svg } from '@svgdotjs/svg.js';
 import type { DialConfig, SVGContent } from '$lib/types/doodledial';
 
-const DPI = 72;
+const DPI = 96;
 const MM_PER_INCH = 25.4;
+const DISC_PADDING_PX = 10;
 
 export function combineDoodledial(content: SVGContent, config: DialConfig): string {
-	const ct = SVG(content.raw) as Container;
+	const ct = SVG(content.raw) as Svg;
 	const vw = ct.viewbox().width;
 	const vh = ct.viewbox().height;
 	const max = Math.max(vw, vh);
-	const diameter = 2 * max * Math.SQRT2;
 
-	ct.size(2 * max * Math.SQRT2, 2 * max * Math.SQRT2);
-	ct.viewbox(0, 0, diameter, diameter);
+	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 
 	const g = SVG().group();
-	g.transform({ translateX: Math.abs(diameter - vw) / 2, translateY: Math.abs(diameter - vh) / 2 });
-	for (const c of ct.children()) {
-		c.remove();
-		g.add(c);
-	}
+	ct.children().forEach((child) => {
+		child.remove();
+		g.add(child);
+	});
+	g.putIn(ct);
 
-	const g2 = SVG().group();
-	g2.circle(diameter / 2)
-		.center(diameter / 2, diameter / 2)
+	const discSizeToFitEverything = max * Math.SQRT2;
+	const disc = SVG()
+		.id('disc')
+		.circle(discSizeToFitEverything)
+		.center(max / 2, max / 2)
 		.fill('none')
 		.stroke({ color: 'black', width: config.borderWidth });
-
-	g2.putIn(ct);
-	g.putIn(ct);
+	disc.putIn(ct);
 
 	if ('width' in ct.css()) {
 		// @ts-expect-error - css() returns unknown type
@@ -39,8 +38,12 @@ export function combineDoodledial(content: SVGContent, config: DialConfig): stri
 		ct.css('height', null);
 	}
 
-	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
-
+	ct.viewbox(
+		-(discSizeToFitEverything-max)/2-DISC_PADDING_PX,
+		-(discSizeToFitEverything-max)/2-DISC_PADDING_PX,
+		discSizeToFitEverything+2*DISC_PADDING_PX,
+		discSizeToFitEverything+2*DISC_PADDING_PX
+	);
 	ct.width(pixelDiameter);
 	ct.height(pixelDiameter);
 	return ct.svg();
