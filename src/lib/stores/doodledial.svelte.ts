@@ -1,10 +1,6 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 
-function generateId(): string {
-	return Math.random().toString(36).substring(2, 9);
-}
-
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
 	let svgContent = $state<SVGContent | null>(null);
@@ -47,12 +43,12 @@ function createDoodledialStore() {
 		setError(err: string | null) {
 			error = err;
 		},
-		addLayer(pathData: string, name?: string) {
+		addLayer(svgElementId: string, name?: string) {
 			const newLayer: Layer = {
-				id: generateId(),
+				id: `layer-${layers.length}`,
 				name: name || `Layer ${layers.length + 1}`,
 				visible: true,
-				pathData
+				svgElementId
 			};
 			layers = [...layers, newLayer];
 		},
