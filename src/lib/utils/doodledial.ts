@@ -45,15 +45,18 @@ export function combineDoodledial(
 
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 
-	const g = SVG().group();
 	ct.children().forEach((child) => {
 		const childId = child.attr('id');
 		if (layers && layers.length > 0) {
 			const layer = layers.find((l) => l.svgElementId === childId);
-			if (layer && !layer.visible) {
-				return;
+			if (layer) {
+				child.attr('visibility', layer.visible ? 'visible' : 'hidden');
 			}
 		}
+	});
+
+	const g = SVG().group();
+	ct.children().forEach((child) => {
 		child.remove();
 		g.add(child);
 	});

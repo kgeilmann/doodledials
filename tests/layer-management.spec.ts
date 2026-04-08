@@ -27,8 +27,11 @@ test.describe('Layer Management', () => {
 
 		await layerCheckboxes.first().uncheck();
 
-		const preview = page.locator('.max-w-full').first();
-		await expect(preview).toBeVisible();
+		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
+		const hiddenPaths = page.locator('.max-w-full svg path[visibility="hidden"]');
+
+		await expect(visiblePaths).toHaveCount(2);
+		await expect(hiddenPaths).toHaveCount(1);
 	});
 
 	test('toggle layer visibility on shows layer in preview', async ({ page }) => {
@@ -40,8 +43,12 @@ test.describe('Layer Management', () => {
 		await layerCheckboxes.first().uncheck();
 		await expect(layerCheckboxes.first()).not.toBeChecked();
 
+		const visiblePaths = page.locator('.max-w-full svg path[visibility="visible"]');
+		await expect(visiblePaths).toHaveCount(2);
+
 		await layerCheckboxes.first().check();
 		await expect(layerCheckboxes.first()).toBeChecked();
+		await expect(visiblePaths).toHaveCount(3);
 	});
 
 	test('export SVG excludes hidden layers', async ({ page }) => {
