@@ -13,7 +13,11 @@
 	function updatePreview() {
 		if (doodledialStore.svgContent) {
 			try {
-				const combined = combineDoodledial(doodledialStore.svgContent, doodledialStore.config);
+				const combined = combineDoodledial(
+					doodledialStore.svgContent,
+					doodledialStore.config,
+					doodledialStore.layers
+				);
 				doodledialStore.setCombinedSvg(combined);
 				doodledialStore.setError(null);
 			} catch (err) {
@@ -25,6 +29,13 @@
 
 	$effect(() => {
 		if (doodledialStore.svgContent && doodledialStore.config.diameter) {
+			updatePreview();
+		}
+	});
+
+	$effect(() => {
+		void doodledialStore.layers;
+		if (doodledialStore.svgContent) {
 			updatePreview();
 		}
 	});

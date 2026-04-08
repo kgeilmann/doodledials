@@ -1,5 +1,5 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
-import type { DialConfig, SVGContent } from '$lib/types/doodledial';
+import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const DPI = 96;
 const MM_PER_INCH = 25.4;
@@ -33,7 +33,11 @@ export function parseSvgPaths(
 	return layers;
 }
 
-export function combineDoodledial(content: SVGContent, config: DialConfig): string {
+export function combineDoodledial(
+	content: SVGContent,
+	config: DialConfig,
+	layers?: Layer[]
+): string {
 	const ct = SVG(content.raw) as Svg;
 	const vw = ct.viewbox().width;
 	const vh = ct.viewbox().height;
@@ -43,6 +47,13 @@ export function combineDoodledial(content: SVGContent, config: DialConfig): stri
 
 	const g = SVG().group();
 	ct.children().forEach((child) => {
+		const childId = child.attr('id');
+		if (layers && layers.length > 0) {
+			const layer = layers.find((l) => l.svgElementId === childId);
+			if (layer && !layer.visible) {
+				return;
+			}
+		}
 		child.remove();
 		g.add(child);
 	});
@@ -77,6 +88,10 @@ export function combineDoodledial(content: SVGContent, config: DialConfig): stri
 	return ct.svg();
 }
 
-export function exportDoodledial(content: SVGContent, config: DialConfig): string {
-	return combineDoodledial(content, config);
+export function exportDoodledial(
+	content: SVGContent,
+	config: DialConfig,
+	layers?: Layer[]
+): string {
+	return combineDoodledial(content, config, layers);
 }
