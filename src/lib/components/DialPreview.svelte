@@ -15,11 +15,16 @@
 			try {
 				const layers = doodledialStore.layers;
 				const highlightedLayer = doodledialStore.highlightedLayer;
+				const currentSelected = doodledialStore.selectedLayer;
+				const selectedLayerSvgId = currentSelected
+					? doodledialStore.layers.find((l) => l.id === currentSelected)?.svgElementId || null
+					: null;
 				const combined = combineDoodledial(
 					doodledialStore.svgContent,
 					doodledialStore.config,
 					layers,
-					highlightedLayer
+					highlightedLayer,
+					selectedLayerSvgId
 				);
 				doodledialStore.setCombinedSvg(combined);
 				doodledialStore.setError(null);
@@ -41,9 +46,9 @@
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
 		});
-		const hl = doodledialStore.highlightedLayer;
+		void doodledialStore.highlightedLayer;
+		void doodledialStore.selectedLayer;
 		if (doodledialStore.svgContent) {
-			console.log('Highlighted layer:', hl);
 			updatePreview();
 		}
 	});

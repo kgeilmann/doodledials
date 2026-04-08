@@ -9,6 +9,7 @@ function createDoodledialStore() {
 	let error = $state<string | null>(null);
 	let layers = $state<Layer[]>([]);
 	let highlightedLayer = $state<string | null>(null);
+	let selectedLayer = $state<string | null>(null);
 
 	return {
 		get config() {
@@ -32,6 +33,9 @@ function createDoodledialStore() {
 		get highlightedLayer() {
 			return highlightedLayer;
 		},
+		get selectedLayer() {
+			return selectedLayer;
+		},
 		setDiameter(diameter: number) {
 			config = { ...config, diameter };
 		},
@@ -49,6 +53,9 @@ function createDoodledialStore() {
 		},
 		setHighlightedLayer(layerId: string | null) {
 			highlightedLayer = layerId;
+		},
+		setSelectedLayer(layerId: string | null) {
+			selectedLayer = layerId;
 		},
 		addLayer(svgElementId: string, name?: string) {
 			const newLayer: Layer = {
