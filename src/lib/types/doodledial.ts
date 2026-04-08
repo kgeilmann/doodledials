@@ -3,6 +3,7 @@ export interface Layer {
 	name: string;
 	visible: boolean;
 	svgElementId: string;
+	rotation: number;
 }
 
 export interface DialConfig {
