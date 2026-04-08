@@ -12,6 +12,8 @@
 	let startAngle = $state(0);
 	let startValue = $state(0);
 	let knobElement: HTMLElement | null = $state(null);
+	let editing = $state(false);
+	let inputValue = $state('');
 
 	function getAngle(clientX: number, clientY: number, element: HTMLElement): number {
 		const rect = element.getBoundingClientRect();
@@ -23,6 +25,7 @@
 	}
 
 	function handleMouseDown(e: MouseEvent) {
+		if (editing) return;
 		e.preventDefault();
 		e.stopPropagation();
 		dragging = true;
@@ -55,14 +58,29 @@
 	}
 
 	function handleDoubleClick() {
-		const normalized = ((value % 360) + 360) % 360;
-		const input = prompt('Enter rotation (degrees):', String(Math.round(normalized)));
-		if (input !== null) {
-			const parsed = parseFloat(input);
-			if (!isNaN(parsed)) {
-				onchange(parsed);
-			}
+		if (disabled) return;
+		editing = true;
+		inputValue = String(Math.round(normalizedValue));
+	}
+
+	function handleInputBlur() {
+		finishEditing();
+	}
+
+	function handleInputKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			finishEditing();
+		} else if (e.key === 'Escape') {
+			editing = false;
 		}
+	}
+
+	function finishEditing() {
+		const parsed = parseFloat(inputValue);
+		if (!isNaN(parsed)) {
+			onchange(parsed);
+		}
+		editing = false;
 	}
 
 	function formatRotation(deg: number): string {
@@ -71,12 +89,12 @@
 	}
 
 	const normalizedValue = $derived(((value % 360) + 360) % 360);
-	const circumference = 2*Math.PI*16;
+	const circumference = 2 * Math.PI * 16;
 	const dashOffset = $derived(circumference - (circumference * normalizedValue) / 360);
-	
 </script>
 
 <div class="flex items-center gap-2 shrink-0">
+	{#if !editing}
 	<div
 		class="relative w-8 h-8 cursor-grab active:cursor-grabbing"
 		class:opacity-50={disabled}
@@ -90,11 +108,7 @@
 		onmousedown={disabled ? undefined : handleMouseDown}
 		ondblclick={disabled ? undefined : handleDoubleClick}
 	>
-		<svg
-			viewBox="0 0 40 40"
-			class="w-8 h-8"
-			style="transform-origin: 20px 20px;"
-		>
+		<svg viewBox="0 0 40 40" class="w-8 h-8" style="transform-origin: 20px 20px;">
 			<circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="3" />
 			<circle
 				cx="20"
@@ -120,7 +134,23 @@
 			/>
 		</svg>
 	</div>
-	<span class="text-[10px] text-gray-500 font-mono w-8 text-center">
-		{formatRotation(value)}
-	</span>
+		<button
+			type="button"
+			class="text-[10px] text-gray-500 font-mono w-8 text-center hover:text-indigo-600"
+			{disabled}
+			ondblclick={handleDoubleClick}
+		>
+			{formatRotation(value)}
+		</button>
+	{:else}
+	<input
+			type="number"
+			class="text-[10px] font-mono w-16 text-center bg-white border border-indigo-500 rounded px-1 py-0.5 outline-none"
+			bind:value={inputValue}
+			onblur={handleInputBlur}
+			onkeydown={handleInputKeydown}
+			autofocus
+		/>
+		
+	{/if}
 </div>

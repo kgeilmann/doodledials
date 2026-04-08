@@ -76,7 +76,7 @@ test.describe('Layer Rotation', () => {
 			[knobX, knobY]
 		);
 
-		const rotationText = await layerRow.locator('span.font-mono').last().textContent();
+		const rotationText = await layerRow.locator('button.font-mono').last().textContent();
 		expect(rotationText).toMatch(/^\d+°$/);
 	});
 });
