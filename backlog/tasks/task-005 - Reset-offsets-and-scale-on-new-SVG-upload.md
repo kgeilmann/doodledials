@@ -1,10 +1,10 @@
 ---
 id: TASK-005
 title: Reset offsets and scale on new SVG upload
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 22:51'
+updated_date: '2026-04-09 22:52'
 labels: []
 dependencies: []
 priority: medium
