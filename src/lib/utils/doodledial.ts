@@ -51,7 +51,8 @@ export function combineDoodledial(
 	const vw = ct.viewbox().width;
 	const vh = ct.viewbox().height;
 	const max = Math.max(vw, vh);
-
+	
+	const discSizeToFitEverything = max * Math.SQRT2;
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 
 	ct.children().forEach((child) => {
@@ -69,8 +70,12 @@ export function combineDoodledial(
 	});
 
 	const g = SVG().group();
-	ct.children().forEach((child) => {
+	const MM_TO_PX = DPI / MM_PER_INCH;
+	const MARK_LENGTH_PX = 6 * MM_TO_PX;
+
+	ct.children().forEach((child, index) => {
 		const childId = child.attr('id');
+		const layerIndex = index + 1;
 		const group = SVG().group();
 
 		if (layers && layers.length > 0) {
@@ -86,13 +91,26 @@ export function combineDoodledial(
 			group.css('stroke-width', '5');
 		}
 
+		const centerX = max / 2;
+		const markStartY = max / 2 - discSizeToFitEverything/2 ;
+		const markEndY = markStartY + MARK_LENGTH_PX;
+
+		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
+		mark.stroke({ color: '#6366f1', width: 2 });
+		group.add(mark);
+
+		const text = SVG().text(String(layerIndex));
+		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
+		text.fill('#6366f1');
+		text.center(centerX, markEndY + 8);
+		group.add(text);
+
 		child.remove();
 		group.add(child);
 		g.add(group);
 	});
 	g.putIn(ct);
 
-	const discSizeToFitEverything = max * Math.SQRT2;
 	const disc = SVG()
 		.id('disc')
 		.circle(discSizeToFitEverything)
