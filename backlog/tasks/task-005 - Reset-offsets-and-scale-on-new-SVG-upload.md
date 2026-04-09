@@ -1,10 +1,10 @@
 ---
 id: TASK-005
 title: Reset offsets and scale on new SVG upload
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 22:52'
+updated_date: '2026-04-09 22:54'
 labels: []
 dependencies: []
 priority: medium
@@ -19,7 +19,7 @@ In FileUpload.svelte, after processing a new SVG file, call doodledialStore.setO
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 e2e test checking the reset exists and passes
+- [x] #1 e2e test checking the reset exists and passes
 <!-- AC:END -->
 
 ## Implementation Plan
