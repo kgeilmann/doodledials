@@ -13,21 +13,16 @@ export function parseSvgPaths(
 	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
 
 	paths.forEach((path, index) => {
-		const existingId = path.attr('id');
-		let id: string;
-		let name: string;
+		const groupId = `layer-${index}`;
 
-		if (existingId) {
-			id = existingId;
-			name = existingId;
-		} else {
-			id = `path-${index}`;
-			name = `Layer ${index + 1}`;
-			path.attr('id', id);
-		}
+		const group = SVG().group().attr('id', groupId);
+		path.remove();
+		group.add(path);
+		doc.add(group);
+
 		layers.push({
-			svgElementId: id,
-			name: name,
+			svgElementId: groupId,
+			name: `Layer ${index + 1}`,
 			updatedSvg: ''
 		});
 	});
@@ -51,48 +46,43 @@ export function combineDoodledial(
 	const vw = ct.viewbox().width;
 	const vh = ct.viewbox().height;
 	const max = Math.max(vw, vh);
-	
+
 	const discSizeToFitEverything = max * Math.SQRT2;
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 
-	ct.children().forEach((child) => {
-		const childId = child.attr('id');
+	const groups = ct.find('g[id^=layer-]');
+	groups.forEach((group) => {
+		const groupId = group.attr('id');
 		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.svgElementId === childId);
+			const layer = layers.find((l) => l.svgElementId === groupId);
 			if (layer) {
-				child.attr('visibility', layer.visible ? 'visible' : 'hidden');
+				group.attr('visibility', layer.visible ? 'visible' : 'hidden');
 			}
 		}
-		if (childId === highlightedLayerId || childId === selectedLayerId) {
-			child.css('stroke', '#6366f1');
-			child.css('stroke-width', '5');
+		if (groupId === highlightedLayerId || groupId === selectedLayerId) {
+			group.css('stroke', '#6366f1');
+			group.css('stroke-width', '5');
 		}
 	});
 
-	const g = SVG().group();
 	const MM_TO_PX = DPI / MM_PER_INCH;
 	const MARK_LENGTH_PX = 6 * MM_TO_PX;
 
-	ct.children().forEach((child, index) => {
-		const childId = child.attr('id');
-		const layerIndex = index + 1;
-		const group = SVG().group();
+	groups.forEach((group) => {
+		const groupId = group.attr('id');
+		const layerIndex = parseInt(groupId.replace('layer-', ''), 10) + 1;
 
 		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.svgElementId === childId);
+			const layer = layers.find((l) => l.svgElementId === groupId);
 			if (layer && layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
 				group.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 			}
 		}
-		if (childId === highlightedLayerId || childId === selectedLayerId) {
-			group.css('stroke', '#6366f1');
-			group.css('stroke-width', '5');
-		}
 
 		const centerX = max / 2;
-		const markStartY = max / 2 - discSizeToFitEverything/2 ;
+		const markStartY = max / 2 - discSizeToFitEverything / 2;
 		const markEndY = markStartY + MARK_LENGTH_PX;
 
 		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
@@ -104,12 +94,7 @@ export function combineDoodledial(
 		text.fill('#6366f1');
 		text.center(centerX, markEndY + 8);
 		group.add(text);
-
-		child.remove();
-		group.add(child);
-		g.add(group);
 	});
-	g.putIn(ct);
 
 	const disc = SVG()
 		.id('disc')
