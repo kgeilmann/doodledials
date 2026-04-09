@@ -7,7 +7,7 @@ const DISC_PADDING_PX = 10;
 
 export function parseSvgPaths(
 	svgContent: string
-): { svgElementId: string; name: string; updatedSvg: string }[] {
+): { id: string; name: string; updatedSvg: string }[] {
 	const doc = SVG(svgContent) as Svg;
 	const all = SVG().group().attr('id', 'all');
 	doc.children().forEach((c) => {
@@ -17,7 +17,7 @@ export function parseSvgPaths(
 	doc.add(all);
 
 	const paths = doc.find('path');
-	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
+	const layers: { id: string; name: string; updatedSvg: string }[] = [];
 
 	paths.forEach((path, index) => {
 		const groupId = `layer-${index}`;
@@ -28,7 +28,7 @@ export function parseSvgPaths(
 		all.add(group);
 
 		layers.push({
-			svgElementId: groupId,
+			id: groupId,
 			name: `Layer ${index + 1}`,
 			updatedSvg: ''
 		});
@@ -61,14 +61,13 @@ export function combineDoodledial(
 	groups.forEach((group) => {
 		const groupId = group.attr('id');
 		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.svgElementId === groupId);
+			const layer = layers.find((l) => l.id === groupId);
 			if (layer) {
 				group.attr('visibility', layer.visible ? 'visible' : 'hidden');
 			}
 		}
 		if (groupId === highlightedLayerId || groupId === selectedLayerId) {
-			group.css('stroke', '#6366f1');
-			group.css('stroke-width', '5');
+			group.css('stroke', '#6366f1');			
 		}
 	});
 
@@ -80,7 +79,7 @@ export function combineDoodledial(
 		const layerIndex = parseInt(groupId.replace('layer-', ''), 10) + 1;
 
 		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.svgElementId === groupId);
+			const layer = layers.find((l) => l.id === groupId);
 			if (layer && layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
@@ -93,18 +92,22 @@ export function combineDoodledial(
 		const markEndY = markStartY + MARK_LENGTH_PX;
 
 		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
-		mark.stroke({ color: '#6366f1', width: 2 });
+		mark.stroke({ color:  (groupId === highlightedLayerId || groupId === selectedLayerId )?	'#6366f1' : 'black', width: 2 });
 		group.add(mark);
 
 		const text = SVG().text(String(layerIndex));
 		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
-		text.fill('#6366f1');
+		text.fill( (groupId === highlightedLayerId || groupId === selectedLayerId )?	'#6366f1' : 'black');
 		text.center(centerX, markEndY + 8);
 		group.add(text);
 
 		group.children().forEach((c) => {
 			if (c.svg().startsWith('<path')) {
 				c.scale(config.scale, max / 2, max / 2).translate(config.offsetX, config.offsetY);
+				if (groupId === highlightedLayerId || groupId === selectedLayerId) {					
+					c.css('stroke-width', '5');
+					c.css('stroke', '#6366f1');		
+				}
 			}
 		});
 	});

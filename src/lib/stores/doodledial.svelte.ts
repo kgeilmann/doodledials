@@ -66,12 +66,11 @@ function createDoodledialStore() {
 		setSelectedLayer(layerId: string | null) {
 			selectedLayer = layerId;
 		},
-		addLayer(svgElementId: string, name?: string) {
+		addLayer(layerId: string, name?: string) {
 			const newLayer: Layer = {
-				id: `layer-${layers.length}`,
+				id: layerId,
 				name: name || `Layer ${layers.length + 1}`,
 				visible: true,
-				svgElementId,
 				rotation: 0
 			};
 			layers = [...layers, newLayer];
