@@ -36,7 +36,7 @@
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected) {
 			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
-			doodledialStore.setHighlightedLayer(selectedLayer?.svgElementId || null);
+			doodledialStore.setHighlightedLayer(selectedLayer?.id || null);
 		} else {
 			doodledialStore.setHighlightedLayer(null);
 		}
@@ -46,9 +46,9 @@
 		doodledialStore.setLayerRotation(layerId, rotation);
 	}
 
-	function handleDragStart(svgElementId: string) {
+	function handleDragStart(layerId: string) {
 		isDraggingKnob = true;
-		doodledialStore.setHighlightedLayer(svgElementId);
+		doodledialStore.setHighlightedLayer(layerId);
 	}
 
 	function handleDragEnd() {
@@ -56,7 +56,7 @@
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected) {
 			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
-			doodledialStore.setHighlightedLayer(selectedLayer?.svgElementId || null);
+			doodledialStore.setHighlightedLayer(selectedLayer?.id || null);
 		} else {
 			doodledialStore.setHighlightedLayer(null);
 		}
@@ -109,7 +109,7 @@
 						tabindex="0"
 						onclick={() => handleSelect(layer.id)}
 						onkeydown={(e) => e.key === 'Enter' && handleSelect(layer.id)}
-						onmouseenter={() => handleMouseEnter(layer.svgElementId)}
+						onmouseenter={() => handleMouseEnter(layer.id)}
 						onmouseleave={handleMouseLeave}
 					>
 						<div class="flex items-center justify-between flex-1 min-w-0 gap-2">
@@ -122,7 +122,7 @@
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
 									disabled={!layer.visible}
-									ondragstart={() => handleDragStart(layer.svgElementId)}
+									ondragstart={() => handleDragStart(layer.id)}
 									ondragend={handleDragEnd}
 								/>
 							</div>

@@ -2,7 +2,6 @@ export interface Layer {
 	id: string;
 	name: string;
 	visible: boolean;
-	svgElementId: string;
 	rotation: number;
 }
 

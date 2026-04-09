@@ -46,7 +46,7 @@
 
 			doodledialStore.clearLayers();
 			parsedLayers.forEach((layer) => {
-				doodledialStore.addLayer(layer.svgElementId, layer.name);
+				doodledialStore.addLayer(layer.id, layer.name);
 			});
 
 			doodledialStore.setSvgContent({

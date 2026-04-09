@@ -17,7 +17,7 @@
 				const highlightedLayer = doodledialStore.highlightedLayer;
 				const currentSelected = doodledialStore.selectedLayer;
 				const selectedLayerSvgId = currentSelected
-					? doodledialStore.layers.find((l) => l.id === currentSelected)?.svgElementId || null
+					? doodledialStore.layers.find((l) => l.id === currentSelected)?.id || null
 					: null;
 				const combined = combineDoodledial(
 					doodledialStore.svgContent,
