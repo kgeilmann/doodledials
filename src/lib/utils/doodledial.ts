@@ -92,6 +92,8 @@ export function combineDoodledial(
 		const markEndY = markStartY + MARK_LENGTH_PX;
 
 		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
+		mark.addClass('mark-line');
+		mark.attr('data-layer-id', groupId);
 		mark.stroke({
 			color: groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black',
 			width: 2
@@ -99,6 +101,8 @@ export function combineDoodledial(
 		group.add(mark);
 
 		const text = SVG().text(String(layerIndex));
+		text.addClass('layer-label');
+		text.attr('data-layer-id', groupId);
 		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
 		text.fill(groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black');
 		text.center(centerX, markEndY + 8);
