@@ -9,6 +9,13 @@ export function parseSvgPaths(
 	svgContent: string
 ): { svgElementId: string; name: string; updatedSvg: string }[] {
 	const doc = SVG(svgContent) as Svg;
+	const all = SVG().group().attr('id', "all");
+	doc.children().forEach((c) => {
+		c.remove()
+		all.add(c);
+	});
+	doc.add(all);
+	
 	const paths = doc.find('path');
 	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
 
@@ -18,8 +25,8 @@ export function parseSvgPaths(
 		const group = SVG().group().attr('id', groupId);
 		path.remove();
 		group.add(path);
-		doc.add(group);
-
+		all.add(group);
+		
 		layers.push({
 			svgElementId: groupId,
 			name: `Layer ${index + 1}`,
