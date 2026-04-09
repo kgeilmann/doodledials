@@ -4,7 +4,7 @@ title: Add mm unit label to X and Y offset inputs
 status: To Do
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 22:44'
+updated_date: '2026-04-09 22:45'
 labels: []
 dependencies: []
 priority: medium
@@ -26,6 +26,28 @@ The value has to be interpreted converted to px when applied to the svg, analogo
 - [ ] #3 The unit labels match the styling of the existing diameter mm label
 - [ ] #4 The offset values are correctly converted from mm to px when applied to the SVG
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## Implementation Plan
+
+### Phase 1: Add mm unit labels to inputs
+- Modify `src/lib/components/DiameterControl.svelte`
+- Wrap X Offset input in a flex container with gap-2 (like diameter input at line 72)
+- Add `<span class="text-sm text-gray-500">mm</span>` after the X Offset input
+- Repeat for Y Offset input
+
+### Phase 2: Fix mm to px conversion
+- Modify `src/lib/utils/doodledial.ts` line 106
+- Change `translate(config.offsetX, config.offsetY)` to `translate(config.offsetX * MM_TO_PX, config.offsetY * MM_TO_PX)`
+- This ensures offset values in mm are correctly converted to pixels
+
+### Phase 3: Testing/verification
+- Verify the mm labels appear correctly in the UI
+- Test that offset values visually move the SVG content by the correct amount (1mm input should move ~3.78px)
+- Ensure the labels match the styling of the diameter mm label
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
