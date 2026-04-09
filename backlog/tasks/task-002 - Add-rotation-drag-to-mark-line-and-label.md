@@ -4,7 +4,7 @@ title: Add rotation drag to mark line and label
 status: To Do
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 23:02'
+updated_date: '2026-04-09 23:03'
 labels: []
 dependencies: []
 priority: medium
@@ -29,3 +29,17 @@ Mark line and layer label also modify selection and highlighting
 - [ ] #3 e2e test to check highlight on hover
 - [ ] #4 all tests pass
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## Implementation Plan
+
+See: `plan/feature-rotation-drag-mark-label-1.md`
+
+### Summary
+- 3 phases: Core rotation logic, Selection/highlighting, Testing
+- 19 tasks total
+- Key files: doodledial.ts, component handling SVG, rotation.spec.ts
+- All 4 acceptance criteria must pass
+<!-- SECTION:PLAN:END -->
