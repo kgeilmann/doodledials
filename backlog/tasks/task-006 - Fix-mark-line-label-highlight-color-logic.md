@@ -1,10 +1,10 @@
 ---
 id: TASK-006
 title: Fix mark line/label highlight color logic
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 21:42'
+updated_date: '2026-04-09 22:37'
 labels: []
 dependencies: []
 priority: medium

@@ -1,10 +1,10 @@
 ---
 id: TASK-004
 title: Prevent stroke-width change on marks during highlight
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 21:42'
+updated_date: '2026-04-09 22:37'
 labels: []
 dependencies: []
 priority: medium
