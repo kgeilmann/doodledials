@@ -26,8 +26,12 @@ test.describe('Layer Management', () => {
 
 		await visibilityButtons.first().click();
 
-		await expect(page.locator('.max-w-full svg path[visibility="visible"]')).toHaveCount(2);
-		await expect(page.locator('.max-w-full svg path[visibility="hidden"]')).toHaveCount(1);
+		await expect(page.locator('.max-w-full svg g[id^="layer-"][visibility="visible"]')).toHaveCount(
+			2
+		);
+		await expect(page.locator('.max-w-full svg g[id^="layer-"][visibility="hidden"]')).toHaveCount(
+			1
+		);
 	});
 
 	test('toggle layer visibility on shows layer in preview', async ({ page }) => {
@@ -39,7 +43,9 @@ test.describe('Layer Management', () => {
 		const button = visibilityButtons.first();
 		await button.click();
 
-		await expect(page.locator('.max-w-full svg path[visibility="visible"]')).toHaveCount(2);
+		await expect(page.locator('.max-w-full svg g[id^="layer-"][visibility="visible"]')).toHaveCount(
+			2
+		);
 	});
 
 	test('export SVG excludes hidden layers', async ({ page }) => {
