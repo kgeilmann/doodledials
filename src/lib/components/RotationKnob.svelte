@@ -23,11 +23,7 @@
 	let knobElement: HTMLElement | null = $state(null);
 	let editing = $state(false);
 	let inputValue = $state('');
-	let localValue = $state(value);
-
-	$effect(() => {
-		localValue = value;
-	});
+	let localValue = $derived(value);
 
 	function getAngle(clientX: number, clientY: number, element: HTMLElement): number {
 		const rect = element.getBoundingClientRect();
@@ -197,6 +193,7 @@
 			</svg>
 		</button>
 	{:else}
+		<!-- svelte-ignore a11y_autofocus -->
 		<input
 			type="number"
 			class="text-[10px] font-mono w-16 text-center bg-white border border-indigo-500 rounded px-1 py-0.5 outline-none"
