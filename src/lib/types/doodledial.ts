@@ -13,6 +13,9 @@ export interface DialConfig {
 	defaultDiameter: number;
 	borderWidth: number;
 	padding: number;
+	offsetX: number;
+	offsetY: number;
+	scale: number;
 }
 
 export interface SVGContent {
@@ -36,5 +39,8 @@ export const DEFAULT_DIAL_CONFIG: DialConfig = {
 	maxDiameter: 200,
 	defaultDiameter: 100,
 	borderWidth: 2,
-	padding: 0.05
+	padding: 0.05,
+	offsetX: 0,
+	offsetY: 0,
+	scale: 1
 };

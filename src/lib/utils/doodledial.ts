@@ -1,4 +1,5 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
+import type {Path } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const DPI = 96;
@@ -9,13 +10,13 @@ export function parseSvgPaths(
 	svgContent: string
 ): { svgElementId: string; name: string; updatedSvg: string }[] {
 	const doc = SVG(svgContent) as Svg;
-	const all = SVG().group().attr('id', "all");
+	const all = SVG().group().attr('id', 'all');
 	doc.children().forEach((c) => {
-		c.remove()
+		c.remove();
 		all.add(c);
 	});
 	doc.add(all);
-	
+
 	const paths = doc.find('path');
 	const layers: { svgElementId: string; name: string; updatedSvg: string }[] = [];
 
@@ -26,7 +27,7 @@ export function parseSvgPaths(
 		path.remove();
 		group.add(path);
 		all.add(group);
-		
+
 		layers.push({
 			svgElementId: groupId,
 			name: `Layer ${index + 1}`,
@@ -101,6 +102,12 @@ export function combineDoodledial(
 		text.fill('#6366f1');
 		text.center(centerX, markEndY + 8);
 		group.add(text);
+		
+		group.children().forEach( c => {
+			if (c.svg().startsWith("<path")) {
+				c.scale(config.scale, max/2, max/2).translate(config.offsetX, config.offsetY)
+			}
+		})
 	});
 
 	const disc = SVG()

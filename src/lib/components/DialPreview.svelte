@@ -49,6 +49,9 @@
 		});
 		void doodledialStore.highlightedLayer;
 		void doodledialStore.selectedLayer;
+		void doodledialStore.config.offsetX;
+		void doodledialStore.config.offsetY;
+		void doodledialStore.config.scale;
 		if (doodledialStore.svgContent) {
 			updatePreview();
 		}

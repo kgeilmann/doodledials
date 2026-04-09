@@ -39,6 +39,15 @@ function createDoodledialStore() {
 		setDiameter(diameter: number) {
 			config = { ...config, diameter };
 		},
+		setOffsetX(offsetX: number) {
+			config = { ...config, offsetX };
+		},
+		setOffsetY(offsetY: number) {
+			config = { ...config, offsetY };
+		},
+		setScale(scale: number) {
+			config = { ...config, scale };
+		},
 		setSvgContent(content: SVGContent | null) {
 			svgContent = content;
 		},
