@@ -17,6 +17,14 @@ When clicking on the mark label, the cursor changes to an text input cursor, add
 The only interaction needed with the label is clicking for layer selection, hovering for layer hightlighting and dragging for layer rotation.
 <!-- SECTION:DESCRIPTION:END -->
 
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Clicking on label shows pointer cursor, not text input cursor
+- [ ] #2 Text cannot be selected with mouse drag
+- [ ] #3 Hover highlighting still works
+- [ ] #4 Click for layer selection still works
+<!-- AC:END -->
+
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
