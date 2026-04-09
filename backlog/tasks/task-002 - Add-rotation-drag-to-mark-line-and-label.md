@@ -1,7 +1,7 @@
 ---
 id: TASK-002
 title: Add rotation drag to mark line and label
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-09 21:42'
 updated_date: '2026-04-09 23:20'
