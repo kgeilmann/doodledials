@@ -53,6 +53,10 @@
 				raw: parsedLayers[0]?.updatedSvg || raw,
 				filename: file.name
 			});
+
+			doodledialStore.setOffsetX(0);
+			doodledialStore.setOffsetY(0);
+			doodledialStore.setScale(1);
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Failed to load SVG');
 		} finally {
