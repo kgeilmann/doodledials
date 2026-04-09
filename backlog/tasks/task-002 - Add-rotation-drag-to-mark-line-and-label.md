@@ -4,7 +4,7 @@ title: Add rotation drag to mark line and label
 status: To Do
 assignee: []
 created_date: '2026-04-09 21:42'
-updated_date: '2026-04-09 23:09'
+updated_date: '2026-04-09 23:20'
 labels: []
 dependencies: []
 priority: medium
@@ -24,10 +24,10 @@ Mark line and layer label also modify selection and highlighting
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 e2e test to check rotation
-- [ ] #2 e2e test to check selection
-- [ ] #3 e2e test to check highlight on hover
-- [ ] #4 all tests pass
+- [x] #1 e2e test to check rotation
+- [x] #2 e2e test to check selection
+- [x] #3 e2e test to check highlight on hover
+- [x] #4 all tests pass
 <!-- AC:END -->
 
 ## Implementation Plan
