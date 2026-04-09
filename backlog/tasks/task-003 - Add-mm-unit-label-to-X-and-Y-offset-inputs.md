@@ -26,3 +26,14 @@ The value has to be interpreted converted to px when applied to the svg, analogo
 - [ ] #3 The unit labels match the styling of the existing diameter mm label
 - [ ] #4 The offset values are correctly converted from mm to px when applied to the SVG
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+**Verification steps for criteria #4 (mm to px conversion):**
+
+1. Examine `src/lib/utils/doodledial.ts` line 106 - the translate uses `config.offsetX` and `config.offsetY` directly
+2. The diameter conversion is done at line 58: `pixelDiameter = (config.diameter * DPI) / MM_PER_INCH` where DPI=96, MM_PER_INCH=25.4
+3. The offset conversion constant is at line 74: `MM_TO_PX = DPI / MM_PER_INCH` (approx 3.78 px/mm)
+4. Current code passes raw offset values - verify if they need to be multiplied by MM_TO_PX before being applied to the SVG transform
+<!-- SECTION:NOTES:END -->
