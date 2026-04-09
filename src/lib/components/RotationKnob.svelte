@@ -121,7 +121,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex items-center gap-2 shrink-0"
+	class="flex items-center gap-2 shrink-0 group"
 	onclick={() => {
 		if (editing) editing = false;
 	}}
@@ -173,6 +173,28 @@
 			ondblclick={handleDoubleClick}
 		>
 			{formatRotation(value)}
+		</button>
+		<button
+			type="button"
+			class="w-4 h-4 text-gray-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 disabled:cursor-not-allowed"
+			{disabled}
+			onclick={() => onchange(0)}
+			title="Reset to 0°"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				class="w-3 h-3"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+				/>
+			</svg>
 		</button>
 	{:else}
 		<input
