@@ -13,17 +13,17 @@
 		doodledialStore.setDiameter(clamped);
 	}
 
-	function handleOffsetXChange(e: Event) {
+	function handleOffsetXInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
 		doodledialStore.setOffsetX(value);
 	}
 
-	function handleOffsetYChange(e: Event) {
+	function handleOffsetYInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
 		doodledialStore.setOffsetY(value);
 	}
 
-	function handleScaleChange(e: Event) {
+	function handleScaleInput(e: Event) {
 		const value = parseFloat((e.target as HTMLInputElement).value) || 1;
 		const clamped = Math.min(Math.max(value, 0.75), 1.25);
 		doodledialStore.setScale(clamped);
@@ -31,14 +31,13 @@
 </script>
 
 <div class="space-y-4">
-
 	<div class="flex items-center justify-between">
 		<label for="offsetX-input" class="text-sm font-medium text-gray-700">X Offset</label>
 		<input
 			id="offsetX-input"
 			type="number"
 			value={doodledialStore.config.offsetX}
-			onchange={handleOffsetXChange}
+			oninput={handleOffsetXInput}
 			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 		/>
 	</div>
@@ -49,7 +48,7 @@
 			id="offsetY-input"
 			type="number"
 			value={doodledialStore.config.offsetY}
-			onchange={handleOffsetYChange}
+			oninput={handleOffsetYInput}
 			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 		/>
 	</div>
@@ -63,7 +62,7 @@
 			max="1.25"
 			step="0.05"
 			value={doodledialStore.config.scale}
-			onchange={handleScaleChange}
+			oninput={handleScaleInput}
 			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 		/>
 	</div>
