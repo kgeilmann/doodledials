@@ -1,7 +1,7 @@
 ---
 id: TASK-003
 title: Add mm unit label to X and Y offset inputs
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-09 21:42'
 updated_date: '2026-04-09 22:48'
