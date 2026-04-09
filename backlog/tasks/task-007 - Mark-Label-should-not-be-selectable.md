@@ -1,10 +1,10 @@
 ---
 id: TASK-007
 title: Mark Label should not be selectable
-status: Draft
+status: Done
 assignee: []
 created_date: '2026-04-09 23:18'
-updated_date: '2026-04-09 23:30'
+updated_date: '2026-04-09 23:37'
 labels: []
 dependencies: []
 ---
