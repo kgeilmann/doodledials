@@ -71,16 +71,24 @@ export function combineDoodledial(
 	const g = SVG().group();
 	ct.children().forEach((child) => {
 		const childId = child.attr('id');
+		const group = SVG().group();
+
 		if (layers && layers.length > 0) {
 			const layer = layers.find((l) => l.svgElementId === childId);
 			if (layer && layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
-				child.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
+				group.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 			}
 		}
+		if (childId === highlightedLayerId || childId === selectedLayerId) {
+			group.css('stroke', '#6366f1');
+			group.css('stroke-width', '5');
+		}
+
 		child.remove();
-		g.add(child);
+		group.add(child);
+		g.add(group);
 	});
 	g.putIn(ct);
 
