@@ -125,8 +125,7 @@
 			<div>
 				<p class="text-gray-700">
 					<span class="font-semibold">Drop an SVG file here</span> or click to browse
-				</p>
-				<p class="text-sm text-gray-400 mt-1">Only .svg files are accepted</p>
+				</p>				
 			</div>
 		</div>
 	{/if}

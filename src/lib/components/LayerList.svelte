@@ -112,7 +112,7 @@
 						onmouseenter={() => handleMouseEnter(layer.svgElementId)}
 						onmouseleave={handleMouseLeave}
 					>
-						<div class="flex items-center justify-between flex-1 min-w-0">
+						<div class="flex items-center justify-between flex-1 min-w-0 gap-2">
 							<span class="text-sm text-gray-700 font-mono truncate">
 								{layer.name}
 							</span>

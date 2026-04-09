@@ -13,7 +13,7 @@
 
 <main class="h-screen bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden flex">
 	<div
-		class="w-80 shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 p-6 flex flex-col gap-6 overflow-y-auto border-r border-gray-200"
+		class="w-96 shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 p-6 flex flex-col gap-6 overflow-y-auto border-r border-gray-200"
 	>
 		<header class="text-center">
 			<h1 class="text-2xl font-bold text-gray-900 mb-1">Doodledial Generator</h1>
