@@ -33,24 +33,30 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<label for="offsetX-input" class="text-sm font-medium text-gray-700">X Offset</label>
-		<input
-			id="offsetX-input"
-			type="number"
-			value={doodledialStore.config.offsetX}
-			oninput={handleOffsetXInput}
-			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-		/>
+		<div class="flex items-center gap-2">
+			<input
+				id="offsetX-input"
+				type="number"
+				value={doodledialStore.config.offsetX}
+				oninput={handleOffsetXInput}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+			/>
+			<span class="text-sm text-gray-500">mm</span>
+		</div>
 	</div>
 
 	<div class="flex items-center justify-between">
 		<label for="offsetY-input" class="text-sm font-medium text-gray-700">Y Offset</label>
-		<input
-			id="offsetY-input"
-			type="number"
-			value={doodledialStore.config.offsetY}
-			oninput={handleOffsetYInput}
-			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-		/>
+		<div class="flex items-center gap-2">
+			<input
+				id="offsetY-input"
+				type="number"
+				value={doodledialStore.config.offsetY}
+				oninput={handleOffsetYInput}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+			/>
+			<span class="text-sm text-gray-500">mm</span>
+		</div>
 	</div>
 
 	<div class="flex items-center justify-between">

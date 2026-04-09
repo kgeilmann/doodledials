@@ -67,7 +67,7 @@ export function combineDoodledial(
 			}
 		}
 		if (groupId === highlightedLayerId || groupId === selectedLayerId) {
-			group.css('stroke', '#6366f1');			
+			group.css('stroke', '#6366f1');
 		}
 	});
 
@@ -92,21 +92,27 @@ export function combineDoodledial(
 		const markEndY = markStartY + MARK_LENGTH_PX;
 
 		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
-		mark.stroke({ color:  (groupId === highlightedLayerId || groupId === selectedLayerId )?	'#6366f1' : 'black', width: 2 });
+		mark.stroke({
+			color: groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black',
+			width: 2
+		});
 		group.add(mark);
 
 		const text = SVG().text(String(layerIndex));
 		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
-		text.fill( (groupId === highlightedLayerId || groupId === selectedLayerId )?	'#6366f1' : 'black');
+		text.fill(groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black');
 		text.center(centerX, markEndY + 8);
 		group.add(text);
 
 		group.children().forEach((c) => {
 			if (c.svg().startsWith('<path')) {
-				c.scale(config.scale, max / 2, max / 2).translate(config.offsetX, config.offsetY);
-				if (groupId === highlightedLayerId || groupId === selectedLayerId) {					
+				c.scale(config.scale, max / 2, max / 2).translate(
+					config.offsetX * MM_TO_PX,
+					config.offsetY * MM_TO_PX
+				);
+				if (groupId === highlightedLayerId || groupId === selectedLayerId) {
 					c.css('stroke-width', '5');
-					c.css('stroke', '#6366f1');		
+					c.css('stroke', '#6366f1');
 				}
 			}
 		});
