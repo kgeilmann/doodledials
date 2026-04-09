@@ -24,7 +24,7 @@ The value has to be interpreted converted to px when applied to the svg, analogo
 - [x] #1 The X Offset input field displays an "mm" unit label next to it
 - [x] #2 The Y Offset input field displays an "mm" unit label next to it
 - [x] #3 The unit labels match the styling of the existing diameter mm label
-- [ ] #4 The offset values are correctly converted from mm to px when applied to the SVG
+- [x] #4 The offset values are correctly converted from mm to px when applied to the SVG
 <!-- AC:END -->
 
 ## Implementation Plan
