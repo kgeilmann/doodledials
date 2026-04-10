@@ -98,6 +98,7 @@ export function combineDoodledial(
 			color: groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black',
 			width: 2
 		});
+		mark.css('pointer-events', 'stroke');
 		group.add(mark);
 
 		const text = SVG().text(String(layerIndex));
