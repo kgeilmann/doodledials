@@ -1,9 +1,10 @@
 ---
 id: TASK-013
 title: Detect label-path collision using kld-intersections
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-10 06:52'
+updated_date: '2026-04-10 08:23'
 labels: []
 dependencies: []
 priority: high
