@@ -124,6 +124,8 @@ export function combineDoodledial(
 				}
 
 				const pathBbox = c.bbox();
+				const offsetXPx = config.offsetX * MM_TO_PX;
+				const offsetYPx = config.offsetY * MM_TO_PX;
 				const pathLabel = SVG().text(String(layerIndex));
 				pathLabel.addClass('path-label');
 				pathLabel.attr('data-layer-id', groupId);
@@ -131,7 +133,10 @@ export function combineDoodledial(
 				pathLabel.fill(
 					groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black'
 				);
-				pathLabel.move(pathBbox.x2 + 4, pathBbox.y + pathBbox.height / 2 - 5);
+				pathLabel.move(
+					pathBbox.x2 + 4 + offsetXPx * config.scale,
+					pathBbox.cy + offsetYPx * config.scale - 5
+				);
 				pathLabel.css('user-select', 'none');
 				group.add(pathLabel);
 			}
