@@ -122,6 +122,18 @@ export function combineDoodledial(
 					c.css('stroke-width', '5');
 					c.css('stroke', '#6366f1');
 				}
+
+				const pathBbox = c.bbox();
+				const pathLabel = SVG().text(String(layerIndex));
+				pathLabel.addClass('path-label');
+				pathLabel.attr('data-layer-id', groupId);
+				pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
+				pathLabel.fill(
+					groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black'
+				);
+				pathLabel.move(pathBbox.x2 + 4, pathBbox.y + pathBbox.height / 2 - 5);
+				pathLabel.css('user-select', 'none');
+				group.add(pathLabel);
 			}
 		});
 	});
