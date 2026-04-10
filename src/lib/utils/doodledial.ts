@@ -5,6 +5,18 @@ const DPI = 96;
 const MM_PER_INCH = 25.4;
 const DISC_PADDING_PX = 10;
 
+function boxesOverlap(
+	a: { x: number; y: number; width: number; height: number },
+	b: { x: number; y: number; width: number; height: number }
+): boolean {
+	return !(
+		a.x + a.width <= b.x ||
+		b.x + b.width <= a.x ||
+		a.y + a.height <= b.y ||
+		b.y + b.height <= a.y
+	);
+}
+
 export function parseSvgPaths(
 	svgContent: string
 ): { id: string; name: string; updatedSvg: string }[] {
@@ -73,6 +85,7 @@ export function combineDoodledial(
 
 	const MM_TO_PX = DPI / MM_PER_INCH;
 	const MARK_LENGTH_PX = 6 * MM_TO_PX;
+	const pathLabels: ReturnType<typeof SVG.prototype.text>[] = [];
 
 	groups.forEach((group) => {
 		const groupId = group.attr('id');
@@ -139,9 +152,21 @@ export function combineDoodledial(
 				);
 				pathLabel.css('user-select', 'none');
 				group.add(pathLabel);
+				pathLabels.push(pathLabel);
 			}
 		});
 	});
+
+	for (let i = 0; i < pathLabels.length; i++) {
+		for (let j = i + 1; j < pathLabels.length; j++) {
+			const box1 = pathLabels[i].bbox();
+			const box2 = pathLabels[j].bbox();
+			if (boxesOverlap(box1, box2)) {
+				pathLabels[i].fill('#ef4444');
+				pathLabels[j].fill('#ef4444');
+			}
+		}
+	}
 
 	const disc = SVG()
 		.id('disc')
