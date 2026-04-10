@@ -1,9 +1,10 @@
 ---
 id: TASK-018
 title: Implement path label code in combineDoodledial
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-04-10 17:30'
+updated_date: '2026-04-10 17:32'
 labels:
   - frontend
   - svg
