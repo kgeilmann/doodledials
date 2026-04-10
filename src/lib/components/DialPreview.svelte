@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { combineDoodledial } from '$lib/utils/doodledial';
-	import { getAngleFromCenter, normalizeAngleDelta } from '$lib/utils/rotation';
+	import { getAngleFromCenter } from '$lib/utils/rotation';
 
 	const DPI = 96;
 	const MM_PER_INCH = 25.4;
@@ -9,8 +9,6 @@
 
 	let isDragging = $state(false);
 	let dragLayerId = $state<string | null>(null);
-	let startAngle = $state(0);
-	let initialRotation = $state(0);
 	let svgContainer: HTMLDivElement | null = $state(null);
 
 	const paddedPixelSize = $derived(
@@ -33,13 +31,9 @@
 		const layerId = getLayerIdFromEvent(target);
 		if (!layerId) return;
 
-		const { cx, cy } = getDiscCenter();
+		doodledialStore.setSelectedLayer(layerId);
 		isDragging = true;
 		dragLayerId = layerId;
-		startAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
-		const layer = doodledialStore.layers.find((l) => l.id === layerId);
-		initialRotation = layer?.rotation || 0;
-
 		(target as HTMLElement).setPointerCapture(e.pointerId);
 	}
 
@@ -48,12 +42,7 @@
 
 		const { cx, cy } = getDiscCenter();
 		const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
-		const delta = normalizeAngleDelta(currentAngle - startAngle);
-		const newRotation = initialRotation + delta;
-
-		doodledialStore.setLayerRotation(dragLayerId, newRotation);
-		startAngle = currentAngle;
-		initialRotation = newRotation;
+		doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);		
 	}
 
 	function handlePointerUp(e: PointerEvent) {
@@ -73,22 +62,6 @@
 			current = current.parentElement;
 		}
 		return null;
-	}
-
-	function handleMouseEnter(e: MouseEvent) {
-		const target = e.target as HTMLElement;
-		const layerId = getLayerIdFromEvent(target);
-		if (layerId) {
-			doodledialStore.setHighlightedLayer(layerId);
-		}
-	}
-
-	function handleMouseLeave(e: MouseEvent) {
-		const target = e.target as HTMLElement;
-		const layerId = getLayerIdFromEvent(target);
-		if (layerId && doodledialStore.highlightedLayer === layerId) {
-			doodledialStore.setHighlightedLayer(null);
-		}
 	}
 
 	function handleClick(e: MouseEvent) {
@@ -163,8 +136,6 @@
 			onpointerdown={handlePointerDown}
 			onpointermove={handlePointerMove}
 			onpointerup={handlePointerUp}
-			onmouseenter={handleMouseEnter}
-			onmouseleave={handleMouseLeave}
 			onclick={handleClick}
 		>
 			<div class="max-w-full max-h-full flex items-center justify-center">
