@@ -1,9 +1,10 @@
 ---
-id: TASK-016
+id: DRAFT-001
 title: Add path labels near each SVG path
-status: To Do
+status: Draft
 assignee: []
 created_date: '2026-04-10 17:29'
+updated_date: '2026-04-10 17:29'
 labels:
   - frontend
   - svg
