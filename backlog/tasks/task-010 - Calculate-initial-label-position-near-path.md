@@ -1,9 +1,10 @@
 ---
 id: TASK-010
 title: Calculate initial label position near path
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-10 06:52'
+updated_date: '2026-04-10 08:23'
 labels: []
 dependencies: []
 priority: high
