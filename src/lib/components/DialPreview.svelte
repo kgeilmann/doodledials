@@ -30,7 +30,7 @@
 
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = target.getAttribute('data-layer-id');
+		const layerId = getLayerIdFromEvent(target);
 		if (!layerId) return;
 
 		const { cx, cy } = getDiscCenter();
@@ -65,9 +65,19 @@
 		dragLayerId = null;
 	}
 
+	function getLayerIdFromEvent(target: HTMLElement): string | null {
+		let current: HTMLElement | null = target;
+		while (current) {
+			const layerId = current.getAttribute('data-layer-id');
+			if (layerId) return layerId;
+			current = current.parentElement;
+		}
+		return null;
+	}
+
 	function handleMouseEnter(e: MouseEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = target.getAttribute('data-layer-id');
+		const layerId = getLayerIdFromEvent(target);
 		if (layerId) {
 			doodledialStore.setHighlightedLayer(layerId);
 		}
@@ -75,7 +85,7 @@
 
 	function handleMouseLeave(e: MouseEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = target.getAttribute('data-layer-id');
+		const layerId = getLayerIdFromEvent(target);
 		if (layerId && doodledialStore.highlightedLayer === layerId) {
 			doodledialStore.setHighlightedLayer(null);
 		}
@@ -83,7 +93,7 @@
 
 	function handleClick(e: MouseEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = target.getAttribute('data-layer-id');
+		const layerId = getLayerIdFromEvent(target);
 		if (layerId) {
 			doodledialStore.setSelectedLayer(layerId);
 		}

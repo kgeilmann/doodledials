@@ -106,6 +106,9 @@ export function combineDoodledial(
 		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
 		text.fill(groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black');
 		text.center(centerX, markEndY + 8);
+		text.css('user-select', 'none');
+		text.css('cursor', 'pointer');
+		text.css('pointer-events', 'bounding-box');
 		group.add(text);
 
 		group.children().forEach((c) => {
