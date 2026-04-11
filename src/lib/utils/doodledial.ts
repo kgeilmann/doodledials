@@ -111,11 +111,11 @@ export function combineDoodledial(
 
 	groups.forEach((group) => {
 		const groupId = group.attr('id');
-		let layerIndex : number = 0;
-		
+		let layerIndex: number = 0;
+
 		if (layers && layers.length > 0) {
 			const layer = layers.find((l) => l.id === groupId);
-			if (layer) layerIndex = layer.index 
+			if (layer) layerIndex = layer.index;
 			if (layer && layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
