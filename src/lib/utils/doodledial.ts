@@ -1,9 +1,6 @@
 import { SVG, Svg, G } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
-
-const DPI = 96;
-const MM_PER_INCH = 25.4;
-const MM_TO_PX = DPI / MM_PER_INCH;
+import {DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
 const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 6 * MM_TO_PX;
@@ -96,32 +93,23 @@ export function combineDoodledial(
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 
 	const groups = ct.find('g[id^=layer-]');
-	groups.forEach((group) => {
-		const groupId = group.attr('id');
-		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.id === groupId);
-			if (layer) {
-				group.attr('visibility', layer.visible ? 'visible' : 'hidden');
-			}
-		}
-		group.attr('highlighted', groupId === highlightedLayerId || groupId === selectedLayerId);
-	});
-
 	const pathLabels: ReturnType<typeof SVG.prototype.text>[] = [];
 
 	groups.forEach((group) => {
 		const groupId = group.attr('id');
 		let layerIndex: number = 0;
 
-		if (layers && layers.length > 0) {
-			const layer = layers.find((l) => l.id === groupId);
-			if (layer) layerIndex = layer.index;
-			if (layer && layer.rotation !== 0) {
+		const layer = layers?.find((l) => l.id === groupId);
+		if (layer) {
+			layerIndex = layer.index;
+			group.attr('visibility', layer.visible ? 'visible' : 'hidden');
+			if (layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
 				group.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 			}
 		}
+		group.attr('highlighted', groupId === highlightedLayerId || groupId === selectedLayerId);
 
 		const mark = createMark(groupId, max, discSizeToFitEverything, layerIndex);
 		group.add(mark);
