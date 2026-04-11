@@ -1,13 +1,9 @@
 <script lang="ts">
-	import { getAngleFromElement, normalizeAngleDelta } from '$lib/utils/rotation';
-
 	interface Props {
 		value: number;
 		onchange: (value: number) => void;
 		label?: string;
-		disabled?: boolean;
-		ondragstart?: () => void;
-		ondragend?: () => void;
+		disabled?: boolean;		
 	}
 
 	let {
@@ -15,52 +11,14 @@
 		onchange,
 		label = 'Rotate',
 		disabled = false,
-		ondragstart,
-		ondragend
 	}: Props = $props();
 
-	let dragging = $state(false);
-	let startAngle = $state(0);
-	let startValue = $state(0);
-	let knobElement: HTMLElement | null = $state(null);
 	let editing = $state(false);
 	let inputValue = $state('');
 	let localValue = $derived(value);
 
-	function handleMouseDown(e: MouseEvent) {
-		if (editing || disabled) return;
-		e.preventDefault();
-		e.stopPropagation();
-		dragging = true;
-		knobElement = e.currentTarget as HTMLElement;
-		startAngle = getAngleFromElement(knobElement, e.clientX, e.clientY);
-		startValue = localValue;
-		ondragstart?.();
-		window.addEventListener('mousemove', handleMouseMove);
-		window.addEventListener('mouseup', handleMouseUp);
-	}
 
-	function handleMouseMove(e: MouseEvent) {
-		if (!dragging || !knobElement) return;
-		const currentAngle = getAngleFromElement(knobElement, e.clientX, e.clientY);
-		const delta = normalizeAngleDelta(currentAngle - startAngle);
-
-		const newValue = startValue + delta;
-		localValue = newValue;
-		onchange(newValue);
-		startAngle = currentAngle;
-		startValue = newValue;
-	}
-
-	function handleMouseUp() {
-		dragging = false;
-		knobElement = null;
-		ondragend?.();
-		window.removeEventListener('mousemove', handleMouseMove);
-		window.removeEventListener('mouseup', handleMouseUp);
-	}
-
-	function handleDoubleClick() {
+	function handleClick() {
 		if (disabled) return;
 		editing = true;
 		inputValue = String(Math.round(normalizedValue));
@@ -109,12 +67,12 @@
 <div
 	class="flex items-center gap-2 shrink-0 group"
 	onclick={() => {
-		if (editing) editing = false;
+		handleClick()
 	}}
 >
 	{#if !editing}
 		<div
-			class="relative w-8 h-8 cursor-grab active:cursor-grabbing"
+			class="relative w-8 h-8"
 			class:opacity-50={disabled}
 			class:cursor-not-allowed={disabled}
 			data-rotation-knob
@@ -122,9 +80,7 @@
 			aria-label={label}
 			aria-valuenow={Math.round(normalizedValue)}
 			aria-disabled={disabled}
-			tabindex={disabled ? -1 : 0}
-			onmousedown={disabled ? undefined : handleMouseDown}
-			ondblclick={disabled ? undefined : handleDoubleClick}
+			tabindex={disabled ? -1 : 0}					
 		>
 			<svg viewBox="0 0 40 40" class="w-8 h-8" style="transform-origin: 20px 20px;">
 				<circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="3" />
@@ -156,7 +112,6 @@
 			type="button"
 			class="text-[10px] text-gray-500 font-mono w-8 text-center hover:text-indigo-600"
 			{disabled}
-			ondblclick={handleDoubleClick}
 		>
 			{formatRotation(value)}
 		</button>

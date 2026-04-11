@@ -2,8 +2,6 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import RotationKnob from './RotationKnob.svelte';
 
-	let isDraggingKnob = $state(false);
-
 	function handleToggle(layerId: string) {
 		doodledialStore.toggleVisibility(layerId);
 	}
@@ -17,7 +15,6 @@
 	}
 
 	function handleSelect(layerId: string) {
-		if (isDraggingKnob) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected === layerId) {
 			doodledialStore.setSelectedLayer(null);
@@ -27,29 +24,16 @@
 	}
 
 	function handleMouseEnter(layerId: string) {
-		if (isDraggingKnob) return;
 		doodledialStore.setHighlightedLayer(layerId);
 	}
 
 	function handleMouseLeave() {
-		if (isDraggingKnob) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	function handleRotationChange(layerId: string, rotation: number) {
 		doodledialStore.setLayerRotation(layerId, rotation);
-	}
-
-	function handleDragStart(layerId: string) {
-		isDraggingKnob = true;
-		doodledialStore.setHighlightedLayer(layerId);
-	}
-
-	function handleDragEnd() {
-		isDraggingKnob = false;
-		const currentSelected = doodledialStore.selectedLayer;
-		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
@@ -112,8 +96,6 @@
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
 									disabled={!layer.visible}
-									ondragstart={() => handleDragStart(layer.id)}
-									ondragend={handleDragEnd}
 								/>
 							</div>
 						</div>
