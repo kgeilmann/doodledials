@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getAngleFromElement, normalizeAngleDelta } from '$lib/utils/rotation';
+
 	interface Props {
 		value: number;
 		onchange: (value: number) => void;
@@ -25,22 +27,13 @@
 	let inputValue = $state('');
 	let localValue = $derived(value);
 
-	function getAngle(clientX: number, clientY: number, element: HTMLElement): number {
-		const rect = element.getBoundingClientRect();
-		const cx = rect.left + rect.width / 2;
-		const cy = rect.top + rect.height / 2;
-		const dx = clientX - cx;
-		const dy = clientY - cy;
-		return Math.atan2(dy, dx) * (180 / Math.PI);
-	}
-
 	function handleMouseDown(e: MouseEvent) {
 		if (editing || disabled) return;
 		e.preventDefault();
 		e.stopPropagation();
 		dragging = true;
 		knobElement = e.currentTarget as HTMLElement;
-		startAngle = getAngle(e.clientX, e.clientY, knobElement);
+		startAngle = getAngleFromElement(knobElement, e.clientX, e.clientY);
 		startValue = localValue;
 		ondragstart?.();
 		window.addEventListener('mousemove', handleMouseMove);
@@ -49,11 +42,8 @@
 
 	function handleMouseMove(e: MouseEvent) {
 		if (!dragging || !knobElement) return;
-		const currentAngle = getAngle(e.clientX, e.clientY, knobElement);
-		let delta = currentAngle - startAngle;
-
-		if (delta > 180) delta -= 360;
-		if (delta < -180) delta += 360;
+		const currentAngle = getAngleFromElement(knobElement, e.clientX, e.clientY);
+		const delta = normalizeAngleDelta(currentAngle - startAngle);
 
 		const newValue = startValue + delta;
 		localValue = newValue;
