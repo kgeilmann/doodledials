@@ -1,9 +1,12 @@
-import { SVG, Svg } from '@svgdotjs/svg.js';
+import { SVG, Svg, G } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const DPI = 96;
 const MM_PER_INCH = 25.4;
+const MM_TO_PX = DPI / MM_PER_INCH;
+
 const DISC_PADDING_PX = 10;
+const MARK_LENGTH_PX = 6 * MM_TO_PX;
 
 function boxesOverlap(
 	a: { x: number; y: number; width: number; height: number },
@@ -18,7 +21,7 @@ function boxesOverlap(
 }
 
 export function parseSvgPaths(svgContent: string): {
-	layers: { id: string; name: string }[];
+	layers: { id: string; name: string; number: number }[];
 	updatedSvg: string;
 } {
 	const doc = SVG(svgContent) as Svg;
@@ -30,9 +33,11 @@ export function parseSvgPaths(svgContent: string): {
 	doc.add(all);
 
 	const paths = doc.find('path');
-	const layers: { id: string; name: string }[] = [];
+	const layers: { id: string; name: string; number: number }[] = [];
 
 	paths.forEach((path, index) => {
+		// @ts-expect-error - css() returns unknown type
+		path.css('stroke', null);
 		const groupId = `layer-${index}`;
 
 		const group = SVG().group().attr('id', groupId);
@@ -42,13 +47,37 @@ export function parseSvgPaths(svgContent: string): {
 
 		layers.push({
 			id: groupId,
-			name: `Layer ${index + 1}`
+			name: `Layer ${index + 1}`,
+			number: index + 1
 		});
 	});
 
 	const updatedSvg = doc.svg();
 
 	return { layers, updatedSvg };
+}
+
+function createMark(
+	groupId: number,
+	max: number,
+	discSizeToFitEverything: number,
+	layerIndex: number
+): G {
+	const markGroup = SVG().group();
+
+	const centerX = max / 2;
+	const markStartY = max / 2 - discSizeToFitEverything / 2;
+	const markEndY = markStartY + MARK_LENGTH_PX;
+	const mark = markGroup.line(centerX, markStartY, centerX, markEndY);
+	mark.addClass('mark-line');
+	mark.attr('data-layer-id', groupId);
+
+	const text = markGroup.text(String(layerIndex));
+	text.addClass('layer-label');
+	text.attr('data-layer-id', groupId);
+	text.center(centerX, markEndY + 8);
+
+	return markGroup;
 }
 
 export function combineDoodledial(
@@ -75,21 +104,18 @@ export function combineDoodledial(
 				group.attr('visibility', layer.visible ? 'visible' : 'hidden');
 			}
 		}
-		if (groupId === highlightedLayerId || groupId === selectedLayerId) {
-			group.css('stroke', '#6366f1');
-		}
+		group.attr('highlighted', groupId === highlightedLayerId || groupId === selectedLayerId);
 	});
 
-	const MM_TO_PX = DPI / MM_PER_INCH;
-	const MARK_LENGTH_PX = 6 * MM_TO_PX;
 	const pathLabels: ReturnType<typeof SVG.prototype.text>[] = [];
 
 	groups.forEach((group) => {
 		const groupId = group.attr('id');
-		const layerIndex = parseInt(groupId.replace('layer-', ''), 10) + 1;
-
+		let layerIndex : number = 0;
+		
 		if (layers && layers.length > 0) {
 			const layer = layers.find((l) => l.id === groupId);
+			if (layer) layerIndex = layer.index 
 			if (layer && layer.rotation !== 0) {
 				const cx = max / 2;
 				const cy = max / 2;
@@ -97,30 +123,8 @@ export function combineDoodledial(
 			}
 		}
 
-		const centerX = max / 2;
-		const markStartY = max / 2 - discSizeToFitEverything / 2;
-		const markEndY = markStartY + MARK_LENGTH_PX;
-
-		const mark = SVG().line(centerX, markStartY, centerX, markEndY);
-		mark.addClass('mark-line');
-		mark.attr('data-layer-id', groupId);
-		mark.stroke({
-			color: groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black',
-			width: 2
-		});
-		mark.css('pointer-events', 'stroke');
+		const mark = createMark(groupId, max, discSizeToFitEverything, layerIndex);
 		group.add(mark);
-
-		const text = SVG().text(String(layerIndex));
-		text.addClass('layer-label');
-		text.attr('data-layer-id', groupId);
-		text.font({ family: 'monospace', size: 14, anchor: 'middle' });
-		text.fill(groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black');
-		text.center(centerX, markEndY + 8);
-		text.css('user-select', 'none');
-		text.css('cursor', 'pointer');
-		text.css('pointer-events', 'bounding-box');
-		group.add(text);
 
 		group.children().forEach((c) => {
 			if (c.svg().startsWith('<path')) {
@@ -128,10 +132,6 @@ export function combineDoodledial(
 					config.offsetX * MM_TO_PX,
 					config.offsetY * MM_TO_PX
 				);
-				if (groupId === highlightedLayerId || groupId === selectedLayerId) {
-					c.css('stroke-width', '5');
-					c.css('stroke', '#6366f1');
-				}
 
 				const pathBbox = c.bbox();
 				const offsetXPx = config.offsetX * MM_TO_PX;
@@ -140,14 +140,10 @@ export function combineDoodledial(
 				pathLabel.addClass('path-label');
 				pathLabel.attr('data-layer-id', groupId);
 				pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
-				pathLabel.fill(
-					groupId === highlightedLayerId || groupId === selectedLayerId ? '#6366f1' : 'black'
-				);
 				pathLabel.move(
 					pathBbox.x2 + 4 + offsetXPx * config.scale,
 					pathBbox.cy + offsetYPx * config.scale - 5
 				);
-				pathLabel.css('user-select', 'none');
 				group.add(pathLabel);
 				pathLabels.push(pathLabel);
 			}
