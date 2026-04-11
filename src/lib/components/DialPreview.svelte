@@ -27,13 +27,15 @@
 
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = getLayerIdFromEvent(target);
+		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
 		if (!layerId) return;
 
 		doodledialStore.setSelectedLayer(layerId);
-		isDragging = true;
-		dragLayerId = layerId;
-		(target as HTMLElement).setPointerCapture(e.pointerId);
+		if (!isPathLabel) {
+			isDragging = true;
+			dragLayerId = layerId;
+			(target as HTMLElement).setPointerCapture(e.pointerId);
+		}
 	}
 
 	function handlePointerMove(e: PointerEvent) {
@@ -53,19 +55,25 @@
 		dragLayerId = null;
 	}
 
-	function getLayerIdFromEvent(target: HTMLElement): string | null {
+	function getLayerIdFromEvent(target: HTMLElement): {
+		layerId: string | null;
+		isPathLabel: boolean;
+	} {
 		let current: HTMLElement | null = target;
 		while (current) {
 			const layerId = current.getAttribute('data-layer-id');
-			if (layerId) return layerId;
+			if (layerId) {
+				const isPathLabel = current.classList.contains('path-label');
+				return { layerId, isPathLabel };
+			}
 			current = current.parentElement;
 		}
-		return null;
+		return { layerId: null, isPathLabel: false };
 	}
 
 	function handleClick(e: MouseEvent) {
 		const target = e.target as HTMLElement;
-		const layerId = getLayerIdFromEvent(target);
+		const { layerId } = getLayerIdFromEvent(target);
 		if (layerId) {
 			doodledialStore.setSelectedLayer(layerId);
 		}
