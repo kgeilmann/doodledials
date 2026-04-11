@@ -3,20 +3,14 @@
 		value: number;
 		onchange: (value: number) => void;
 		label?: string;
-		disabled?: boolean;		
+		disabled?: boolean;
 	}
 
-	let {
-		value,
-		onchange,
-		label = 'Rotate',
-		disabled = false,
-	}: Props = $props();
+	let { value, onchange, label = 'Rotate', disabled = false }: Props = $props();
 
 	let editing = $state(false);
 	let inputValue = $state('');
 	let localValue = $derived(value);
-
 
 	function handleClick() {
 		if (disabled) return;
@@ -63,13 +57,7 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-	class="flex items-center gap-2 shrink-0 group"
-	onclick={() => {
-		handleClick()
-	}}
->
+<div class="flex items-center gap-2 shrink-0 group">
 	{#if !editing}
 		<div
 			class="relative w-8 h-8"
@@ -80,7 +68,10 @@
 			aria-label={label}
 			aria-valuenow={Math.round(normalizedValue)}
 			aria-disabled={disabled}
-			tabindex={disabled ? -1 : 0}					
+			tabindex={disabled ? -1 : 0}
+			onclick={() => {
+				handleClick();
+			}}
 		>
 			<svg viewBox="0 0 40 40" class="w-8 h-8" style="transform-origin: 20px 20px;">
 				<circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="3" />
@@ -112,6 +103,9 @@
 			type="button"
 			class="text-[10px] text-gray-500 font-mono w-8 text-center hover:text-indigo-600"
 			{disabled}
+			onclick={() => {
+				handleClick();
+			}}
 		>
 			{formatRotation(value)}
 		</button>
