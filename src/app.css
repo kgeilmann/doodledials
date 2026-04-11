@@ -2,3 +2,35 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
+
+svg {
+    --highlight: #6366f1
+}
+
+.layer-label {
+	user-select: none;
+    font-family: monospace;
+    font-size: 14;
+    text-anchor: middle;
+}
+
+.mark-line {
+    stroke-width: 2;
+}
+
+[highlighted="true"] {
+    color: var(--highlight);
+    fill:  var(--highlight);
+    stroke: var(--highlight);
+}
+
+[highlighted="true"] path {
+    stroke-width: 5;
+}
+
+[highlighted="false"] {
+    color: black;
+    fill: black;
+    stroke: black;
+}
+

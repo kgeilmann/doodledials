@@ -1,6 +1,7 @@
 export interface Layer {
 	id: string;
 	name: string;
+	index: number;
 	visible: boolean;
 	rotation: number;
 }
@@ -9,7 +10,6 @@ export interface DialConfig {
 	diameter: number;
 	minDiameter: number;
 	maxDiameter: number;
-	defaultDiameter: number;
 	borderWidth: number;
 	padding: number;
 	offsetX: number;
@@ -33,10 +33,9 @@ export interface DoodledialState {
 }
 
 export const DEFAULT_DIAL_CONFIG: DialConfig = {
-	diameter: 100,
+	diameter: 200,
 	minDiameter: 50,
 	maxDiameter: 200,
-	defaultDiameter: 100,
 	borderWidth: 2,
 	padding: 0.05,
 	offsetX: 0,
