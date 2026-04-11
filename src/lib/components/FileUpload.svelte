@@ -42,15 +42,15 @@
 
 		try {
 			const raw = await file.text();
-			const parsedLayers = parseSvgPaths(raw);
+			const parsed = parseSvgPaths(raw);
 
 			doodledialStore.clearLayers();
-			parsedLayers.forEach((layer) => {
+			parsed.layers.forEach((layer) => {
 				doodledialStore.addLayer(layer.id, layer.name);
 			});
 
 			doodledialStore.setSvgContent({
-				raw: parsedLayers[0]?.updatedSvg || raw,
+				raw: parsed.updatedSvg || raw,
 				filename: file.name
 			});
 

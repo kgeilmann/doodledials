@@ -17,9 +17,10 @@ function boxesOverlap(
 	);
 }
 
-export function parseSvgPaths(
-	svgContent: string
-): { id: string; name: string; updatedSvg: string }[] {
+export function parseSvgPaths(svgContent: string): {
+	layers: { id: string; name: string }[];
+	updatedSvg: string;
+} {
 	const doc = SVG(svgContent) as Svg;
 	const all = SVG().group().attr('id', 'all');
 	doc.children().forEach((c) => {
@@ -29,7 +30,7 @@ export function parseSvgPaths(
 	doc.add(all);
 
 	const paths = doc.find('path');
-	const layers: { id: string; name: string; updatedSvg: string }[] = [];
+	const layers: { id: string; name: string }[] = [];
 
 	paths.forEach((path, index) => {
 		const groupId = `layer-${index}`;
@@ -41,17 +42,13 @@ export function parseSvgPaths(
 
 		layers.push({
 			id: groupId,
-			name: `Layer ${index + 1}`,
-			updatedSvg: ''
+			name: `Layer ${index + 1}`
 		});
 	});
 
 	const updatedSvg = doc.svg();
-	layers.forEach((layer, index) => {
-		layers[index] = { ...layer, updatedSvg };
-	});
 
-	return layers;
+	return { layers, updatedSvg };
 }
 
 export function combineDoodledial(
