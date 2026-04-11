@@ -75,10 +75,10 @@ function createDoodledialStore() {
 		setSelectedLayer(layerId: string | null) {
 			selectedLayer = layerId;
 		},
-		addLayer(layerId: string, index: number, name?: string) {
+		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {
 				id: layerId,
-				name: name || `Layer ${layers.size + 1}`,
+				name: name,
 				index: index,
 				visible: true,
 				rotation: 0

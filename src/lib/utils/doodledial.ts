@@ -1,4 +1,4 @@
-import { SVG, Svg, G, Path } from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Path, Text } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
@@ -6,10 +6,19 @@ const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 6 * MM_TO_PX;
 
 export function parseSvgPaths(svgContent: string): {
-	layers: { id: string; name: string; number: number }[];
+	layers: { id: string; name: string; index: number }[];
 	updatedSvg: string;
 } {
 	const doc = SVG(svgContent) as Svg;
+	if ('width' in doc.css()) {
+		// @ts-expect-error - css() returns unknown type
+		doc.css('width', null);
+	}
+	if ('height' in doc.css()) {
+		// @ts-expect-error - css() returns unknown type
+		doc.css('height', null);
+	}
+
 	const all = SVG().group().attr('id', 'all');
 	doc.children().forEach((c) => {
 		c.remove();
@@ -17,7 +26,14 @@ export function parseSvgPaths(svgContent: string): {
 	});
 	doc.add(all);
 
-	const layers: { id: string; name: string; number: number }[] = [];
+	const maxImageDimension = Math.max(doc.viewbox().width, doc.viewbox().height);
+	const disc = SVG()
+		.circle(maxImageDimension * Math.SQRT2)
+		.id('disc')
+		.center(maxImageDimension / 2, maxImageDimension / 2);
+	disc.putIn(doc);
+
+	const layers: { id: string; name: string; index: number }[] = [];
 
 	const paths = doc.find('path');
 	paths.forEach((path, index) => {
@@ -26,17 +42,19 @@ export function parseSvgPaths(svgContent: string): {
 		// @ts-expect-error - css() returns unknown type
 		path.css('stroke-width', null);
 
-		const groupId = `layer-${index}`;
+		const layerId = `layer-${index}`;
 
-		const group = SVG().group().attr('id', groupId);
+		const layer = SVG().group().attr('id', layerId);
 		path.remove();
-		group.add(path);
-		all.add(group);
+		layer.add(path);
+		const pathLabel = createPathLabel(layerId, index + 1, path as Path);
+		layer.add(pathLabel);
+		all.add(layer);
 
 		layers.push({
-			id: groupId,
+			id: layerId,
 			name: `Layer ${index + 1}`,
-			number: index + 1
+			index: index + 1
 		});
 	});
 
@@ -68,10 +86,11 @@ function createMark(
 	return markGroup;
 }
 
-function createPathLabel(groupId: string, layerIndex: number, path: Path) {
+function createPathLabel(layerId: string, layerIndex: number, path: Path): Text {
 	const pathLabel = SVG().text(String(layerIndex));
 	pathLabel.addClass('path-label');
-	pathLabel.attr('data-layer-id', groupId);
+	pathLabel.id('path-label-' + layerId);
+	pathLabel.attr('data-layer-id', layerId);
 	pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
 	pathLabel.center(path.bbox().x2 + 4, path.bbox().cy - 5);
 	return pathLabel;
@@ -112,29 +131,12 @@ export function combineDoodledial(
 
 				const offsetXPx = config.offsetX * MM_TO_PX;
 				const offsetYPx = config.offsetY * MM_TO_PX;
-				const pathLabel = createPathLabel(layer.id, layer.index, c as Path);
+				const pathLabel = doc.findOne('#path-label-' + layer.id) as Text;
 				pathLabel.translate(offsetXPx * config.scale, offsetYPx * config.scale);
 				svgLayer.add(pathLabel);
 			}
 		});
 	});
-
-	const disc = SVG()
-		.id('disc')
-		.circle(discSizeToFitEverything)
-		.center(max / 2, max / 2)
-		.fill('none')
-		.stroke({ color: 'black', width: config.borderWidth });
-	disc.putIn(doc);
-
-	if ('width' in doc.css()) {
-		// @ts-expect-error - css() returns unknown type
-		doc.css('width', null);
-	}
-	if ('height' in doc.css()) {
-		// @ts-expect-error - css() returns unknown type
-		doc.css('height', null);
-	}
 
 	doc.viewbox(
 		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
