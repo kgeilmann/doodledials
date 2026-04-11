@@ -1,4 +1,4 @@
-import { SVG, Svg, G , Path} from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Path } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
@@ -68,12 +68,12 @@ function createMark(
 	return markGroup;
 }
 
-function createPathLabel(groupId: string, layerIndex: number, path:Path) {
+function createPathLabel(groupId: string, layerIndex: number, path: Path) {
 	const pathLabel = SVG().text(String(layerIndex));
 	pathLabel.addClass('path-label');
 	pathLabel.attr('data-layer-id', groupId);
 	pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
-	pathLabel.center(path.bbox().x2 + 4, path.bbox().cy -5);
+	pathLabel.center(path.bbox().x2 + 4, path.bbox().cy - 5);
 	return pathLabel;
 }
 
@@ -112,8 +112,8 @@ export function combineDoodledial(
 
 				const offsetXPx = config.offsetX * MM_TO_PX;
 				const offsetYPx = config.offsetY * MM_TO_PX;
-				const pathLabel = createPathLabel(layer.id, layer.index, c as Path)
-				pathLabel.translate(offsetXPx * config.scale, offsetYPx * config.scale)
+				const pathLabel = createPathLabel(layer.id, layer.index, c as Path);
+				pathLabel.translate(offsetXPx * config.scale, offsetYPx * config.scale);
 				svgLayer.add(pathLabel);
 			}
 		});
@@ -127,6 +127,15 @@ export function combineDoodledial(
 		.stroke({ color: 'black', width: config.borderWidth });
 	disc.putIn(doc);
 
+	if ('width' in doc.css()) {
+		// @ts-expect-error - css() returns unknown type
+		doc.css('width', null);
+	}
+	if ('height' in doc.css()) {
+		// @ts-expect-error - css() returns unknown type
+		doc.css('height', null);
+	}
+
 	doc.viewbox(
 		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
 		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
@@ -135,8 +144,8 @@ export function combineDoodledial(
 	);
 
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
-	doc.css('width', pixelDiameter.toString());
-	doc.css('height', pixelDiameter.toString());
+	doc.width(pixelDiameter);
+	doc.height(pixelDiameter);
 	return doc.svg();
 }
 
