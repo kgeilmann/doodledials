@@ -7,6 +7,12 @@ svg {
     --highlight: #6366f1
 }
 
+#disc {
+    fill: none;
+    stroke: black;
+    stroke-width: 2;
+}
+
 .layer-label {
 	user-select: none;
     font-family: monospace;
