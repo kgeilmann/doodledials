@@ -34,12 +34,7 @@
 	function handleMouseLeave() {
 		if (isDraggingKnob) return;
 		const currentSelected = doodledialStore.selectedLayer;
-		if (currentSelected) {
-			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
-			doodledialStore.setHighlightedLayer(selectedLayer?.id || null);
-		} else {
-			doodledialStore.setHighlightedLayer(null);
-		}
+		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	function handleRotationChange(layerId: string, rotation: number) {
@@ -54,12 +49,7 @@
 	function handleDragEnd() {
 		isDraggingKnob = false;
 		const currentSelected = doodledialStore.selectedLayer;
-		if (currentSelected) {
-			const selectedLayer = doodledialStore.layers.find((l) => l.id === currentSelected);
-			doodledialStore.setHighlightedLayer(selectedLayer?.id || null);
-		} else {
-			doodledialStore.setHighlightedLayer(null);
-		}
+		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);

@@ -42,7 +42,7 @@
 
 		const { cx, cy } = getDiscCenter();
 		const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
-		doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);		
+		doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
 	}
 
 	function handlePointerUp(e: PointerEvent) {
@@ -78,15 +78,12 @@
 				const layers = doodledialStore.layers;
 				const highlightedLayer = doodledialStore.highlightedLayer;
 				const currentSelected = doodledialStore.selectedLayer;
-				const selectedLayerSvgId = currentSelected
-					? doodledialStore.layers.find((l) => l.id === currentSelected)?.id || null
-					: null;
 				const combined = combineDoodledial(
 					doodledialStore.svgContent,
 					doodledialStore.config,
 					layers,
 					highlightedLayer,
-					selectedLayerSvgId
+					currentSelected
 				);
 				doodledialStore.setCombinedSvg(combined);
 				doodledialStore.setError(null);

@@ -22,16 +22,6 @@ export interface SVGContent {
 	filename: string;
 }
 
-export interface DoodledialState {
-	config: DialConfig;
-	svgContent: SVGContent | null;
-	combinedSvg: string | null;
-	isLoading: boolean;
-	error: string | null;
-	layers: Layer[];
-	highlightedLayer: string | null;
-}
-
 export const DEFAULT_DIAL_CONFIG: DialConfig = {
 	diameter: 200,
 	minDiameter: 50,
