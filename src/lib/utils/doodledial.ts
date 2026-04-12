@@ -72,6 +72,8 @@ export function parseSvgPaths(svgContent: string): {
 		layer.addClass('layer');
 		path.remove();
 		layer.add(path);
+		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
+		layer.add(mark);
 		const pathLabel = createPathLabel(layerId, index + 1, path as Path);
 		layer.add(pathLabel);
 		all.add(layer);
@@ -82,6 +84,13 @@ export function parseSvgPaths(svgContent: string): {
 			index: index + 1
 		});
 	});
+
+	doc.viewbox(
+		-(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX,
+		-(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX,
+		maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX,
+		maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX
+	);
 
 	const updatedSvg = doc.svg();
 
@@ -129,11 +138,8 @@ export function combineDoodledial(
 	selectedLayerId?: string | null
 ): string {
 	const doc = SVG(content.raw) as Svg;
-	const vw = doc.viewbox().width;
-	const vh = doc.viewbox().height;
-	const max = Math.max(vw, vh);
-
-	const discSizeToFitEverything = max * Math.SQRT2;
+	const cx = doc.viewbox().cx;
+	const cy = doc.viewbox().cy;
 
 	let highlighted: G;
 	let selected: G;
@@ -141,18 +147,12 @@ export function combineDoodledial(
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
 		svgLayer.attr('visibility', layer.visible ? 'visible' : 'hidden');
-		if (layer.rotation !== 0) {
-			const cx = max / 2;
-			const cy = max / 2;
-			svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
-		}
+		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 		svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
-		const mark = createMark(layer.id, max, discSizeToFitEverything, layer.index);
-		svgLayer.add(mark);
 
 		svgLayer.children().forEach((c) => {
 			if (c.svg().startsWith('<path')) {
-				c.scale(config.scale, max / 2, max / 2).translate(
+				c.scale(config.scale, cx, cy).translate(
 					config.offsetX * MM_TO_PX,
 					config.offsetY * MM_TO_PX
 				);
@@ -165,8 +165,7 @@ export function combineDoodledial(
 				pathLabel.translate(
 					offsetXPx * config.scale + labelOffsetX,
 					offsetYPx * config.scale + labelOffsetY
-				);
-				svgLayer.add(pathLabel);
+				);				
 			}
 		});
 
@@ -177,13 +176,6 @@ export function combineDoodledial(
 	const allLayers = doc.findOne('#all');
 	if (highlighted!) allLayers?.add(highlighted);
 	if (selected!) allLayers?.add(selected);
-
-	doc.viewbox(
-		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
-		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
-		discSizeToFitEverything + 2 * DISC_PADDING_PX,
-		discSizeToFitEverything + 2 * DISC_PADDING_PX
-	);
 
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 	doc.width(pixelDiameter);
@@ -205,7 +197,7 @@ export function exportDoodledial(
 // 	strokeWidth: 0.5
 // };
 
-export async function traceSVG(svgElement: SVGSVGElement) : Promise<string> {
+export async function traceSVG(svgElement: SVGSVGElement): Promise<string> {
 	const traced = await PotracePlus(svgElement);
 	return traced.getSVG(true);
 }
