@@ -7,38 +7,25 @@ svg {
 	--highlight: #6366f1;
 }
 
-#disc {
-	fill: none;
-	stroke: black;
-	stroke-width: 2;
-}
-
 .layer-label {
 	user-select: none;
-	font-family: monospace;
-	font-size: 14;
-	text-anchor: middle;
 }
 
 .path-label {
 	user-select: none;
 }
 
-.mark-line {
-	stroke-width: 2;
-}
-
-[highlighted='true'] {
+.layer[highlighted='true'] {
 	color: var(--highlight);
 	fill: var(--highlight);
 	stroke: var(--highlight);
 }
 
-[highlighted='true'] path {
+.layer[highlighted='true'] path {
 	stroke-width: 5;
 }
 
-[highlighted='false'] {
+.layer[highlighted='false'] {
 	color: black;
 	fill: black;
 	stroke: black;

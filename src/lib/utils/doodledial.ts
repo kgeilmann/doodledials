@@ -1,4 +1,4 @@
-import { SVG, Svg, G, Path, Text } from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Path, Text, Style } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
@@ -19,7 +19,27 @@ export function parseSvgPaths(svgContent: string): {
 		doc.css('height', null);
 	}
 
+	const style = doc.style();
+	style.rule('#disc', {
+		fill: 'none',
+		stroke: 'black',
+		'stroke-width': '2'
+	});
+	style.rule('.layer-label', {
+		'font-family': 'monospace',
+		'font-size': 14,
+		'text-anchor': 'middle'
+	});
+	style.rule('.path-label', {});
+	style.rule('.mark-line', {
+		'stroke-width': 2
+	});
+	style.rule('.layer', {
+		stroke: 'black'
+	});
+	
 	const all = SVG().group().attr('id', 'all');
+
 	doc.children().forEach((c) => {
 		c.remove();
 		all.add(c);
@@ -43,11 +63,12 @@ export function parseSvgPaths(svgContent: string): {
 		path.css('stroke-width', null);
 		path.css('stroke-width', '1mm');
 		path.css('stroke-linejoin', 'round');
-		path.css('stroke-linecap', "round");
+		path.css('stroke-linecap', 'round');
 
 		const layerId = `layer-${index}`;
 
 		const layer = SVG().group().attr('id', layerId);
+		layer.addClass('layer');
 		path.remove();
 		layer.add(path);
 		const pathLabel = createPathLabel(layerId, index + 1, path as Path);
