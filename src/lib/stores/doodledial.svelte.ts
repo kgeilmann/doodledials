@@ -12,7 +12,6 @@ function createDoodledialStore() {
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
 	let labelEditMode = $state<boolean>(false);
-	let traceState = $state<{ tracingLayerId: string | null }>({ tracingLayerId: null });
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -45,9 +44,6 @@ function createDoodledialStore() {
 		},
 		get labelEditMode() {
 			return labelEditMode;
-		},
-		get traceState() {
-			return traceState;
 		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
@@ -85,15 +81,6 @@ function createDoodledialStore() {
 		},
 		toggleLabelEditMode() {
 			labelEditMode = !labelEditMode;
-		},
-		setTraceState(tracingLayerId: string | null) {
-			traceState = { tracingLayerId };
-		},
-		updateLayerPathData(layerId: string, pathData: string, traced: boolean) {
-			const layer = layers.get(layerId);
-			if (layer) {
-				layers.set(layerId, { ...layer, pathData, traced });
-			}
 		},
 		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {

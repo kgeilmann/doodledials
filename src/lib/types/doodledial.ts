@@ -6,12 +6,6 @@ export interface Layer {
 	rotation: number;
 	labelOffsetX?: number;
 	labelOffsetY?: number;
-	traced?: boolean;
-	pathData?: string;
-}
-
-export interface TraceState {
-	tracingLayerId: string | null;
 }
 
 export interface DialConfig {
