@@ -31,6 +31,7 @@
 		if (!layerId) return;
 
 		doodledialStore.setSelectedLayer(layerId);
+		doodledialStore.setHighlightedLayer(layerId);
 		if (!isPathLabel) {
 			isDragging = true;
 			dragLayerId = layerId;
@@ -51,6 +52,7 @@
 			const target = e.target as HTMLElement;
 			target.releasePointerCapture(e.pointerId);
 		}
+		doodledialStore.setHighlightedLayer(null);
 		isDragging = false;
 		dragLayerId = null;
 	}
@@ -75,7 +77,11 @@
 		const target = e.target as HTMLElement;
 		const { layerId } = getLayerIdFromEvent(target);
 		if (layerId) {
-			doodledialStore.setSelectedLayer(layerId);
+			if (doodledialStore.selectedLayer != layerId) {
+				doodledialStore.setSelectedLayer(layerId);
+			} else {
+				doodledialStore.setSelectedLayer(null);
+			}
 		}
 	}
 

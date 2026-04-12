@@ -110,6 +110,9 @@ export function combineDoodledial(
 
 	const discSizeToFitEverything = max * Math.SQRT2;
 
+	let highlighted: G;
+	let selected: G;
+
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
 		svgLayer.attr('visibility', layer.visible ? 'visible' : 'hidden');
@@ -136,7 +139,14 @@ export function combineDoodledial(
 				svgLayer.add(pathLabel);
 			}
 		});
+
+		if (layer.id === highlightedLayerId) highlighted = svgLayer;
+		if (layer.id === selectedLayerId) selected = svgLayer;
 	});
+
+	const allLayers = doc.findOne('#all');
+	if (highlighted!) allLayers?.add(highlighted);
+	if (selected!) allLayers?.add(selected);
 
 	doc.viewbox(
 		-(discSizeToFitEverything - max) / 2 - DISC_PADDING_PX,
