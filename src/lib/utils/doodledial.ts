@@ -41,6 +41,9 @@ export function parseSvgPaths(svgContent: string): {
 		path.css('stroke', null);
 		// @ts-expect-error - css() returns unknown type
 		path.css('stroke-width', null);
+		path.css('stroke-width', '1mm');
+		path.css('stroke-linejoin', 'round');
+		path.css('stroke-linecap', "round");
 
 		const layerId = `layer-${index}`;
 
