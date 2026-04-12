@@ -21,7 +21,6 @@ svg {
 }
 
 .path-label {
-	cursor: pointer;
 	user-select: none;
 }
 
