@@ -62,6 +62,7 @@ function createDoodledialStore() {
 		},
 		setSvgContent(content: SVGContent | null) {
 			svgContent = content;
+			labelEditMode = false;
 		},
 		setCombinedSvg(svg: string | null) {
 			combinedSvg = svg;
@@ -139,6 +140,7 @@ function createDoodledialStore() {
 			isLoading = false;
 			error = null;
 			layers.clear();
+			labelEditMode = false;
 		}
 	};
 }
