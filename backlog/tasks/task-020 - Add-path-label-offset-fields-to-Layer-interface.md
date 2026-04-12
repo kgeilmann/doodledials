@@ -12,6 +12,43 @@ ordinal: 1000
 
 ## Description
 
-<!-- SECTION:DESCRIPTION:BEGIN -->
 Add `labelOffsetX?: number` and `labelOffsetY?: number` optional fields to the Layer interface in `src/lib/types/doodledial.ts`
-<!-- SECTION:DESCRIPTION:END -->
+
+## Implementation Plan
+
+### 1. Locate and Modify the Interface
+
+- File: `src/lib/types/doodledial.ts`
+- Current interface (lines 1-7):
+  ```typescript
+  export interface Layer {
+  	id: string;
+  	name: string;
+  	index: number;
+  	visible: boolean;
+  	rotation: number;
+  }
+  ```
+- Add two new optional properties after `rotation`:
+  ```typescript
+  export interface Layer {
+  	id: string;
+  	name: string;
+  	index: number;
+  	visible: boolean;
+  	rotation: number;
+  	labelOffsetX?: number;
+  	labelOffsetY?: number;
+  }
+  ```
+
+### 2. Type Justification
+
+- Both fields are optional (`?`) so existing code works without changes
+- Values represent pixel offsets from default label position
+- Positive values move label right/down, negative move left/up
+
+### 3. Verification
+
+- Run `pnpm check` to verify TypeScript compiles
+- Ensure no breaking changes to existing Layer usage

@@ -10,6 +10,13 @@
 	let dragLayerId = $state<string | null>(null);
 	let svgContainer: HTMLDivElement | null = $state(null);
 
+	let isDraggingLabel = $state(false);
+	let dragLabelLayerId = $state<string | null>(null);
+	let labelDragStartX = $state(0);
+	let labelDragStartY = $state(0);
+	let labelInitialOffsetX = $state(0);
+	let labelInitialOffsetY = $state(0);
+
 	const paddedPixelSize = $derived(
 		((doodledialStore.config.maxDiameter * DPI) / MM_PER_INCH) * VIEWBOX_PADDING
 	);
@@ -32,7 +39,20 @@
 
 		doodledialStore.setSelectedLayer(layerId);
 		doodledialStore.setHighlightedLayer(layerId);
-		if (!isPathLabel) {
+
+		if (doodledialStore.labelEditMode && isPathLabel) {
+			isDraggingLabel = true;
+			dragLabelLayerId = layerId;
+
+			const layer = doodledialStore.getLayer(layerId);
+			labelInitialOffsetX = layer?.labelOffsetX || 0;
+			labelInitialOffsetY = layer?.labelOffsetY || 0;
+
+			labelDragStartX = e.clientX;
+			labelDragStartY = e.clientY;
+
+			(target as HTMLElement).setPointerCapture(e.pointerId);
+		} else if (!doodledialStore.labelEditMode && !isPathLabel) {
 			isDragging = true;
 			dragLayerId = layerId;
 			(target as HTMLElement).setPointerCapture(e.pointerId);
@@ -40,21 +60,31 @@
 	}
 
 	function handlePointerMove(e: PointerEvent) {
-		if (!isDragging || !dragLayerId) return;
+		if (isDraggingLabel && dragLabelLayerId) {
+			const deltaX = e.clientX - labelDragStartX;
+			const deltaY = e.clientY - labelDragStartY;
 
-		const { cx, cy } = getDiscCenter();
-		const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
-		doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
+			const newOffsetX = labelInitialOffsetX + deltaX;
+			const newOffsetY = labelInitialOffsetY + deltaY;
+
+			doodledialStore.setLayerLabelOffset(dragLabelLayerId, newOffsetX, newOffsetY);
+		} else if (isDragging && dragLayerId && !doodledialStore.labelEditMode) {
+			const { cx, cy } = getDiscCenter();
+			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
+			doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
+		}
 	}
 
 	function handlePointerUp(e: PointerEvent) {
-		if (isDragging) {
+		if (isDragging || isDraggingLabel) {
 			const target = e.target as HTMLElement;
 			target.releasePointerCapture(e.pointerId);
 		}
 		doodledialStore.setHighlightedLayer(null);
 		isDragging = false;
+		isDraggingLabel = false;
 		dragLayerId = null;
+		dragLabelLayerId = null;
 	}
 
 	function getLayerIdFromEvent(target: HTMLElement): {
@@ -118,9 +148,12 @@
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
 			void l.rotation;
+			void l.labelOffsetX;
+			void l.labelOffsetY;
 		});
 		void doodledialStore.highlightedLayer;
 		void doodledialStore.selectedLayer;
+		void doodledialStore.labelEditMode;
 		void doodledialStore.config.offsetX;
 		void doodledialStore.config.offsetY;
 		void doodledialStore.config.scale;
@@ -140,7 +173,9 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	{#if doodledialStore.svgContent}
 		<div
-			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10"
+			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {doodledialStore.labelEditMode
+				? 'ring-2 ring-indigo-400 ring-offset-2'
+				: ''} {doodledialStore.labelEditMode ? 'label-edit-mode' : ''}"
 			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px;"
 			bind:this={svgContainer}
 			onpointerdown={handlePointerDown}
@@ -148,6 +183,13 @@
 			onpointerup={handlePointerUp}
 			onclick={handleClick}
 		>
+			{#if doodledialStore.labelEditMode}
+				<div
+					class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded shadow z-20"
+				>
+					Drag labels to reposition
+				</div>
+			{/if}
 			<div class="max-w-full max-h-full flex items-center justify-center">
 				{@html doodledialStore.combinedSvg || ''}
 			</div>
@@ -172,3 +214,16 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	:global(.label-edit-mode .path-label) {
+		cursor: grab;
+	}
+	:global(.label-edit-mode .path-label:hover) {
+		fill: #6366f1;
+		font-weight: 700;
+	}
+	:global(.label-edit-mode .path-label:active) {
+		cursor: grabbing;
+	}
+</style>
