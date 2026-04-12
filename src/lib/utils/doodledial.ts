@@ -37,7 +37,7 @@ export function parseSvgPaths(svgContent: string): {
 	style.rule('.layer', {
 		stroke: 'black'
 	});
-	
+
 	const all = SVG().group().attr('id', 'all');
 
 	doc.children().forEach((c) => {
@@ -196,4 +196,66 @@ export function exportDoodledial(
 	layers?: Layer[]
 ): string {
 	return combineDoodledial(content, config, layers, null, null);
+}
+
+export function getViewBox(svgContent: string): { width: number; height: number } | null {
+	const doc = SVG(svgContent) as Svg;
+	const vb = doc.viewbox();
+	return vb ? { width: vb.width, height: vb.height } : null;
+}
+
+export function pathHasStroke(svgContent: string, layerId: string): boolean {
+	const doc = SVG(svgContent) as Svg;
+	const layer = doc.findOne('#' + layerId) as G | null;
+	if (!layer) return false;
+
+	const path = layer.find('path')[0] as Path | null;
+	if (!path) return false;
+
+	const stroke = path.css('stroke');
+	return stroke !== undefined && stroke !== 'none';
+}
+
+export function getLayerPathData(svgContent: string, layerId: string): string | null {
+	const doc = SVG(svgContent) as Svg;
+	const layer = doc.findOne('#' + layerId) as G | null;
+	if (!layer) return null;
+
+	const path = layer.find('path')[0] as Path | null;
+	if (!path) return null;
+
+	return path.array().toString();
+}
+
+export function updateLayerPathInSvg(
+	svgContent: string,
+	layerId: string,
+	newPathData: string
+): string {
+	const doc = SVG(svgContent) as Svg;
+	const layer = doc.findOne('#' + layerId) as G | null;
+	if (!layer) return svgContent;
+
+	const path = layer.find('path')[0] as Path | null;
+	if (!path) return svgContent;
+
+	const dMatch = newPathData.match(/d="([^"]*)"/);
+	const fillMatch = newPathData.match(/fill="([^"]*)"/);
+	const strokeMatch = newPathData.match(/stroke="([^"]*)"/);
+	const strokeWidthMatch = newPathData.match(/stroke-width="([^"]*)"/);
+
+	if (dMatch) {
+		path.plot(dMatch[1]);
+	}
+	if (fillMatch) {
+		path.css('fill', fillMatch[1]);
+	}
+	if (strokeMatch) {
+		path.css('stroke', strokeMatch[1]);
+	}
+	if (strokeWidthMatch) {
+		path.css('stroke-width', strokeWidthMatch[1]);
+	}
+
+	return doc.svg();
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import RotationKnob from './RotationKnob.svelte';
+	import TraceButton from './TraceButton.svelte';
 
 	function handleToggle(layerId: string) {
 		doodledialStore.toggleVisibility(layerId);
@@ -101,6 +102,10 @@
 								{layer.name}
 							</span>
 							<div class="flex items-center gap-2 shrink-0">
+								<TraceButton
+									layerId={layer.id}
+									disabled={!layer.visible || doodledialStore.labelEditMode}
+								/>
 								<RotationKnob
 									value={layer.rotation}
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}

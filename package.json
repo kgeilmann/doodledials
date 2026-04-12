@@ -46,6 +46,9 @@
 	},
 	"dependencies": {
 		"@svgdotjs/svg.js": "^3.2.5",
-		"@tailwindcss/postcss": "^4.2.2"
+		"@tailwindcss/postcss": "^4.2.2",
+		"potrace": "2.1.8",
+		"potrace-plus": "^0.1.3",
+		"sharp": "0.34.5"
 	}
 }
