@@ -135,7 +135,12 @@ export function combineDoodledial(
 				const offsetXPx = config.offsetX * MM_TO_PX;
 				const offsetYPx = config.offsetY * MM_TO_PX;
 				const pathLabel = doc.findOne('#path-label-' + layer.id) as Text;
-				pathLabel.translate(offsetXPx * config.scale, offsetYPx * config.scale);
+				const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
+				const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
+				pathLabel.translate(
+					offsetXPx * config.scale + labelOffsetX,
+					offsetYPx * config.scale + labelOffsetY
+				);
 				svgLayer.add(pathLabel);
 			}
 		});

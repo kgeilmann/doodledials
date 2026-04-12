@@ -4,6 +4,8 @@ export interface Layer {
 	index: number;
 	visible: boolean;
 	rotation: number;
+	labelOffsetX?: number;
+	labelOffsetY?: number;
 }
 
 export interface DialConfig {

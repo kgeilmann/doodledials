@@ -2,16 +2,16 @@ import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 
-
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
 	let svgContent = $state<SVGContent | null>(null);
 	let combinedSvg = $state<string | null>(null);
 	let isLoading = $state<boolean>(false);
 	let error = $state<string | null>(null);
-	const layers : SvelteMap<string, Layer> = new SvelteMap();
+	const layers: SvelteMap<string, Layer> = new SvelteMap();
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
+	let labelEditMode = $state<boolean>(false);
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -41,6 +41,9 @@ function createDoodledialStore() {
 		},
 		get selectedLayer() {
 			return selectedLayer;
+		},
+		get labelEditMode() {
+			return labelEditMode;
 		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
@@ -75,6 +78,9 @@ function createDoodledialStore() {
 		setSelectedLayer(layerId: string | null) {
 			selectedLayer = layerId;
 		},
+		toggleLabelEditMode() {
+			labelEditMode = !labelEditMode;
+		},
 		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {
 				id: layerId,
@@ -88,14 +94,30 @@ function createDoodledialStore() {
 		toggleVisibility(id: string) {
 			const layer = layers.get(id);
 			if (layer) {
-				layers.set(id, { ...layer, visible: !layer.visible });				
+				layers.set(id, { ...layer, visible: !layer.visible });
 			}
 		},
 		setLayerRotation(id: string, rotation: number) {
 			const layer = layers.get(id);
 			if (layer) {
-				layers.set(id, { ...layer, rotation });				
+				layers.set(id, { ...layer, rotation });
 			}
+		},
+		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
+			const layer = layers.get(id);
+			if (layer) {
+				layers.set(id, { ...layer, labelOffsetX, labelOffsetY });
+			}
+		},
+		getLayerLabelOffset(id: string): { labelOffsetX: number; labelOffsetY: number } | undefined {
+			const layer = layers.get(id);
+			if (layer) {
+				return {
+					labelOffsetX: layer.labelOffsetX || 0,
+					labelOffsetY: layer.labelOffsetY || 0
+				};
+			}
+			return undefined;
 		},
 		showAllLayers() {
 			layers.forEach((layer) => {
