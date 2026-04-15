@@ -1,7 +1,6 @@
 import { SVG, Svg, G, Path, Text } from '@svgdotjs/svg.js';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
-import { PotracePlus } from 'potrace-plus';
 
 const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 6 * MM_TO_PX;
@@ -165,7 +164,7 @@ export function combineDoodledial(
 				pathLabel.translate(
 					offsetXPx * config.scale + labelOffsetX,
 					offsetYPx * config.scale + labelOffsetY
-				);				
+				);
 			}
 		});
 
@@ -189,15 +188,4 @@ export function exportDoodledial(
 	layers?: Layer[]
 ): string {
 	return combineDoodledial(content, config, layers, null, null);
-}
-
-// const OUTPUT_STYLE = {
-// 	fill: '#D3D3D3',
-// 	stroke: '#FF0000',
-// 	strokeWidth: 0.5
-// };
-
-export async function traceSVG(svgElement: SVGSVGElement): Promise<string> {
-	const traced = await PotracePlus(svgElement);
-	return traced.getSVG(true);
 }
