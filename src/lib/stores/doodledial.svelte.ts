@@ -1,7 +1,7 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
-import { detectOverlaps } from '$lib/utils/overlap-detection';
+import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
 
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
@@ -15,6 +15,7 @@ function createDoodledialStore() {
 	let labelEditMode = $state<boolean>(false);
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Set<string>>>(new Map());
+	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -34,6 +35,20 @@ function createDoodledialStore() {
 			console.error('Overlap detection failed:', err);
 		} finally {
 			checkingOverlaps = false;
+		}
+	}
+
+	async function runCutoutGapDetection() {
+		if (!combinedSvg || layers.size < 2) {
+			cutoutGaps = new Map();
+			return;
+		}
+		try {
+			const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
+			const result = await detectCutoutGaps(layerArray, combinedSvg, 2, config.diameter);
+			cutoutGaps = result;
+		} catch (err) {
+			console.error('Cutout gap detection failed:', err);
 		}
 	}
 
@@ -70,6 +85,9 @@ function createDoodledialStore() {
 		},
 		get overlaps() {
 			return overlaps;
+		},
+		get cutoutGaps() {
+			return cutoutGaps;
 		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
@@ -120,6 +138,15 @@ function createDoodledialStore() {
 		clearOverlaps() {
 			overlaps = new Map();
 		},
+		getCutoutGaps(layerId: string): string[] {
+			return Array.from(cutoutGaps.get(layerId) || []);
+		},
+		setCutoutGaps(newGaps: Map<string, Set<string>>) {
+			cutoutGaps = newGaps;
+		},
+		clearCutoutGaps() {
+			cutoutGaps = new Map();
+		},
 		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {
 				id: layerId,
@@ -131,6 +158,7 @@ function createDoodledialStore() {
 			layers.set(layerId, newLayer);
 			overlaps = new Map();
 			runOverlapDetection();
+			runCutoutGapDetection();
 		},
 		toggleVisibility(id: string) {
 			const layer = layers.get(id);
@@ -138,6 +166,7 @@ function createDoodledialStore() {
 				layers.set(id, { ...layer, visible: !layer.visible });
 			}
 			overlaps = new Map();
+			cutoutGaps = new Map();
 		},
 		setLayerRotation(id: string, rotation: number) {
 			const layer = layers.get(id);
@@ -146,6 +175,7 @@ function createDoodledialStore() {
 			}
 			overlaps = new Map();
 			runOverlapDetection();
+			runCutoutGapDetection();
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
 			const layer = layers.get(id);
