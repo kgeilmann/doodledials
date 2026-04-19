@@ -96,19 +96,23 @@
 				</button>
 			</div>
 			<div class="p-6 overflow-auto flex items-center justify-center min-h-[300px] bg-gray-50">
-				{#if isGenerating}
-					<div class="text-gray-500">Generating preview...</div>
-				{:else if renderError}
-					<div class="text-red-500">{renderError}</div>
-				{:else}
-					<div class="relative">
-						<canvas
-							bind:this={canvas}
-							style="background: white;"
-							class="max-w-full max-h-[70vh] object-contain border border-gray-200"
-						></canvas>
-					</div>
-				{/if}
+				<div class="relative">
+					<canvas
+						bind:this={canvas}
+						style="background: white;"
+						class="max-w-full max-h-[70vh] object-contain border border-gray-200"
+					></canvas>
+					{#if isGenerating}
+						<div class="absolute inset-0 flex items-center justify-center bg-white/70">
+							<div class="text-gray-500">Generating preview...</div>
+						</div>
+					{/if}
+					{#if renderError}
+						<div class="absolute inset-0 flex items-center justify-center bg-white/70">
+							<div class="text-red-500">{renderError}</div>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>
