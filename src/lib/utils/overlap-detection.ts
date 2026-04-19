@@ -1,4 +1,4 @@
-import { SVG, Svg } from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Element } from '@svgdotjs/svg.js';
 import type { Layer, DialConfig, SVGContent } from '$lib/types/doodledial';
 
 const RENDER_SIZE = 200;
@@ -56,7 +56,7 @@ async function renderLayersToBitmaps(
 	const cy = doc.viewbox().cy;
 
 	for (const layer of layers) {
-		const svgLayer = doc.findOne('#' + layer.id) as any;
+		const svgLayer = doc.findOne('#' + layer.id) as G | null;
 		if (!svgLayer) continue;
 
 		const tempDoc = SVG(content.raw) as Svg;
@@ -75,7 +75,7 @@ async function renderLayersToBitmaps(
 		const offsetXPx = config.offsetX * ((config.diameter * 300) / 25400);
 		const offsetYPx = config.offsetY * ((config.diameter * 300) / 25400);
 
-		tempDoc.find('.cutout').forEach((c: any) => {
+		tempDoc.find('.cutout').forEach((c: Element) => {
 			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 		});
 
