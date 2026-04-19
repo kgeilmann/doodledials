@@ -21,12 +21,8 @@ svg {
 	stroke: var(--highlight);
 }
 
-.layer[highlighted='true'] path {
-	stroke-width: 5;
-}
-
-.layer[highlighted='false'] {
-	color: black;
-	fill: black;
-	stroke: black;
+.layer[highlighted='true'] .cutout {
+	color: var(--highlight);
+	fill: var(--highlight);
+	stroke: var(--highlight);
 }
