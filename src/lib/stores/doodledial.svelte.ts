@@ -1,6 +1,7 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
+import { detectOverlaps } from '$lib/utils/overlap-detection';
 
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
@@ -17,6 +18,23 @@ function createDoodledialStore() {
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
+	}
+
+	async function runOverlapDetection() {
+		if (!combinedSvg || layers.size < 2) {
+			overlaps = new Map();
+			return;
+		}
+		checkingOverlaps = true;
+		try {
+			const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
+			const result = await detectOverlaps(layerArray, combinedSvg);
+			overlaps = result;
+		} catch (err) {
+			console.error('Overlap detection failed:', err);
+		} finally {
+			checkingOverlaps = false;
+		}
 	}
 
 	return {
@@ -112,6 +130,7 @@ function createDoodledialStore() {
 			};
 			layers.set(layerId, newLayer);
 			overlaps = new Map();
+			runOverlapDetection();
 		},
 		toggleVisibility(id: string) {
 			const layer = layers.get(id);
@@ -126,6 +145,7 @@ function createDoodledialStore() {
 				layers.set(id, { ...layer, rotation });
 			}
 			overlaps = new Map();
+			runOverlapDetection();
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
 			const layer = layers.get(id);
@@ -133,6 +153,7 @@ function createDoodledialStore() {
 				layers.set(id, { ...layer, labelOffsetX, labelOffsetY });
 			}
 			overlaps = new Map();
+			runOverlapDetection();
 		},
 		getLayerLabelOffset(id: string): { labelOffsetX: number; labelOffsetY: number } | undefined {
 			const layer = layers.get(id);
