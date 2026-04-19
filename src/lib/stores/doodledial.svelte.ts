@@ -148,11 +148,13 @@ function createDoodledialStore() {
 			layers.forEach((layer) => {
 				layers.set(layer.id, { ...layer, visible: true });
 			});
+			overlaps = new Map();
 		},
 		hideAllLayers() {
 			layers.forEach((layer) => {
 				layers.set(layer.id, { ...layer, visible: false });
 			});
+			overlaps = new Map();
 		},
 		clearLayers() {
 			layers.clear();
