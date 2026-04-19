@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
+	import { DPI, MM_PER_INCH, MM_TO_PX } from '$lib/utils/constants';
+	import { SVG, Svg } from '@svgdotjs/svg.js';
 
 	let { open = $bindable(false) } = $props();
 
@@ -10,6 +11,68 @@
 	let renderError = $state<string | null>(null);
 
 	const pixelSize = $derived(Math.round((doodledialStore.config.diameter / MM_PER_INCH) * DPI));
+
+	function generatePathsOnlySvg(): string | null {
+		if (!doodledialStore.combinedSvg) return null;
+
+		try {
+			const doc = SVG(doodledialStore.combinedSvg) as Svg;
+
+			const layerLabels = doc.find('.layer-label').toArray();
+			for (const label of layerLabels) {
+				(label as any).remove();
+			}
+			const markLines = doc.find('.mark-line').toArray();
+			for (const mark of markLines) {
+				(mark as any).remove();
+			}
+			doc.findOne('#disc')?.remove();
+
+			const style = doc.style();
+			style.rule('.path-preview', {
+				fill: '#808080',
+				'fill-opacity': '0.2',
+				stroke: 'red',
+				'stroke-width': '0.1px',
+				'vector-effect': 'non-scaling-stroke'
+			});
+
+			const layerPaths = doc.find('.layer');
+			const layerArray = layerPaths.toArray();
+			for (const layerGroup of layerArray) {
+				const layerId = (layerGroup as any).id();
+				const layer = doodledialStore.layers.find((l) => l.id === layerId);
+
+				if (!layer || !layer.visible) {
+					(layerGroup as any).remove();
+					continue;
+				}
+
+				const childArray = (layerGroup as any).children().toArray();
+				for (let i = 0; i < childArray.length; i++) {
+					const child = childArray[i];
+					const svg = (child as any).svg();
+					if (svg.startsWith('<path')) {
+						const pathEl = child as any;
+						const node = pathEl.node as SVGElement;
+						node.removeAttribute('fill');
+						node.style.cssText = '';
+						pathEl.attr('fill', '#808080');
+						pathEl.attr('fill-opacity', '0.2');
+						pathEl.attr('stroke', 'red');
+						pathEl.attr('stroke-width', '0.1px');
+					} else {
+						(child as any).remove();
+					}
+				}
+			}
+
+			return doc.svg();
+		} catch (err) {
+			console.error('Failed to generate paths-only SVG:', err);
+			return null;
+		}
+	}
 
 	async function generateRaster() {
 		await tick();
@@ -20,6 +83,13 @@
 
 		isGenerating = true;
 		renderError = null;
+
+		const pathsOnlySvg = generatePathsOnlySvg();
+		if (!pathsOnlySvg) {
+			renderError = 'Failed to generate paths SVG';
+			isGenerating = false;
+			return;
+		}
 
 		const ctx = canvas.getContext('2d');
 		if (!ctx) {
@@ -35,7 +105,7 @@
 		ctx.fillRect(0, 0, pixelSize, pixelSize);
 
 		const img = new Image();
-		const svgBlob = new Blob([doodledialStore.combinedSvg], { type: 'image/svg+xml' });
+		const svgBlob = new Blob([pathsOnlySvg], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(svgBlob);
 
 		img.onload = () => {
@@ -54,7 +124,7 @@
 	}
 
 	$effect(() => {
-		if (open && doodledialStore.combinedSvg) {
+		if (open && doodledialStore.svgContent) {
 			tick().then(generateRaster);
 		}
 	});
