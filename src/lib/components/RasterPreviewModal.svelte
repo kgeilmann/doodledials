@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
+	import { MM_PER_INCH } from '$lib/utils/constants';
 
 	let { open = $bindable(false) } = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
 	let isGenerating = $state(false);
 
-	const pixelSize = $derived(Math.round((doodledialStore.config.diameter / MM_PER_INCH) * DPI));
+	const PRINT_DPI = 300;
+	const pixelSize = $derived(
+		Math.round((doodledialStore.config.diameter / MM_PER_INCH) * PRINT_DPI)
+	);
 
 	async function generateRaster() {
 		if (!doodledialStore.combinedSvg || !canvas) return;
@@ -38,9 +41,11 @@
 		img.src = url;
 	}
 
+	import { tick } from 'svelte';
+
 	$effect(() => {
 		if (open && doodledialStore.combinedSvg) {
-			generateRaster();
+			tick().then(generateRaster);
 		}
 	});
 
