@@ -43,6 +43,7 @@
 
 	const isChecking = $derived(doodledialStore.checkingOverlaps);
 	const hasSufficientLayers = $derived(doodledialStore.layers.length >= 2);
+	const overlapsMap = $derived(doodledialStore.overlaps);
 
 	async function handleCheckOverlaps() {
 		if (!doodledialStore.svgContent) return;
@@ -65,7 +66,7 @@
 	}
 
 	function getOverlappingLayers(layerId: string): string[] {
-		return doodledialStore.getOverlappingLayers(layerId);
+		return Array.from(overlapsMap.get(layerId) || []);
 	}
 </script>
 
