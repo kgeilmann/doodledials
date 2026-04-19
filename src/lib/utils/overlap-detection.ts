@@ -74,6 +74,12 @@ async function renderLayersToBitmaps(
 			}
 		});
 
+		tempDoc.find('.mark-line').forEach((m: Element) => m.hide());
+		tempDoc.find('.mark').forEach((m: Element) => m.hide());
+		tempDoc.find('.path-label').forEach((l: Element) => l.hide());
+		tempDoc.find('.layer-label').forEach((l: Element) => l.hide());
+		tempDoc.find('#disc').forEach((d: Element) => d.hide());
+
 		const offsetXPx = config.offsetX * ((config.diameter * 300) / 25400);
 		const offsetYPx = config.offsetY * ((config.diameter * 300) / 25400);
 
@@ -102,8 +108,7 @@ async function renderSvgToBitmap(
 	canvas.height = height;
 	const ctx = canvas.getContext('2d')!;
 
-	ctx.fillStyle = 'white';
-	ctx.fillRect(0, 0, width, height);
+	ctx.clearRect(0, 0, width, height);
 
 	return new Promise((resolve, reject) => {
 		const img = new Image();
