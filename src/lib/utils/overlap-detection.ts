@@ -70,7 +70,7 @@ async function renderLayersToBitmaps(
 		const otherLayers = tempDoc.find('.layer');
 		otherLayers.forEach((l: Element) => {
 			if (l.id() !== layer.id) {
-				l.remove();
+				l.hide();
 			}
 		});
 
