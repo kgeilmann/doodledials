@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { DPI, MM_PER_INCH, MM_TO_PX } from '$lib/utils/constants';
+	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
 	import { SVG, Svg } from '@svgdotjs/svg.js';
 
 	let { open = $bindable(false) } = $props();

@@ -52,11 +52,7 @@
 		doodledialStore.clearOverlaps();
 
 		try {
-			const overlaps = await detectOverlaps(
-				doodledialStore.layers,
-				doodledialStore.combinedSvg,
-				doodledialStore.config as DialConfig
-			);
+			const overlaps = await detectOverlaps(doodledialStore.layers, doodledialStore.combinedSvg);
 			doodledialStore.setOverlaps(overlaps);
 		} catch (err) {
 			console.error('Overlap detection failed:', err);
