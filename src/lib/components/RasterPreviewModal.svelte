@@ -17,55 +17,13 @@
 
 		try {
 			const doc = SVG(doodledialStore.combinedSvg) as Svg;
-
-			const layerLabels = doc.find('.layer-label').toArray();
-			for (const label of layerLabels) {
-				(label as any).remove();
-			}
-			const markLines = doc.find('.mark-line').toArray();
-			for (const mark of markLines) {
-				(mark as any).remove();
-			}
-			doc.findOne('#disc')?.remove();
-
-			const style = doc.style();
-			style.rule('.path-preview', {
-				fill: '#808080',
-				'fill-opacity': '0.2',
-				stroke: 'red',
-				'stroke-width': '0.1px',
-				'vector-effect': 'non-scaling-stroke'
+			doc.find(':not(.cutout)').forEach((e) => {
+				e.attr('visibility', 'hidden');
 			});
-
-			const layerPaths = doc.find('.layer');
-			const layerArray = layerPaths.toArray();
-			for (const layerGroup of layerArray) {
-				const layerId = (layerGroup as any).id();
-				const layer = doodledialStore.layers.find((l) => l.id === layerId);
-
-				if (!layer || !layer.visible) {
-					(layerGroup as any).remove();
-					continue;
-				}
-
-				const childArray = (layerGroup as any).children().toArray();
-				for (let i = 0; i < childArray.length; i++) {
-					const child = childArray[i];
-					const svg = (child as any).svg();
-					if (svg.startsWith('<path')) {
-						const pathEl = child as any;
-						const node = pathEl.node as SVGElement;
-						node.removeAttribute('fill');
-						node.style.cssText = '';
-						pathEl.attr('fill', '#808080');
-						pathEl.attr('fill-opacity', '0.2');
-						pathEl.attr('stroke', 'red');
-						pathEl.attr('stroke-width', '0.1px');
-					} else {
-						(child as any).remove();
-					}
-				}
-			}
+			
+			doc.find('.cutout').forEach((e) => {
+				e.parent()?.attr('visibility', 'visible')
+			})
 
 			return doc.svg();
 		} catch (err) {

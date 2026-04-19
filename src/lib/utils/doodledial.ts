@@ -25,17 +25,23 @@ export function parseSvgPaths(svgContent: string): {
 		stroke: 'black',
 		'stroke-width': '2'
 	});
-	style.rule('.layer-label', {
-		'font-family': 'monospace',
-		'font-size': 14,
-		'text-anchor': 'middle'
-	});
-	style.rule('.path-label', {});
+
 	style.rule('.mark-line', {
 		'stroke-width': 2
 	});
+
 	style.rule('.layer', {
-		stroke: 'black'
+		stroke: 'black',
+		'stroke-width': '0.1',
+		fill: 'black',
+		'fill-opacity': 1
+	});
+
+	style.rule('.layer .cutout', {
+		stroke: 'red',
+		'stroke-width': '0.1',
+		fill: 'gray',
+		'fill-opacity': 0.2
 	});
 
 	const all = SVG().group().attr('id', 'all');
@@ -57,13 +63,16 @@ export function parseSvgPaths(svgContent: string): {
 
 	const paths = doc.find('path');
 	paths.forEach((path, index) => {
+		path.addClass('cutout');
+
 		// @ts-expect-error - css() returns unknown type
 		path.css('stroke', null);
 		// @ts-expect-error - css() returns unknown type
 		path.css('stroke-width', null);
-		path.css('stroke-width', '1mm');
-		path.css('stroke-linejoin', 'round');
-		path.css('stroke-linecap', 'round');
+		// @ts-expect-error - css() returns unknown type
+		path.css('fill', null);
+		// @ts-expect-error - css() returns unknown type
+		path.css('fill-opacity', null);
 
 		const layerId = `layer-${index}`;
 
@@ -114,6 +123,7 @@ function createMark(
 	const text = markGroup.text(String(layerNumber));
 	text.addClass('layer-label');
 	text.attr('data-layer-id', layerId);
+	text.font({ family: 'monospace', size: 10, anchor: 'middle' });
 	text.center(centerX, markEndY + 8);
 
 	return markGroup;
@@ -149,23 +159,21 @@ export function combineDoodledial(
 		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 		svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
 
-		svgLayer.children().forEach((c) => {
-			if (c.svg().startsWith('<path')) {
-				c.scale(config.scale, cx, cy).translate(
-					config.offsetX * MM_TO_PX,
-					config.offsetY * MM_TO_PX
-				);
+		const offsetXPx = config.offsetX * MM_TO_PX;
+		const offsetYPx = config.offsetY * MM_TO_PX;
 
-				const offsetXPx = config.offsetX * MM_TO_PX;
-				const offsetYPx = config.offsetY * MM_TO_PX;
-				const pathLabel = doc.findOne('#path-label-' + layer.id) as Text;
-				const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
-				const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
-				pathLabel.translate(
-					offsetXPx * config.scale + labelOffsetX,
-					offsetYPx * config.scale + labelOffsetY
-				);
-			}
+		doc.find('#cutout').forEach((c) => {
+			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+		});
+
+		doc.find('#path-label-' + layer.id).forEach((label) => {
+			const pathLabel = label as Text;
+			const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
+			const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
+			pathLabel.translate(
+				offsetXPx * config.scale + labelOffsetX,
+				offsetYPx * config.scale + labelOffsetY
+			);
 		});
 
 		if (layer.id === highlightedLayerId) highlighted = svgLayer;
