@@ -1,5 +1,5 @@
 import { SVG, Svg, G, Element } from '@svgdotjs/svg.js';
-import type { Layer, DialConfig, SVGContent } from '$lib/types/doodledial';
+import type { Layer, DialConfig } from '$lib/types/doodledial';
 
 const RENDER_SIZE = 200;
 
@@ -11,7 +11,7 @@ interface PixelData {
 
 export async function detectOverlaps(
 	layers: Layer[],
-	content: SVGContent,
+	combinedSvg: string,
 	config: DialConfig
 ): Promise<Map<string, Set<string>>> {
 	const overlaps = new Map<string, Set<string>>();
@@ -20,7 +20,7 @@ export async function detectOverlaps(
 		return overlaps;
 	}
 
-	const layerBitmaps = await renderLayersToBitmaps(layers, content, config);
+	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg, config);
 
 	for (let i = 0; i < layers.length; i++) {
 		for (let j = i + 1; j < layers.length; j++) {
@@ -49,42 +49,27 @@ export async function detectOverlaps(
 
 async function renderLayersToBitmaps(
 	layers: Layer[],
-	content: SVGContent,
+	combinedSvg: string,
 	config: DialConfig
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
 
 	for (const layer of layers) {
-		const tempDoc = SVG(content.raw) as Svg;
+		const tempDoc = SVG(combinedSvg) as Svg;
 		const cx = tempDoc.viewbox().cx;
 		const cy = tempDoc.viewbox().cy;
-		const svgLayer = tempDoc.findOne('#' + layer.id) as G | null;
 
-		if (!svgLayer) continue;
-
-		const allLayers = tempDoc.findOne('#all');
-
-		svgLayer.attr('visibility', 'visible');
-		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
-
-		const otherLayers = tempDoc.find('.layer');
-		otherLayers.forEach((l: Element) => {
-			if (l.id() !== layer.id) {
-				l.hide();
-			}
+		tempDoc.find(':not(.cutout)').forEach((e) => {
+			e.attr('visibility', 'hidden');
 		});
 
-		tempDoc.find('.mark-line').forEach((m: Element) => m.hide());
-		tempDoc.find('.mark').forEach((m: Element) => m.hide());
-		tempDoc.find('.path-label').forEach((l: Element) => l.hide());
-		tempDoc.find('.layer-label').forEach((l: Element) => l.hide());
-		tempDoc.find('#disc').forEach((d: Element) => d.hide());
-
-		const offsetXPx = config.offsetX * ((config.diameter * 300) / 25400);
-		const offsetYPx = config.offsetY * ((config.diameter * 300) / 25400);
-
-		tempDoc.find('.cutout').forEach((c: Element) => {
-			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+		tempDoc.find('.layer').forEach((l: Element) => {
+			if (l.id() !== layer.id) {
+				l.attr('visibility', 'hidden');
+			} else {
+				l.attr('visibility', 'visible');
+				l.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
+			}
 		});
 
 		const pixelDiameter = Math.round((config.diameter * 300) / 25400);
