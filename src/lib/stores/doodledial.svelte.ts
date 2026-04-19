@@ -12,6 +12,8 @@ function createDoodledialStore() {
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
 	let labelEditMode = $state<boolean>(false);
+	let checkingOverlaps = $state<boolean>(false);
+	let overlaps = $state<Map<string, Set<string>>>(new Map());
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -44,6 +46,12 @@ function createDoodledialStore() {
 		},
 		get labelEditMode() {
 			return labelEditMode;
+		},
+		get checkingOverlaps() {
+			return checkingOverlaps;
+		},
+		get overlaps() {
+			return overlaps;
 		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
@@ -82,6 +90,18 @@ function createDoodledialStore() {
 		toggleLabelEditMode() {
 			labelEditMode = !labelEditMode;
 		},
+		setCheckingOverlaps(checking: boolean) {
+			checkingOverlaps = checking;
+		},
+		setOverlaps(newOverlaps: Map<string, Set<string>>) {
+			overlaps = newOverlaps;
+		},
+		getOverlappingLayers(layerId: string): string[] {
+			return Array.from(overlaps.get(layerId) || []);
+		},
+		clearOverlaps() {
+			overlaps = new Map();
+		},
 		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {
 				id: layerId,
@@ -91,24 +111,28 @@ function createDoodledialStore() {
 				rotation: 0
 			};
 			layers.set(layerId, newLayer);
+			overlaps = new Map();
 		},
 		toggleVisibility(id: string) {
 			const layer = layers.get(id);
 			if (layer) {
 				layers.set(id, { ...layer, visible: !layer.visible });
 			}
+			overlaps = new Map();
 		},
 		setLayerRotation(id: string, rotation: number) {
 			const layer = layers.get(id);
 			if (layer) {
 				layers.set(id, { ...layer, rotation });
 			}
+			overlaps = new Map();
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
 			const layer = layers.get(id);
 			if (layer) {
 				layers.set(id, { ...layer, labelOffsetX, labelOffsetY });
 			}
+			overlaps = new Map();
 		},
 		getLayerLabelOffset(id: string): { labelOffsetX: number; labelOffsetY: number } | undefined {
 			const layer = layers.get(id);
