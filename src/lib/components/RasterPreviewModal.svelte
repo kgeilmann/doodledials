@@ -8,13 +8,15 @@
 	let canvas: HTMLCanvasElement | null = $state(null);
 	let isGenerating = $state(false);
 	let renderError = $state<string | null>(null);
-	let canvasReady = $state(false);
 
 	const pixelSize = $derived(Math.round((doodledialStore.config.diameter / MM_PER_INCH) * DPI));
 
 	async function generateRaster() {
 		await tick();
 		await tick();
+		await tick();
+
+		console.log('generateRaster called, canvas:', canvas);
 
 		if (!doodledialStore.combinedSvg || !canvas) {
 			console.log('Missing combinedSvg or canvas', {
@@ -37,23 +39,21 @@
 		canvas.width = pixelSize;
 		canvas.height = pixelSize;
 
+		ctx.fillStyle = 'white';
+		ctx.fillRect(0, 0, pixelSize, pixelSize);
+
 		const img = new Image();
 		const svgBlob = new Blob([doodledialStore.combinedSvg], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(svgBlob);
 
-		console.log(
-			'Loading SVG, size:',
-			pixelSize,
-			'content length:',
-			doodledialStore.combinedSvg.length
-		);
+		console.log('Loading SVG, size:', pixelSize);
 
 		img.onload = () => {
-			console.log('Image loaded, dimensions:', img.width, img.height);
-			ctx.clearRect(0, 0, pixelSize, pixelSize);
+			console.log('Image loaded, drawing to canvas');
 			ctx.drawImage(img, 0, 0, pixelSize, pixelSize);
 			URL.revokeObjectURL(url);
 			isGenerating = false;
+			console.log('Done, isGenerating:', false);
 		};
 
 		img.onerror = (e) => {
@@ -68,7 +68,7 @@
 
 	$effect(() => {
 		if (open && doodledialStore.combinedSvg) {
-			canvasReady = true;
+			console.log('Modal opened, scheduling generateRaster');
 			tick().then(generateRaster);
 		}
 	});
@@ -109,17 +109,11 @@
 					</svg>
 				</button>
 			</div>
-			<div class="p-6 overflow-auto flex items-center justify-center min-h-[200px]">
-				{#if isGenerating}
-					<div class="text-gray-500">Generating preview...</div>
-				{:else if renderError}
-					<div class="text-red-500">{renderError}</div>
-				{:else if canvasReady}
-					<canvas
-						bind:this={canvas}
-						class="max-w-full max-h-[70vh] object-contain border border-gray-200"
-					></canvas>
-				{/if}
+			<div class="p-6 overflow-auto flex items-center justify-center min-h-[300px]">
+				<canvas
+					bind:this={canvas}
+					class="max-w-full max-h-[70vh] object-contain border border-gray-200"
+				></canvas>
 			</div>
 		</div>
 	</div>
