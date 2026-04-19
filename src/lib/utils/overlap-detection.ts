@@ -27,7 +27,9 @@ export async function detectOverlaps(
 			const bitmapA = layerBitmaps.get(layers[i].id);
 			const bitmapB = layerBitmaps.get(layers[j].id);
 
-			if (!bitmapA || !bitmapB) continue;
+			if (!bitmapA || !bitmapB) {
+				continue;
+			}
 
 			if (bitmapsOverlap(bitmapA, bitmapB)) {
 				if (!overlaps.has(layers[i].id)) {
@@ -51,26 +53,26 @@ async function renderLayersToBitmaps(
 	config: DialConfig
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
-	const doc = SVG(content.raw) as Svg;
-	const cx = doc.viewbox().cx;
-	const cy = doc.viewbox().cy;
 
 	for (const layer of layers) {
-		const svgLayer = doc.findOne('#' + layer.id) as G | null;
+		const tempDoc = SVG(content.raw) as Svg;
+		const cx = tempDoc.viewbox().cx;
+		const cy = tempDoc.viewbox().cy;
+		const svgLayer = tempDoc.findOne('#' + layer.id) as G | null;
+
 		if (!svgLayer) continue;
 
-		const tempDoc = SVG(content.raw) as Svg;
 		const allLayers = tempDoc.findOne('#all');
 
-		const clonedLayer = svgLayer.clone();
-		clonedLayer.attr('visibility', 'visible');
-		clonedLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
+		svgLayer.attr('visibility', 'visible');
+		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 
-		tempDoc.clear();
-		if (allLayers) {
-			const newGroup = tempDoc.group().id('all');
-			newGroup.add(clonedLayer);
-		}
+		const otherLayers = tempDoc.find('.layer');
+		otherLayers.forEach((l: Element) => {
+			if (l.id() !== layer.id) {
+				l.remove();
+			}
+		});
 
 		const offsetXPx = config.offsetX * ((config.diameter * 300) / 25400);
 		const offsetYPx = config.offsetY * ((config.diameter * 300) / 25400);
