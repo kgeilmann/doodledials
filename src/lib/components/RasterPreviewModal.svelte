@@ -16,15 +16,7 @@
 		await tick();
 		await tick();
 
-		console.log('generateRaster called, canvas:', canvas);
-
-		if (!doodledialStore.combinedSvg || !canvas) {
-			console.log('Missing combinedSvg or canvas', {
-				hasSvg: !!doodledialStore.combinedSvg,
-				hasCanvas: !!canvas
-			});
-			return;
-		}
+		if (!doodledialStore.combinedSvg || !canvas) return;
 
 		isGenerating = true;
 		renderError = null;
@@ -46,18 +38,13 @@
 		const svgBlob = new Blob([doodledialStore.combinedSvg], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(svgBlob);
 
-		console.log('Loading SVG, size:', pixelSize);
-
 		img.onload = () => {
-			console.log('Image loaded, drawing to canvas');
 			ctx.drawImage(img, 0, 0, pixelSize, pixelSize);
 			URL.revokeObjectURL(url);
 			isGenerating = false;
-			console.log('Done, isGenerating:', false);
 		};
 
-		img.onerror = (e) => {
-			console.error('Image load error:', e);
+		img.onerror = () => {
 			renderError = 'Failed to load SVG image';
 			URL.revokeObjectURL(url);
 			isGenerating = false;
@@ -68,7 +55,6 @@
 
 	$effect(() => {
 		if (open && doodledialStore.combinedSvg) {
-			console.log('Modal opened, scheduling generateRaster');
 			tick().then(generateRaster);
 		}
 	});
@@ -109,11 +95,20 @@
 					</svg>
 				</button>
 			</div>
-			<div class="p-6 overflow-auto flex items-center justify-center min-h-[300px]">
-				<canvas
-					bind:this={canvas}
-					class="max-w-full max-h-[70vh] object-contain border border-gray-200"
-				></canvas>
+			<div class="p-6 overflow-auto flex items-center justify-center min-h-[300px] bg-gray-50">
+				{#if isGenerating}
+					<div class="text-gray-500">Generating preview...</div>
+				{:else if renderError}
+					<div class="text-red-500">{renderError}</div>
+				{:else}
+					<div class="relative">
+						<canvas
+							bind:this={canvas}
+							style="background: white;"
+							class="max-w-full max-h-[70vh] object-contain border border-gray-200"
+						></canvas>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</div>
