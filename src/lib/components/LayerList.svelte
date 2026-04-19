@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { detectOverlaps } from '$lib/utils/overlap-detection';
 	import type { DialConfig } from '$lib/types/doodledial';
 	import RotationKnob from './RotationKnob.svelte';
 
@@ -42,24 +41,7 @@
 	const totalCount = $derived(doodledialStore.layers.length);
 
 	const isChecking = $derived(doodledialStore.checkingOverlaps);
-	const hasSufficientLayers = $derived(doodledialStore.layers.length >= 2);
 	const overlapsMap = $derived(doodledialStore.overlaps);
-
-	async function handleCheckOverlaps() {
-		if (!doodledialStore.combinedSvg) return;
-
-		doodledialStore.setCheckingOverlaps(true);
-		doodledialStore.clearOverlaps();
-
-		try {
-			const overlaps = await detectOverlaps(doodledialStore.layers, doodledialStore.combinedSvg);
-			doodledialStore.setOverlaps(overlaps);
-		} catch (err) {
-			console.error('Overlap detection failed:', err);
-		} finally {
-			doodledialStore.setCheckingOverlaps(false);
-		}
-	}
 
 	function getOverlappingLayers(layerId: string): string[] {
 		return Array.from(overlapsMap.get(layerId) || []);
@@ -103,15 +85,6 @@
 						: 'text-indigo-600 hover:text-indigo-800 font-medium'}"
 				>
 					{doodledialStore.labelEditMode ? 'Done' : 'Edit Labels'}
-				</button>
-				<span class="text-gray-300">|</span>
-				<button
-					type="button"
-					onclick={handleCheckOverlaps}
-					disabled={!hasSufficientLayers || isChecking}
-					class="text-xs text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{isChecking ? 'Checking...' : 'Check Overlaps'}
 				</button>
 			</div>
 		</div>
