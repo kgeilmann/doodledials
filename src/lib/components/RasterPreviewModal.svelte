@@ -1,23 +1,38 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { MM_PER_INCH } from '$lib/utils/constants';
+	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
 
 	let { open = $bindable(false) } = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
 	let isGenerating = $state(false);
+	let renderError = $state<string | null>(null);
+	let canvasReady = $state(false);
 
-	const PRINT_DPI = 300;
-	const pixelSize = $derived(
-		Math.round((doodledialStore.config.diameter / MM_PER_INCH) * PRINT_DPI)
-	);
+	const pixelSize = $derived(Math.round((doodledialStore.config.diameter / MM_PER_INCH) * DPI));
 
 	async function generateRaster() {
-		if (!doodledialStore.combinedSvg || !canvas) return;
+		await tick();
+		await tick();
+
+		if (!doodledialStore.combinedSvg || !canvas) {
+			console.log('Missing combinedSvg or canvas', {
+				hasSvg: !!doodledialStore.combinedSvg,
+				hasCanvas: !!canvas
+			});
+			return;
+		}
 
 		isGenerating = true;
+		renderError = null;
+
 		const ctx = canvas.getContext('2d');
-		if (!ctx) return;
+		if (!ctx) {
+			renderError = 'Failed to get canvas context';
+			isGenerating = false;
+			return;
+		}
 
 		canvas.width = pixelSize;
 		canvas.height = pixelSize;
@@ -26,14 +41,24 @@
 		const svgBlob = new Blob([doodledialStore.combinedSvg], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(svgBlob);
 
+		console.log(
+			'Loading SVG, size:',
+			pixelSize,
+			'content length:',
+			doodledialStore.combinedSvg.length
+		);
+
 		img.onload = () => {
+			console.log('Image loaded, dimensions:', img.width, img.height);
 			ctx.clearRect(0, 0, pixelSize, pixelSize);
 			ctx.drawImage(img, 0, 0, pixelSize, pixelSize);
 			URL.revokeObjectURL(url);
 			isGenerating = false;
 		};
 
-		img.onerror = () => {
+		img.onerror = (e) => {
+			console.error('Image load error:', e);
+			renderError = 'Failed to load SVG image';
 			URL.revokeObjectURL(url);
 			isGenerating = false;
 		};
@@ -41,10 +66,9 @@
 		img.src = url;
 	}
 
-	import { tick } from 'svelte';
-
 	$effect(() => {
 		if (open && doodledialStore.combinedSvg) {
+			canvasReady = true;
 			tick().then(generateRaster);
 		}
 	});
@@ -67,7 +91,7 @@
 			class="bg-white rounded-xl shadow-2xl max-w-[90vw] max-h-[90vh] flex flex-col overflow-hidden"
 		>
 			<div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-				<h2 class="text-lg font-semibold text-gray-800">Raster Preview (300 DPI)</h2>
+				<h2 class="text-lg font-semibold text-gray-800">Raster Preview ({DPI} DPI)</h2>
 				<button
 					onclick={() => (open = false)}
 					class="p-1 hover:bg-gray-100 rounded-lg transition-colors"
@@ -85,10 +109,12 @@
 					</svg>
 				</button>
 			</div>
-			<div class="p-6 overflow-auto flex items-center justify-center">
+			<div class="p-6 overflow-auto flex items-center justify-center min-h-[200px]">
 				{#if isGenerating}
 					<div class="text-gray-500">Generating preview...</div>
-				{:else}
+				{:else if renderError}
+					<div class="text-red-500">{renderError}</div>
+				{:else if canvasReady}
 					<canvas
 						bind:this={canvas}
 						class="max-w-full max-h-[70vh] object-contain border border-gray-200"
