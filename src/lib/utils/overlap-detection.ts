@@ -1,5 +1,5 @@
-import { SVG, Svg, G, Element } from '@svgdotjs/svg.js';
-import type { Layer, DialConfig } from '$lib/types/doodledial';
+import { SVG, Svg } from '@svgdotjs/svg.js';
+import type { Layer } from '$lib/types/doodledial';
 
 const RENDER_SIZE = 200;
 
@@ -11,8 +11,7 @@ interface PixelData {
 
 export async function detectOverlaps(
 	layers: Layer[],
-	combinedSvg: string,
-	config: DialConfig
+	combinedSvg: string
 ): Promise<Map<string, Set<string>>> {
 	const overlaps = new Map<string, Set<string>>();
 
@@ -20,7 +19,7 @@ export async function detectOverlaps(
 		return overlaps;
 	}
 
-	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg, config);
+	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg);
 
 	for (let i = 0; i < layers.length; i++) {
 		for (let j = i + 1; j < layers.length; j++) {
@@ -50,31 +49,18 @@ export async function detectOverlaps(
 async function renderLayersToBitmaps(
 	layers: Layer[],
 	combinedSvg: string,
-	config: DialConfig
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
 
 	for (const layer of layers) {
 		const tempDoc = SVG(combinedSvg) as Svg;
-		const cx = tempDoc.viewbox().cx;
-		const cy = tempDoc.viewbox().cy;
 
 		tempDoc.find(':not(.cutout)').forEach((e) => {
 			e.attr('visibility', 'hidden');
 		});
 
-		tempDoc.find('.layer').forEach((l: Element) => {
-			if (l.id() !== layer.id) {
-				l.attr('visibility', 'hidden');
-			} else {
-				l.attr('visibility', 'visible');
-				l.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
-			}
-		});
-
-		const pixelDiameter = Math.round((config.diameter * 300) / 25400);
-		tempDoc.width(pixelDiameter);
-		tempDoc.height(pixelDiameter);
+		const l = tempDoc.findOne('#' + layer.id);
+		l!.attr('visibility', 'visible');
 
 		const bitmap = await renderSvgToBitmap(tempDoc.svg(), RENDER_SIZE, RENDER_SIZE);
 		bitmaps.set(layer.id, bitmap);
@@ -92,8 +78,6 @@ async function renderSvgToBitmap(
 	canvas.width = width;
 	canvas.height = height;
 	const ctx = canvas.getContext('2d')!;
-
-	ctx.clearRect(0, 0, width, height);
 
 	return new Promise((resolve, reject) => {
 		const img = new Image();
