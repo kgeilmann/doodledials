@@ -46,7 +46,7 @@
 	const overlapsMap = $derived(doodledialStore.overlaps);
 
 	async function handleCheckOverlaps() {
-		if (!doodledialStore.svgContent) return;
+		if (!doodledialStore.combinedSvg) return;
 
 		doodledialStore.setCheckingOverlaps(true);
 		doodledialStore.clearOverlaps();
@@ -54,7 +54,7 @@
 		try {
 			const overlaps = await detectOverlaps(
 				doodledialStore.layers,
-				doodledialStore.svgContent,
+				doodledialStore.combinedSvg,
 				doodledialStore.config as DialConfig
 			);
 			doodledialStore.setOverlaps(overlaps);
