@@ -143,7 +143,7 @@ export async function solveDoodledial(
 				isValid: true
 			});
 
-			if (searchedCount % 100 === 0) {
+			if (searchedCount % 1 === 0) {
 				updateProgress();
 				await new Promise((resolve) => setTimeout(resolve, 0));
 			}

@@ -49,11 +49,14 @@ interface SolverConfig {
 ```typescript
 solveDoodledial(
   layers: Layer[],
-  config: DialConfig,
-  svgContent: SVGContent,
+  combinedSvg: string,
   onProgress: (progress: SolverProgress) => void
 ): Promise<SolverSolution[]>
 ```
+
+- `layers` — array of Layer objects with current rotations
+- `combinedSvg` — the already-combined SVG (from `combineDoodledial()`)
+- `onProgress` — callback to stream top 10 solutions as they're found
 
 ### Algorithm
 
@@ -120,6 +123,7 @@ This captures both how spread out angles are AND how well they use the full 360�
 ## Implementation Notes
 
 - Use existing `detectOverlaps` and `detectCutoutGaps` from `overlap-detection.ts` (adapted if needed)
-- Leverage existing Layer and DialConfig types
+- Leverages existing Layer type
 - Cache bitmaps per layer per rotation to avoid recomputation
 - No early termination — search continues until full space is explored or user aborts
+- Call `combineDoodledial()` in the UI before passing to solver to get the combined SVG
