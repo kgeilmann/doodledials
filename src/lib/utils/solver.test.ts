@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import type { Layer } from '$lib/types/doodledial';
 import {
 	calculateCircularVariance,
 	calculateScore,
 	hasUniqueAngles,
 	hasMinAngleDifference,
-	satisfiesAngleConstraints
+	satisfiesAngleConstraints,
+	solveDoodledial,
+	type SolverProgress
 } from './solver';
 
 describe('calculateCircularVariance', () => {
@@ -85,5 +88,37 @@ describe('satisfiesAngleConstraints', () => {
 			['layer-3', 180]
 		]);
 		expect(satisfiesAngleConstraints(rotations)).toBe(false);
+	});
+});
+
+describe('solveDoodledial', () => {
+	it.skip('returns solutions for valid input', async () => {
+		const layers: Layer[] = [
+			{ id: 'layer-1', name: 'Layer 1', index: 1, visible: true, rotation: 0 },
+			{ id: 'layer-2', name: 'Layer 2', index: 2, visible: true, rotation: 0 }
+		];
+
+		const mockSvg = '<svg></svg>';
+
+		const progress: SolverProgress[] = [];
+		const results = await solveDoodledial(layers, mockSvg, 200, (p) => progress.push(p));
+
+		expect(results.length).toBeGreaterThan(0);
+		expect(progress.length).toBeGreaterThan(0);
+	});
+
+	it.skip('respects abort signal', async () => {
+		const layers: Layer[] = [
+			{ id: 'layer-1', name: 'Layer 1', index: 1, visible: true, rotation: 0 }
+		];
+
+		const mockSvg = '<svg></svg>';
+		const abortController = new AbortController();
+
+		setTimeout(() => abortController.abort(), 10);
+
+		const results = await solveDoodledial(layers, mockSvg, 200, () => {}, abortController.signal);
+
+		expect(results).toHaveLength(0);
 	});
 });
