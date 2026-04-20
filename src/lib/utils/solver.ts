@@ -23,7 +23,7 @@ export function calculateScore(angles: number[]): number {
 	return 1 - variance;
 }
 
-const MIN_ANGLE_DIFF = 2;
+const MIN_ANGLE_DIFF = 10;
 
 export function hasUniqueAngles(rotations: Map<string, number>): boolean {
 	const angles = Array.from(rotations.values());
@@ -63,6 +63,8 @@ export interface SolverProgress {
 }
 
 const GAP_MM = 2;
+const STEP_SIZE = 10;
+const NUM_STEPS = 36;
 
 export async function solveDoodledial(
 	layers: Layer[],
@@ -109,7 +111,7 @@ export async function solveDoodledial(
 		const layerArray = [...layers].sort((a, b) => a.index - b.index);
 		const n = layerArray.length;
 
-		const totalCombinations = Math.pow(360, n);
+		const totalCombinations = Math.pow(NUM_STEPS, n);
 
 		for (let combination = 0; combination < totalCombinations; combination++) {
 			if (signal?.aborted) {
@@ -122,9 +124,9 @@ export async function solveDoodledial(
 			let temp = combination;
 			const rotations = new Map<string, number>();
 			for (let i = 0; i < n; i++) {
-				const angle = temp % 360;
+				const angle = (temp % NUM_STEPS) * STEP_SIZE;
 				rotations.set(layerArray[i].id, angle);
-				temp = Math.floor(temp / 360);
+				temp = Math.floor(temp / NUM_STEPS);
 			}
 
 			if (!satisfiesAngleConstraints(rotations)) continue;
@@ -141,7 +143,7 @@ export async function solveDoodledial(
 				isValid: true
 			});
 
-			if (searchedCount % 1000 === 0) {
+			if (searchedCount % 100 === 0) {
 				updateProgress();
 				await new Promise((resolve) => setTimeout(resolve, 0));
 			}
