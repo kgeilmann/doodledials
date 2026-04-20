@@ -53,11 +53,10 @@ export function parseSvgPaths(svgContent: string): {
 	doc.add(all);
 
 	const maxImageDimension = Math.max(doc.viewbox().width, doc.viewbox().height);
-	const disc = SVG()
+	doc
 		.circle(maxImageDimension * Math.SQRT2)
+		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('disc')
-		.center(maxImageDimension / 2, maxImageDimension / 2);
-	disc.putIn(doc);
 
 	const layers: { id: string; name: string; index: number }[] = [];
 
@@ -153,20 +152,23 @@ export function combineDoodledial(
 	let highlighted: G;
 	let selected: G;
 
+	const offsetXPx = config.offsetX * MM_TO_PX;
+	const offsetYPx = config.offsetY * MM_TO_PX;
+	
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
 		svgLayer.attr('visibility', layer.visible ? 'visible' : 'hidden');
 		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 		svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
+	
+		if (layer.id === highlightedLayerId) highlighted = svgLayer;
+		if (layer.id === selectedLayerId) selected = svgLayer;
 
-		const offsetXPx = config.offsetX * MM_TO_PX;
-		const offsetYPx = config.offsetY * MM_TO_PX;
-
-		doc.find('#cutout').forEach((c) => {
+		svgLayer.find('.cutout').forEach((c) => {
 			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 		});
 
-		doc.find('#path-label-' + layer.id).forEach((label) => {
+		svgLayer.find('#path-label-' + layer.id).forEach((label) => {
 			const pathLabel = label as Text;
 			const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
 			const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
@@ -175,9 +177,6 @@ export function combineDoodledial(
 				offsetYPx * config.scale + labelOffsetY
 			);
 		});
-
-		if (layer.id === highlightedLayerId) highlighted = svgLayer;
-		if (layer.id === selectedLayerId) selected = svgLayer;
 	});
 
 	const allLayers = doc.findOne('#all');

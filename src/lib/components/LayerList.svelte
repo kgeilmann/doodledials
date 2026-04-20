@@ -39,8 +39,7 @@
 
 	const hiddenCount = $derived(doodledialStore.layers.filter((l) => !l.visible).length);
 	const totalCount = $derived(doodledialStore.layers.length);
-
-	const isChecking = $derived(doodledialStore.checkingOverlaps);
+	
 	const overlapsMap = $derived(doodledialStore.overlaps);
 	const cutoutGapsMap = $derived(doodledialStore.cutoutGaps);
 
