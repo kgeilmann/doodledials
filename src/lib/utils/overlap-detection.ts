@@ -112,13 +112,6 @@ function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
 	return false;
 }
 
-function hasCutout(layer: Layer, svgContent: string): boolean {
-	const tempDoc = SVG(svgContent) as Svg;
-	const layerElement = tempDoc.findOne('#' + layer.id);
-	if (!layerElement) return false;
-	const cutout = layerElement.find('.cutout');
-	return cutout.length > 0;
-}
 
 async function renderCutoutWithStroke(
 	layer: Layer,
@@ -130,8 +123,7 @@ async function renderCutoutWithStroke(
 	const tempDoc = SVG(svgContent) as Svg;
 	tempDoc.find(':not(.cutout)').forEach((e) => e.attr('visibility', 'hidden'));
 
-	const layerElement = tempDoc.findOne('#' + layer.id);
-	const cutout = layerElement?.findOne('.cutout');
+	const cutout = tempDoc.findOne('#' + layer.id + " .cutout");
 	if (!cutout) throw new Error('No cutout found');
 
 	const strokeWidthPx = (strokeWidthMm / dialDiameter) * renderSize;
@@ -148,19 +140,12 @@ export async function detectCutoutGaps(
 	layers: Layer[],
 	combinedSvg: string,
 	gapMm: number = 2,
-	dialDiameter: number = 100
+	dialDiameter: number = 200
 ): Promise<Map<string, Set<string>>> {
 	const gaps = new Map<string, Set<string>>();
-
-	const cutoutLayers = layers.filter((l) => hasCutout(l, combinedSvg));
-
-	if (cutoutLayers.length < 2) {
-		return gaps;
-	}
-
 	const strokedBitmaps = new Map<string, PixelData>();
 
-	for (const layer of cutoutLayers) {
+	for (const layer of layers) {
 		const bitmap = await renderCutoutWithStroke(
 			layer,
 			combinedSvg,
@@ -171,20 +156,20 @@ export async function detectCutoutGaps(
 		strokedBitmaps.set(layer.id, bitmap);
 	}
 
-	for (let i = 0; i < cutoutLayers.length; i++) {
-		for (let j = i + 1; j < cutoutLayers.length; j++) {
-			const strokedA = strokedBitmaps.get(cutoutLayers[i].id)!;
-			const strokedB = strokedBitmaps.get(cutoutLayers[j].id)!;
+	for (let i = 0; i < layers.length; i++) {
+		for (let j = i + 1; j < layers.length; j++) {
+			const strokedA = strokedBitmaps.get(layers[i].id)!;
+			const strokedB = strokedBitmaps.get(layers[j].id)!;
 
 			if (bitmapsOverlap(strokedA, strokedB)) {
-				if (!gaps.has(cutoutLayers[i].id)) {
-					gaps.set(cutoutLayers[i].id, new Set());
+				if (!gaps.has(layers[i].id)) {
+					gaps.set(layers[i].id, new Set());
 				}
-				if (!gaps.has(cutoutLayers[j].id)) {
-					gaps.set(cutoutLayers[j].id, new Set());
+				if (!gaps.has(layers[j].id)) {
+					gaps.set(layers[j].id, new Set());
 				}
-				gaps.get(cutoutLayers[i].id)!.add(cutoutLayers[j].id);
-				gaps.get(cutoutLayers[j].id)!.add(cutoutLayers[i].id);
+				gaps.get(layers[i].id)!.add(layers[j].id);
+				gaps.get(layers[j].id)!.add(layers[i].id);
 			}
 		}
 	}

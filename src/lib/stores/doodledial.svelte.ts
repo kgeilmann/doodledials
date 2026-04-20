@@ -110,6 +110,10 @@ function createDoodledialStore() {
 		},
 		setCombinedSvg(svg: string | null) {
 			combinedSvg = svg;
+			if (svg && layers.size >= 2) {
+				runOverlapDetection();
+				runCutoutGapDetection();
+			}
 		},
 		setLoading(loading: boolean) {
 			isLoading = loading;
@@ -156,24 +160,20 @@ function createDoodledialStore() {
 				rotation: 0
 			};
 			layers.set(layerId, newLayer);
-			overlaps = new Map();
-			runOverlapDetection();
-			runCutoutGapDetection();
+			overlaps = new Map();			
+			cutoutGaps = new Map();
 		},
 		toggleVisibility(id: string) {
 			const layer = layers.get(id);
 			if (layer) {
 				layers.set(id, { ...layer, visible: !layer.visible });
 			}
-			overlaps = new Map();
-			cutoutGaps = new Map();
 		},
 		setLayerRotation(id: string, rotation: number) {
 			const layer = layers.get(id);
 			if (layer) {
 				layers.set(id, { ...layer, rotation });
 			}
-			overlaps = new Map();
 			runOverlapDetection();
 			runCutoutGapDetection();
 		},
@@ -182,8 +182,8 @@ function createDoodledialStore() {
 			if (layer) {
 				layers.set(id, { ...layer, labelOffsetX, labelOffsetY });
 			}
-			overlaps = new Map();
 			runOverlapDetection();
+			runCutoutGapDetection();
 		},
 		getLayerLabelOffset(id: string): { labelOffsetX: number; labelOffsetY: number } | undefined {
 			const layer = layers.get(id);
