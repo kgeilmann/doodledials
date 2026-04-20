@@ -68,25 +68,58 @@ solveDoodledial(
 
 ### Even Distribution Score
 
-Use the complement of angular variance:
+Use circular variance to measure how evenly rotation angles are distributed around 360°:
 
-- Calculate the circular variance of all rotation angles
-- Score = 1 / (1 + variance)
-- Higher score = more even distribution
+**Step 1:** Convert angles to radians and compute unit vectors on circle:
+
+```
+angleRad = angleDeg * π / 180
+x = cos(angleRad)
+y = sin(angleRad)
+```
+
+**Step 2:** Calculate mean direction (vector sum normalized):
+
+```
+x̄ = (Σx) / N
+ȳ = (Σy) / N
+R = √(x̄² + ȳ²)  // mean resultant length, ranges 0 to 1
+```
+
+**Step 3:** Compute circular variance:
+
+```
+variance = 1 - R
+```
+
+- R = 1 → all angles identical → variance = 0
+- R = 0 → perfectly even (angles at 360°/N intervals) → variance = 1
+
+**Step 4:** Score (higher = better):
+
+```
+score = 1 / (1 + variance)
+```
+
+- Perfect even distribution scores ~1
+- Clustered angles score lower
+
+This captures both how spread out angles are AND how well they use the full 360° disc.
 
 ### User Interface
 
-- Add "Solve" button in the rotation controls area
-- Show loading indicator while solving
-- Display top 10 solutions as they're found
-- Allow user to:
-  - Abort search at any time
-  - Select any found solution to apply
-  - Show "No valid solution found" if constraints impossible
+- Add "Solve" button in the toolbar, next to the Export button
+- Show loading indicator (spinner + "Solving..." text) while running
+- Display a modal with top 10 solutions:
+  - Each solution shows rotation values for all layers
+  - Distribution score indicator (visual bar or percentage)
+  - "Apply" button to select a solution
+  - "Abort" button to stop search and keep current rotations
+- Show "No valid solution found" state if constraints impossible
 
 ## Implementation Notes
 
-- Use existing `detectOverlaps` and `detectCutoutGaps` from `overlap-detection.ts`
+- Use existing `detectOverlaps` and `detectCutoutGaps` from `overlap-detection.ts` (adapted if needed)
 - Leverage existing Layer and DialConfig types
-- Consider caching bitmaps per layer per rotation to avoid recomputation
-- For N > 8 layers, consider adding early termination if full search is too slow
+- Cache bitmaps per layer per rotation to avoid recomputation
+- No early termination — search continues until full space is explored or user aborts
