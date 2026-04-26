@@ -45,22 +45,3 @@
 	</svg>
 	<span>Export SVG</span>
 </button>
-<button
-	onclick={() => doodledialStore.runSolver()}
-	disabled={!doodledialStore.svgContent || doodledialStore.solving}
-	class="group relative px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-gray-300 disabled:cursor-not-allowed enabled:hover:bg-emerald-700 enabled:hover:shadow-lg enabled:hover:shadow-emerald-200 enabled:active:scale-95 enabled:shadow-md enabled:shadow-emerald-100"
->
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		class="h-5 w-5 transition-transform group-hover:-translate-y-0.5"
-		viewBox="0 0 20 20"
-		fill="currentColor"
-	>
-		<path
-			fill-rule="evenodd"
-			d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-			clip-rule="evenodd"
-		/>
-	</svg>
-	<span>Solve</span>
-</button>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import type { DialConfig } from '$lib/types/doodledial';
 	import RotationKnob from './RotationKnob.svelte';
 
 	function handleToggle(layerId: string) {
