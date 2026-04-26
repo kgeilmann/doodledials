@@ -2,8 +2,6 @@ import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
-import { solveDoodledial } from '$lib/utils/solver';
-import type { SolverSolution, SolverProgress } from '$lib/utils/solver';
 
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
@@ -18,14 +16,6 @@ function createDoodledialStore() {
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Set<string>>>(new Map());
 	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
-	let solving = $state<boolean>(false);
-	let solverProgress = $state<SolverProgress>({
-		bestSolutions: [],
-		searchedCount: 0,
-		isComplete: false,
-		isAborted: false
-	});
-	let abortController = $state<AbortController | null>(null);
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -99,12 +89,6 @@ function createDoodledialStore() {
 		get cutoutGaps() {
 			return cutoutGaps;
 		},
-		get solving() {
-			return solving;
-		},
-		get solverProgress() {
-			return solverProgress;
-		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
 		},
@@ -166,57 +150,6 @@ function createDoodledialStore() {
 		},
 		clearCutoutGaps() {
 			cutoutGaps = new Map();
-		},
-		async runSolver() {
-			if (!combinedSvg || layers.size < 2 || solving) return;
-
-			solving = true;
-			abortController = new AbortController();
-			solverProgress = {
-				bestSolutions: [],
-				searchedCount: 0,
-				isComplete: false,
-				isAborted: false
-			};
-
-			try {
-				const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
-				const results = await solveDoodledial(
-					layerArray,
-					combinedSvg,
-					config.diameter,
-					(progress: SolverProgress) => {
-						solverProgress = progress;
-					},
-					abortController!.signal
-				);
-
-				solverProgress = {
-					...solverProgress,
-					bestSolutions: results,
-					isComplete: true
-				};
-			} catch (err) {
-				console.error('Solver failed:', err);
-			} finally {
-				solving = false;
-				abortController = null;
-			}
-		},
-		abortSolver() {
-			if (abortController) {
-				abortController.abort();
-			}
-		},
-		applySolution(solution: SolverSolution) {
-			solution.rotations.forEach((rotation: number, layerId: string) => {
-				const layer = layers.get(layerId);
-				if (layer) {
-					layers.set(layerId, { ...layer, rotation });
-				}
-			});
-			runOverlapDetection();
-			runCutoutGapDetection();
 		},
 		addLayer(layerId: string, index: number, name: string) {
 			const newLayer: Layer = {

@@ -5,7 +5,6 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
-	import SolverModal from '$lib/components/SolverModal.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
 	let showRasterPreview = $state(false);
@@ -144,16 +143,5 @@
 			<DialPreview />
 		</div>
 	</div>
-	<RasterPreviewModal bind:open={showRasterPreview} />
-	<SolverModal
-		solutions={doodledialStore.solverProgress.bestSolutions}
-		isOpen={doodledialStore.solving || doodledialStore.solverProgress.isComplete}
-		isSearching={doodledialStore.solving}
-		searchedCount={doodledialStore.solverProgress.searchedCount}
-		onSelect={(solution) => {
-			doodledialStore.applySolution(solution);
-		}}
-		onAbort={() => doodledialStore.abortSolver()}
-		onClose={() => doodledialStore.abortSolver()}
-	/>
+	<RasterPreviewModal bind:open={showRasterPreview} />	
 </main>
