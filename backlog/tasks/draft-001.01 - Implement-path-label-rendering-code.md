@@ -17,5 +17,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Implement code in combineDoodledial to add text labels near each SVG path element. The label should show the same content as the mark label (layer index). Need to calculate a suitable position near each path (e.g., using the path's bounding box or a fixed offset from center). The label should have similar styling to existing layer-label class.
+
 <!-- SECTION:DESCRIPTION:END -->

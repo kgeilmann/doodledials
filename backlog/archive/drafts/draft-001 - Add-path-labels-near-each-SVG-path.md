@@ -19,5 +19,7 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Add labels near each path in the SVG that show the same content as the mark labels (layer index). The marks already have labels showing layer numbers. Need to also place labels near each path so users can identify which path corresponds to which mark/layer. This involves calculating positions near each path element and adding text labels there.
+
 <!-- SECTION:DESCRIPTION:END -->

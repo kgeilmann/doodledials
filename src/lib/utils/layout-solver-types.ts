@@ -8,6 +8,8 @@ export interface SolverLayer {
 	index: number;
 	visible: boolean;
 	rotation: number; // in degrees
+	labelOffsetX?: number;
+	labelOffsetY?: number;
 	// Calculated properties for .cutout paths only
 	boundingBox: { x1: number; y1: number; x2: number; y2: number };
 	center: { x: number; y: number };

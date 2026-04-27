@@ -1,0 +1,108 @@
+import type { SolverLayer } from './layout-solver-types';
+import { detectOverlaps, detectCutoutGaps } from './overlap-detection';
+
+import type { SVGContent } from '../types/doodledial';
+
+const MIN_GAP_MM = 2;
+const MIN_ANGLE_SEPARATION_DEG = 2;
+// Force constants
+const OVERLAP_FORCE_FACTOR = 0.5; // Repulsive force for actual overlap
+const GAP_VIOLATION_FORCE_FACTOR = 0.3; // Repulsive force for gap violations
+const ANGULAR_FORCE_FACTOR = 0.2; // Force for angular separation
+const ATTRACTIVE_FORCE_FACTOR = 0.05; // Weak attractive force for distant layers
+const MAX_DISTANCE_FOR_ATTRACTION = 100; // pixels
+
+export async function calculateForces(
+	layers: SolverLayer[],
+	svgContent: SVGContent
+): Promise<{ forces: number[]; totalForce: number }> {
+	const forces = new Array(layers.length).fill(0);
+
+	// Skip force calculation if fewer than 2 layers
+	if (layers.length < 2) {
+		return { forces, totalForce: 0 };
+	}
+
+	// Convert SVGContent to string for overlap detection functions
+	const svgString = svgContent.raw;
+
+	// Detect actual overlaps (pixel intersection)
+	const overlapMap = await detectOverlaps(layers, svgString);
+	// Apply repulsive forces for actual overlaps
+	overlapMap.forEach((overlappingLayers, layerId) => {
+		const layerIndex = layers.findIndex((l) => l.id === layerId);
+		if (layerIndex === -1) return;
+
+		overlappingLayers.forEach((overlappingLayerId) => {
+			const overlappingLayerIndex = layers.findIndex((l) => l.id === overlappingLayerId);
+			if (overlappingLayerIndex === -1) return;
+
+			// Apply repulsive force to both layers (push them apart)
+			// In a force-directed layout, we'd calculate direction, but for rotation
+			// we apply torque that increases/decreases rotation
+			forces[layerIndex] += OVERLAP_FORCE_FACTOR;
+			forces[overlappingLayerIndex] -= OVERLAP_FORCE_FACTOR; // Opposite direction
+		});
+	});
+
+	// Detect gap violations (layers too close to each other)
+	const gapMap = await detectCutoutGaps(layers, svgString, MIN_GAP_MM);
+	// Apply repulsive forces for gap violations
+	gapMap.forEach((tooCloseLayers, layerId) => {
+		const layerIndex = layers.findIndex((l) => l.id === layerId);
+		if (layerIndex === -1) return;
+
+		tooCloseLayers.forEach((tooCloseLayerId) => {
+			const tooCloseLayerIndex = layers.findIndex((l) => l.id === tooCloseLayerId);
+			if (tooCloseLayerIndex === -1) return;
+
+			// Apply repulsive force proportional to gap violation
+			forces[layerIndex] += GAP_VIOLATION_FORCE_FACTOR;
+			forces[tooCloseLayerIndex] -= GAP_VIOLATION_FORCE_FACTOR; // Opposite direction
+		});
+	});
+
+	// Calculate angular separation forces
+	for (let i = 0; i < layers.length; i++) {
+		for (let j = i + 1; j < layers.length; j++) {
+			const angleDiff = Math.abs(((layers[i].rotation - layers[j].rotation + 180) % 360) - 180);
+
+			if (angleDiff < MIN_ANGLE_SEPARATION_DEG) {
+				// Layers are too close angularly, apply force to increase separation
+				const angleForce =
+					(ANGULAR_FORCE_FACTOR * (MIN_ANGLE_SEPARATION_DEG - angleDiff)) /
+					MIN_ANGLE_SEPARATION_DEG;
+				forces[i] += angleForce;
+				forces[j] -= angleForce; // Opposite direction
+			}
+		}
+	}
+
+	// Optional: Apply weak attractive force for layers that are far apart
+	// This helps with convergence in force-directed layouts
+	for (let i = 0; i < layers.length; i++) {
+		for (let j = i + 1; j < layers.length; j++) {
+			// Use bounding box centers for distance approximation
+			const dx = layers[i].center.x - layers[j].center.x;
+			const dy = layers[i].center.y - layers[j].center.y;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+
+			if (distance > MAX_DISTANCE_FOR_ATTRACTION) {
+				// Weak attractive force to bring distant layers closer
+				const attractiveForce =
+					(ATTRACTIVE_FORCE_FACTOR * (distance - MAX_DISTANCE_FOR_ATTRACTION)) /
+					MAX_DISTANCE_FOR_ATTRACTION;
+				forces[i] -= attractiveForce; // Attractive (negative in our convention)
+				forces[j] += attractiveForce; // Attractive (positive in our convention)
+			}
+		}
+	}
+
+	// Calculate total force magnitude for convergence detection
+	let totalForce = 0;
+	for (const force of forces) {
+		totalForce += Math.abs(force);
+	}
+
+	return { forces, totalForce };
+}

@@ -112,7 +112,6 @@ function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
 	return false;
 }
 
-
 async function renderCutoutWithStroke(
 	layer: Layer,
 	svgContent: string,
@@ -123,7 +122,7 @@ async function renderCutoutWithStroke(
 	const tempDoc = SVG(svgContent) as Svg;
 	tempDoc.find(':not(.cutout)').forEach((e) => e.attr('visibility', 'hidden'));
 
-	const cutout = tempDoc.findOne('#' + layer.id + " .cutout");
+	const cutout = tempDoc.findOne('#' + layer.id + ' .cutout');
 	if (!cutout) throw new Error('No cutout found');
 
 	const strokeWidthPx = (strokeWidthMm / dialDiameter) * renderSize;

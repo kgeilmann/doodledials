@@ -12,5 +12,7 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Write unit tests for label collision detection functions (label-label, label-mark, label-path). Test bounding box intersection logic and kld-intersections integration.
+
 <!-- SECTION:DESCRIPTION:END -->

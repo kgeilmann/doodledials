@@ -13,5 +13,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Create utility function to detect label-mark collisions using bounding box intersection. Returns true if a label overlaps with a mark (the radial line on the disc).
+
 <!-- SECTION:DESCRIPTION:END -->

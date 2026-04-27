@@ -14,17 +14,22 @@ ordinal: 500
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 In FileUpload.svelte, after processing a new SVG file, call doodledialStore.setOffsetX(0), setOffsetY(0), and setScale(1) to reset the values to defaults.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
+
 <!-- AC:BEGIN -->
+
 - [x] #1 e2e test checking the reset exists and passes
 <!-- AC:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ## Implementation Plan
 
 ### Phase 1: Add reset calls to FileUpload.svelte
@@ -41,6 +46,7 @@ doodledialStore.setScale(1);
 ### Phase 2: Add e2e test
 
 Add a Playwright e2e test to verify that uploading a new SVG resets the offsets and scale:
+
 - Upload an SVG file
 - Modify offsetX, offsetY, and scale values via the UI
 - Upload a new SVG file

@@ -13,5 +13,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Create utility function to detect label-path collisions using kld-intersections library. Parse SVG path and check intersection with label bounding box.
+
 <!-- SECTION:DESCRIPTION:END -->

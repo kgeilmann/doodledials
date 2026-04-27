@@ -13,5 +13,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Define Label type with position (x, y), text, layerId, boundingBox for collision detection. Update Layer interface to include path reference.
+
 <!-- SECTION:DESCRIPTION:END -->

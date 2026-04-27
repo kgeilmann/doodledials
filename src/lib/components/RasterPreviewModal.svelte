@@ -20,10 +20,10 @@
 			doc.find(':not(.cutout)').forEach((e) => {
 				e.attr('visibility', 'hidden');
 			});
-			
+
 			doc.find('.cutout').forEach((e) => {
-				e.parent()?.attr('visibility', 'visible')
-			})
+				e.parent()?.attr('visibility', 'visible');
+			});
 
 			return doc.svg();
 		} catch (err) {
