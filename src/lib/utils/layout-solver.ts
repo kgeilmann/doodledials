@@ -20,6 +20,8 @@ export async function solveOptimalLayout(
 		return layers;
 	}
 
+	console.log(`[Layout Solver] Starting optimization for ${layers.length} layers`);
+
 	// Convert to solver layers
 	const solverLayers: SolverLayer[] = layers.map((layer) => ({
 		...layer,
@@ -31,9 +33,13 @@ export async function solveOptimalLayout(
 	}));
 
 	// Main solver loop
+	let lastForces: number[] = [];
+	let lastTotalForce = 0;
 	for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
 		// Calculate forces based on current layer positions/rotations
 		const { forces, totalForce } = await calculateForces(solverLayers, svgContent);
+		lastForces = forces;
+		lastTotalForce = totalForce;
 
 		// Update velocities with damping
 		for (let i = 0; i < solverLayers.length; i++) {
@@ -48,8 +54,18 @@ export async function solveOptimalLayout(
 		// Apply constraints (normalization, uniqueness, minimum separation)
 		applyConstraints(solverLayers);
 
+		// Log progress every 50 iterations or when converged
+		if (iteration % 50 === 0 || totalForce < CONVERGENCE_THRESHOLD) {
+			console.log(
+				`[Layout Solver] Iteration ${iteration}/${MAX_ITERATIONS}, Total Force: ${totalForce.toFixed(6)}`
+			);
+		}
+
 		// Check for convergence AFTER applying forces and constraints
 		if (totalForce < CONVERGENCE_THRESHOLD) {
+			console.log(
+				`[Layout Solver] Converged after ${iteration + 1} iterations with total force: ${totalForce.toFixed(6)}`
+			);
 			// Convert back to Layer format and return
 			return solverLayers.map((solverLayer, index) => ({
 				id: solverLayer.id,
@@ -64,6 +80,9 @@ export async function solveOptimalLayout(
 	}
 
 	// If we reach max iterations, apply constraints and return anyway
+	console.log(
+		`[Layout Solver] Reached maximum iterations (${MAX_ITERATIONS}) with final total force: ${lastTotalForce.toFixed(6)}`
+	);
 	applyConstraints(solverLayers);
 
 	// Convert back to Layer format

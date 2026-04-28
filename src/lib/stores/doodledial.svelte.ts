@@ -225,6 +225,7 @@ function createDoodledialStore() {
 				return;
 			}
 
+			console.log(`[Layout Solver UI] Starting layout optimization for ${layers.size} layers`);
 			this.setLoading(true);
 			this.setError(null);
 
@@ -243,6 +244,8 @@ function createDoodledialStore() {
 				// Re-run overlap and cutout gap detection with new rotations
 				runOverlapDetection();
 				runCutoutGapDetection();
+
+				console.log(`[Layout Solver UI] Layout optimization completed successfully`);
 			} catch (err) {
 				console.error('Layout solving failed:', err);
 				this.setError(
