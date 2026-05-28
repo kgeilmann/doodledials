@@ -27,14 +27,96 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 	detectOverlaps: detectOverlapsMock
 }));
 
-import { OptimizerCancelledError, runOptimizer } from './run-optimizer';
+import {
+	OptimizerCancelledError,
+	analyzeCircularGaps,
+	calculateRestoringContributions,
+	calculateRestoringForceMap,
+	runOptimizer
+} from './run-optimizer';
+
+describe('analyzeCircularGaps', () => {
+	test('sorts by normalized angle and computes circular gaps including wrap-around', () => {
+		const state = {
+			layerA: 300,
+			layerB: 20,
+			layerC: 140
+		};
+
+		const analysis = analyzeCircularGaps(state, ['layerA', 'layerB', 'layerC']);
+
+		expect(analysis.orderedLayerIds).toEqual(['layerB', 'layerC', 'layerA']);
+		expect(analysis.idealGap).toBeCloseTo(120, 6);
+		expect(analysis.gaps).toEqual([
+			{ fromLayerId: 'layerB', toLayerId: 'layerC', gap: 120 },
+			{ fromLayerId: 'layerC', toLayerId: 'layerA', gap: 160 },
+			{ fromLayerId: 'layerA', toLayerId: 'layerB', gap: 80 }
+		]);
+	});
+
+	test('returns a full-circle gap for a single layer', () => {
+		const analysis = analyzeCircularGaps({ solo: 77 }, ['solo']);
+
+		expect(analysis.orderedLayerIds).toEqual(['solo']);
+		expect(analysis.idealGap).toBe(360);
+		expect(analysis.gaps).toEqual([{ fromLayerId: 'solo', toLayerId: 'solo', gap: 360 }]);
+	});
+});
+
+describe('calculateRestoringContributions', () => {
+	test('returns finite numeric contributions for every layer id', () => {
+		const state = {
+			layerA: 300,
+			layerB: 20,
+			layerC: 140
+		};
+
+		const contributions = calculateRestoringContributions(state, ['layerA', 'layerB', 'layerC']);
+
+		expect(Object.keys(contributions).sort()).toEqual(['layerA', 'layerB', 'layerC']);
+		expect(Number.isFinite(contributions.layerA)).toBe(true);
+		expect(Number.isFinite(contributions.layerB)).toBe(true);
+		expect(Number.isFinite(contributions.layerC)).toBe(true);
+
+		const total = contributions.layerA + contributions.layerB + contributions.layerC;
+		expect(total).toBeCloseTo(0, 8);
+	});
+
+	test('returns zeroed map when there are fewer than two layers', () => {
+		expect(calculateRestoringContributions({ solo: 123 }, ['solo'])).toEqual({ solo: 0 });
+		expect(calculateRestoringContributions({}, [])).toEqual({});
+	});
+});
+
+describe('calculateRestoringForceMap', () => {
+	test('returns a zero-sum restoring map after clamp normalization', () => {
+		const layerIds = ['layerA', 'layerB', 'layerC'];
+		const restoringContributions = {
+			layerA: 10,
+			layerB: -1,
+			layerC: -8
+		};
+
+		const forceMap = calculateRestoringForceMap(restoringContributions, layerIds);
+		const total = layerIds.reduce((sum, layerId) => sum + forceMap[layerId], 0);
+
+		expect(Number.isFinite(forceMap.layerA)).toBe(true);
+		expect(Number.isFinite(forceMap.layerB)).toBe(true);
+		expect(Number.isFinite(forceMap.layerC)).toBe(true);
+		expect(total).toBeCloseTo(0, 8);
+	});
+
+	test('returns empty map for empty layer ids', () => {
+		expect(calculateRestoringForceMap({}, [])).toEqual({});
+	});
+});
 
 describe('runOptimizer', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	test('rerenders updated svg snapshots and moves layers using overlap force only', async () => {
+	test('rerenders updated svg snapshots and moves layers', async () => {
 		const layers: Layer[] = [
 			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
 			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
@@ -67,7 +149,7 @@ describe('runOptimizer', () => {
 		expect(new Set(svgSnapshots).size).toBeGreaterThan(1);
 
 		expect(result.layout.layerA).toBeGreaterThan(0);
-		expect(result.layout.layerB).toBe(0);
+		expect(Math.abs(result.layout.layerA - result.layout.layerB)).toBeGreaterThan(0);
 	});
 
 	test('applies a deterministic exploration nudge when overlap probes cannot reduce pixels', async () => {
@@ -104,7 +186,7 @@ describe('runOptimizer', () => {
 				}
 			});
 
-			expect(result.layout.layerA).toBe(0);
+			expect(Number.isFinite(result.layout.layerA)).toBe(true);
 			expect(result.layout.layerB).not.toBe(0);
 			expect(result.layout.layerC).not.toBe(0);
 		} finally {
@@ -156,5 +238,55 @@ describe('runOptimizer', () => {
 				{ signal: controller.signal }
 			)
 		).rejects.toBeInstanceOf(OptimizerCancelledError);
+	});
+
+	test('reduces worst circular gap deviation when no overlaps are present', async () => {
+		detectOverlapsMock.mockImplementation(async () => new Map());
+
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 10, visible: true },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+		];
+
+		const input = {
+			diameter: 200,
+			config: {
+				diameter: 200,
+				minDiameter: 50,
+				maxDiameter: 200,
+				borderWidth: 2,
+				padding: 0.05,
+				offsetX: 0,
+				offsetY: 0,
+				scale: 1
+			},
+			layers,
+			svgContent: {
+				raw: '<svg viewBox="0 0 200 200"></svg>',
+				filename: 'fixture.svg'
+			}
+		};
+
+		const initialState = Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation]));
+		const initialAnalysis = analyzeCircularGaps(
+			initialState as Record<string, number>,
+			layers.map((layer) => layer.id)
+		);
+		const initialWorstDeviation = Math.max(
+			...initialAnalysis.gaps.map((gap) => Math.abs(gap.gap - initialAnalysis.idealGap))
+		);
+
+		const result = await runOptimizer(input);
+
+		const finalAnalysis = analyzeCircularGaps(
+			result.layout,
+			layers.map((layer) => layer.id)
+		);
+		const finalWorstDeviation = Math.max(
+			...finalAnalysis.gaps.map((gap) => Math.abs(gap.gap - finalAnalysis.idealGap))
+		);
+
+		expect(finalWorstDeviation).toBeLessThan(initialWorstDeviation);
 	});
 });
