@@ -31,9 +31,10 @@
 		try {
 			const result = await runOptimizer(
 				{
-					layerCount: doodledialStore.layers.length,
 					diameter: doodledialStore.config.diameter,
-					layerIds: doodledialStore.layers.map((layer) => layer.id)
+					config: doodledialStore.config,
+					layers: doodledialStore.layers,
+					svgContent: doodledialStore.svgContent
 				},
 				(progress) => {
 					optimizerProgress = progress.percent;
@@ -43,7 +44,7 @@
 				}
 			);
 
-			doodledialStore.applyLayerRotations(result.randomLayout);
+			doodledialStore.applyLayerRotations(result.layout);
 
 			console.log('[optimizer] Frontend optimizer response:', result);
 		} catch (error) {

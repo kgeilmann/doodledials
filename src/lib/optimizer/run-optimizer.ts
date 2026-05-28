@@ -1,7 +1,12 @@
+import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import { combineDoodledial } from '$lib/utils/doodledial';
+import { detectOverlaps } from '$lib/utils/overlap-detection';
+
 export interface OptimizerInput {
-	layerCount: number;
 	diameter: number;
-	layerIds: string[];
+	config: DialConfig;
+	layers: Layer[];
+	svgContent: SVGContent;
 }
 
 export interface OptimizerProgress {
@@ -12,60 +17,123 @@ export interface OptimizerProgress {
 }
 
 export interface OptimizerResult {
-	randomLayout: Record<string, number>;
+	layout: Record<string, number>;
 }
+
+type OptimizerStopReason = 'convergence' | 'max_iteration_count';
+
+const CONVERGENCE_THRESHOLD = 0.001;
+const MAX_ITERATIONS = 536;
+const MIN_OVERLAP_PIXELS = 2;
+const OVERLAP_TEST_STEP = 1;
+const TIME_STEP_DT = 0.5;
 
 function normalizeAngle(angle: number): number {
 	return ((angle % 360) + 360) % 360;
 }
 
-function createRandomLayout(layerIds: string[]): Record<string, number> {
-	const randomLayout: Record<string, number> = {};
-	const minSeparation = layerIds.length > 0 ? 360 / layerIds.length : 0;
-
-	layerIds.forEach((layerId, index) => {
-		const jitter = (Math.random() - 0.5) * Math.min(25, minSeparation * 0.4);
-		randomLayout[layerId] = normalizeAngle(index * minSeparation + jitter);
-	});
-
-	return randomLayout;
+function getIterationCount(layerCount: number): number {
+	return Math.min(MAX_ITERATIONS, Math.max(12, layerCount * 6));
 }
 
-function getSimulatedIterationCount(layerCount: number): number {
-	return Math.min(36, Math.max(12, layerCount * 6));
+function initializeLayout(layers: Layer[]): Record<string, number> {
+	return Object.fromEntries(layers.map((layer) => [layer.id, normalizeAngle(layer.rotation)]));
 }
 
-function initializeLayout(layerIds: string[]): Record<string, number> {
-	return createRandomLayout(layerIds);
+function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Layer[] {
+	return layers.map((layer) => ({
+		...layer,
+		rotation: normalizeAngle(state[layer.id] ?? layer.rotation)
+	}));
 }
 
-function calculateOverlapForce(): number {
-	return (Math.random() - 0.5) * 8;
+async function detectLayoutOverlaps(
+	input: OptimizerInput,
+	state: Record<string, number>
+): Promise<Map<string, Map<string, number>>> {
+	const layers = buildRotatedLayers(input.layers, state);
+	const combinedSvg = combineDoodledial(
+		input.svgContent,
+		{ ...input.config, diameter: input.diameter },
+		layers
+	);
+
+	return detectOverlaps(layers, combinedSvg);
+}
+
+function getOverlapCount(
+	overlaps: Map<string, Map<string, number>>,
+	layerId: string,
+	otherLayerId: string
+): number {
+	return overlaps.get(layerId)?.get(otherLayerId) ?? 0;
+}
+
+async function calculateOverlapForce(
+	input: OptimizerInput,
+	state: Record<string, number>,
+	currentOverlaps: Map<string, Map<string, number>>,
+	layerId: string
+): Promise<number> {
+	const overlappingLayerIds = input.layers
+		.filter((layer) => layer.id !== layerId)
+		.map((layer) => layer.id)
+		.filter(
+			(otherLayerId) =>
+				getOverlapCount(currentOverlaps, layerId, otherLayerId) >= MIN_OVERLAP_PIXELS
+		);
+
+	if (overlappingLayerIds.length === 0) {
+		return 0;
+	}
+
+	const positiveState = {
+		...state,
+		[layerId]: normalizeAngle(state[layerId] + OVERLAP_TEST_STEP)
+	};
+	const negativeState = {
+		...state,
+		[layerId]: normalizeAngle(state[layerId] - OVERLAP_TEST_STEP)
+	};
+
+	const [positiveOverlaps, negativeOverlaps] = await Promise.all([
+		detectLayoutOverlaps(input, positiveState),
+		detectLayoutOverlaps(input, negativeState)
+	]);
+
+	let force = 0;
+
+	for (const otherLayerId of overlappingLayerIds) {
+		const currentOverlap = getOverlapCount(currentOverlaps, layerId, otherLayerId);
+		const positiveOverlap = getOverlapCount(positiveOverlaps, layerId, otherLayerId);
+		const negativeOverlap = getOverlapCount(negativeOverlaps, layerId, otherLayerId);
+		const positiveDecrease = currentOverlap - positiveOverlap;
+		const negativeDecrease = currentOverlap - negativeOverlap;
+
+		if (positiveDecrease >= negativeDecrease && positiveDecrease > 0) {
+			force += OVERLAP_TEST_STEP;
+		} else if (negativeDecrease > positiveDecrease && negativeDecrease > 0) {
+			force -= OVERLAP_TEST_STEP;
+		}
+	}
+
+	return force;
 }
 
 function calculateRestoringForce(): number {
-	return (Math.random() - 0.5) * 3;
+	return 0;
 }
 
 function calculateUniqueForce(): number {
-	return (Math.random() - 0.5) * 2;
+	return 0;
 }
 
-function integrateAngle(
-	currentAngle: number,
-	totalForce: number,
-	timeStepDt: number,
-	damping = 0.9
-): number {
-	return normalizeAngle(currentAngle + totalForce * timeStepDt * damping);
+function integrateAngle(currentAngle: number, totalForce: number, timeStepDt: number): number {
+	return normalizeAngle(currentAngle + totalForce * timeStepDt);
 }
 
 function shouldConverge(avgForceMagnitude: number, threshold: number): boolean {
 	return avgForceMagnitude < threshold;
-}
-
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function runOptimizer(
@@ -74,33 +142,64 @@ export async function runOptimizer(
 ): Promise<OptimizerResult> {
 	console.log('[optimizer] Frontend optimizer called:', input);
 
-	const simulatedIterations = getSimulatedIterationCount(input.layerCount);
+	const layerIds = input.layers.map((layer) => layer.id);
+	const simulatedIterations = getIterationCount(layerIds.length);
 
-	const state = initializeLayout(input.layerIds);
+	let state = initializeLayout(input.layers);
+	let stopReason: OptimizerStopReason = 'max_iteration_count';
+	let completedIterations = 0;
+	let lastAverageForceMagnitude = 0;
 
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
+		const layoutBefore = { ...state };
+		const currentOverlaps = await detectLayoutOverlaps(input, state);
 		let totalForceMagnitude = 0;
-		for (const layerId of input.layerIds) {
-			const overlapForce = calculateOverlapForce();
+		const nextState = { ...state };
+		const layerForces: Record<string, number> = {};
+
+		for (const layerId of layerIds) {
+			const overlapForce = await calculateOverlapForce(input, state, currentOverlaps, layerId);
 			const restoringForce = calculateRestoringForce();
 			const uniqueForce = calculateUniqueForce();
 			const totalForce = overlapForce + restoringForce + uniqueForce;
-			state[layerId] = integrateAngle(state[layerId], totalForce, 0.5);
+			layerForces[layerId] = totalForce;
+			nextState[layerId] = integrateAngle(state[layerId], totalForce, TIME_STEP_DT);
 			totalForceMagnitude += Math.abs(totalForce);
 		}
-		const averageForceMagnitude =
-			input.layerIds.length > 0 ? totalForceMagnitude / input.layerIds.length : 0;
+
+		const averageForceMagnitude = layerIds.length > 0 ? totalForceMagnitude / layerIds.length : 0;
+		lastAverageForceMagnitude = averageForceMagnitude;
+		completedIterations = iteration;
 		onProgress?.({
 			percent: Math.round((iteration / simulatedIterations) * 100),
 			message: `Iterations ${iteration}/${simulatedIterations}`,
 			iteration,
 			totalIterations: simulatedIterations
 		});
-			await sleep(50);
-		if (iteration >= 6 && shouldConverge(averageForceMagnitude, 0.001)) {
+
+		console.log('[optimizer] Frontend optimizer iteration:', {
+			iteration,
+			averageForceMagnitude,
+			forces: layerForces,
+			layoutBefore,
+			layoutAfter: nextState
+		});
+
+		state = nextState;
+
+		if (shouldConverge(averageForceMagnitude, CONVERGENCE_THRESHOLD)) {
+			stopReason = 'convergence';
 			break;
 		}
 	}
-	const randomLayout = state;
-	return { randomLayout };
+
+	console.log('[optimizer] Frontend optimizer stopped:', {
+		reason: stopReason,
+		iterations: completedIterations,
+		maxIterations: simulatedIterations,
+		averageForceMagnitude: lastAverageForceMagnitude
+	});
+
+	const layout = state;
+	return { layout };
 }
