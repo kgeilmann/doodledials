@@ -5,7 +5,7 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
-	import { runOptimizer } from '$lib/optimizer/run-optimizer';
+	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
 	let showRasterPreview = $state(false);
@@ -15,6 +15,28 @@
 	let optimizerProgressMessage = $state('');
 	let optimizerIteration = $state(0);
 	let optimizerTotalIterations = $state(0);
+	let optimizerAbortController = $state<AbortController | null>(null);
+	let optimizerOverlayVisible = $state(false);
+	let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function handleCancelOptimizer() {
+		optimizerAbortController?.abort();
+	}
+
+	function clearOverlayHideTimer() {
+		if (overlayHideTimer) {
+			clearTimeout(overlayHideTimer);
+			overlayHideTimer = null;
+		}
+	}
+
+	function scheduleOverlayHide() {
+		clearOverlayHideTimer();
+		overlayHideTimer = setTimeout(() => {
+			optimizerOverlayVisible = false;
+			overlayHideTimer = null;
+		}, 1200);
+	}
 
 	async function handleRunOptimizer() {
 		if (!doodledialStore.svgContent || optimizerPending) {
@@ -27,6 +49,12 @@
 		optimizerProgressMessage = 'Preparing optimizer input...';
 		optimizerIteration = 0;
 		optimizerTotalIterations = 0;
+		optimizerOverlayVisible = true;
+		clearOverlayHideTimer();
+		optimizerAbortController = new AbortController();
+
+		let optimizerApplied = false;
+		let optimizerCancelled = false;
 
 		try {
 			const result = await runOptimizer(
@@ -37,23 +65,43 @@
 					svgContent: doodledialStore.svgContent
 				},
 				(progress) => {
+					optimizerProgressPhase = 'Optimizing';
 					optimizerProgress = progress.percent;
 					optimizerProgressMessage = progress.message;
 					optimizerIteration = progress.iteration;
 					optimizerTotalIterations = progress.totalIterations;
-				}
+				},
+				{ signal: optimizerAbortController.signal }
 			);
 
 			doodledialStore.applyLayerRotations(result.layout);
+			optimizerApplied = true;
 
 			console.log('[optimizer] Frontend optimizer response:', result);
 		} catch (error) {
-			console.error('[optimizer] Frontend optimizer call failed:', error);
+			if (error instanceof OptimizerCancelledError) {
+				optimizerCancelled = true;
+				optimizerProgressPhase = 'Cancelled';
+				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || '?'} - optimization cancelled.`;
+			} else {
+				optimizerProgressPhase = 'Error';
+				optimizerProgressMessage = 'Optimization failed. Please try again.';
+				console.error('[optimizer] Frontend optimizer call failed:', error);
+			}
 		} finally {
-			optimizerProgress = 100;
-			optimizerProgressPhase = 'complete';
-			optimizerProgressMessage = `Layout applied after ${optimizerIteration} iterations.`;
+			if (optimizerApplied) {
+				optimizerProgress = 100;
+				optimizerProgressPhase = 'Complete';
+				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - layout applied.`;
+			}
+
+			if (optimizerCancelled && optimizerProgress === 0) {
+				optimizerProgressMessage = 'Optimization cancelled.';
+			}
+
 			optimizerPending = false;
+			optimizerAbortController = null;
+			scheduleOverlayHide();
 		}
 	}
 </script>
@@ -204,31 +252,51 @@
 			</button>
 			<ExportButton />
 		</div>
-		{#if optimizerPending}
-			<section class="mx-4 mb-2 rounded-2xl border border-indigo-200 bg-white shadow-sm px-4 py-3">
-				<div class="flex items-center justify-between text-xs text-slate-600 mb-2">
-					<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
-					<span data-testid="optimizer-iteration-counter"
-						>Iterations {optimizerIteration}/{optimizerTotalIterations || '?'}</span
-					>
+		<div class="flex-1 p-4">
+			<div class="relative h-full w-full">
+				<div class="h-full flex items-center justify-center">
+					<DialPreview />
 				</div>
-				<div
-					class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"
-					data-testid="optimizer-progress-track"
-				>
-					<div
-						data-testid="optimizer-progress-bar"
-						class="h-full bg-indigo-600 transition-all duration-300"
-						style="width: {optimizerProgress}%;"
-					></div>
-				</div>
-				<p class="mt-2 text-sm text-slate-700" data-testid="optimizer-progress-message">
-					{optimizerProgressMessage}
-				</p>
-			</section>
-		{/if}
-		<div class="flex-1 flex items-center justify-center p-4">
-			<DialPreview />
+				{#if optimizerOverlayVisible}
+					<div class="absolute inset-0 z-20 flex items-start justify-center pointer-events-none">
+						<div class="absolute inset-0 rounded-2xl bg-slate-900/20 backdrop-blur-[1px]"></div>
+						<section
+							class="pointer-events-auto relative mt-4 w-full max-w-2xl rounded-2xl border border-indigo-200 bg-white/95 shadow-lg px-4 py-3"
+						>
+							<div class="flex items-center justify-between text-xs text-slate-600 mb-2 gap-4">
+								<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
+								<span data-testid="optimizer-iteration-counter"
+									>Iterations {optimizerIteration}/{optimizerTotalIterations || '?'}</span
+								>
+							</div>
+							<div
+								class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"
+								data-testid="optimizer-progress-track"
+							>
+								<div
+									data-testid="optimizer-progress-bar"
+									class="h-full bg-indigo-600 transition-all duration-300"
+									style="width: {optimizerProgress}%;"
+								></div>
+							</div>
+							<div class="mt-2 flex items-center justify-between gap-4">
+								<p class="text-sm text-slate-700" data-testid="optimizer-progress-message">
+									{optimizerProgressMessage}
+								</p>
+								{#if optimizerPending}
+									<button
+										onclick={handleCancelOptimizer}
+										class="shrink-0 px-3 py-1.5 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 text-sm font-medium transition-colors hover:bg-rose-100"
+										data-testid="optimizer-cancel-button"
+									>
+										Cancel
+									</button>
+								{/if}
+							</div>
+						</section>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 	<RasterPreviewModal bind:open={showRasterPreview} />

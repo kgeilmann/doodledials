@@ -27,7 +27,7 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 	detectOverlaps: detectOverlapsMock
 }));
 
-import { runOptimizer } from './run-optimizer';
+import { OptimizerCancelledError, runOptimizer } from './run-optimizer';
 
 describe('runOptimizer', () => {
 	beforeEach(() => {
@@ -121,5 +121,40 @@ describe('runOptimizer', () => {
 				return overlaps;
 			});
 		}
+	});
+
+	test('throws cancellation error when abort signal is already cancelled', async () => {
+		const controller = new AbortController();
+		controller.abort();
+
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+		];
+
+		await expect(
+			runOptimizer(
+				{
+					diameter: 200,
+					config: {
+						diameter: 200,
+						minDiameter: 50,
+						maxDiameter: 200,
+						borderWidth: 2,
+						padding: 0.05,
+						offsetX: 0,
+						offsetY: 0,
+						scale: 1
+					},
+					layers,
+					svgContent: {
+						raw: '<svg viewBox="0 0 200 200"></svg>',
+						filename: 'fixture.svg'
+					}
+				},
+				undefined,
+				{ signal: controller.signal }
+			)
+		).rejects.toBeInstanceOf(OptimizerCancelledError);
 	});
 });
