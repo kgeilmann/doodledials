@@ -5,7 +5,7 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
-	import { runOptimizerStub } from '$lib/optimizer/run-optimizer';
+	import { runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
 	let showRasterPreview = $state(false);
@@ -16,7 +16,7 @@
 	let optimizerIteration = $state(0);
 	let optimizerTotalIterations = $state(0);
 
-	async function runOptimizer() {
+	async function handleRunOptimizer() {
 		if (!doodledialStore.svgContent || optimizerPending) {
 			return;
 		}
@@ -29,7 +29,7 @@
 		optimizerTotalIterations = 0;
 
 		try {
-			const result = await runOptimizerStub(
+			const result = await runOptimizer(
 				{
 					layerCount: doodledialStore.layers.length,
 					diameter: doodledialStore.config.diameter,
@@ -37,7 +37,6 @@
 				},
 				(progress) => {
 					optimizerProgress = progress.percent;
-					optimizerProgressPhase = progress.phase;
 					optimizerProgressMessage = progress.message;
 					optimizerIteration = progress.iteration;
 					optimizerTotalIterations = progress.totalIterations;
@@ -165,7 +164,7 @@
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
-				onclick={runOptimizer}
+				onclick={handleRunOptimizer}
 				disabled={!doodledialStore.svgContent || optimizerPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>
