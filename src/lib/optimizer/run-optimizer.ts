@@ -22,6 +22,9 @@ export interface OptimizerResult {
 
 export interface OptimizerOptions {
 	signal?: AbortSignal;
+	initializeRandomly?: boolean;
+	randomSeed?: number;
+	roundOutputAngles?: boolean;
 }
 
 export class OptimizerCancelledError extends Error {
@@ -84,6 +87,38 @@ function normalizeAngle(angle: number): number {
 
 function getIterationCount(layerCount: number): number {
 	return Math.min(MAX_ITERATIONS, Math.max(12, layerCount * 6));
+}
+
+function createSeededRandom(seed: number): () => number {
+	let state = seed >>> 0;
+
+	return () => {
+		state = (state * 1664525 + 1013904223) >>> 0;
+		return state / 0x100000000;
+	};
+}
+
+function createRandomSource(seed?: number): () => number {
+	return typeof seed === 'number' ? createSeededRandom(seed) : Math.random;
+}
+
+function initializeRandomLayout(layers: Layer[], seed?: number): Record<string, number> {
+	if (layers.length === 0) {
+		return {};
+	}
+
+	const random = createRandomSource(seed);
+	const idealGap = 360 / layers.length;
+	const jitterRange = idealGap * 0.2;
+	const offset = random() * 360;
+
+	const layoutEntries = layers.map((layer, index) => {
+		const jitter = (random() - 0.5) * jitterRange;
+		const angle = normalizeAngle(offset + index * idealGap + jitter);
+		return [layer.id, angle] as const;
+	});
+
+	return Object.fromEntries(layoutEntries);
 }
 
 export function analyzeCircularGaps(
@@ -246,6 +281,15 @@ export function calculateUniqueForceMap(
 
 function initializeLayout(layers: Layer[]): Record<string, number> {
 	return Object.fromEntries(layers.map((layer) => [layer.id, normalizeAngle(layer.rotation)]));
+}
+
+function roundLayoutAngles(layout: Record<string, number>): Record<string, number> {
+	return Object.fromEntries(
+		Object.entries(layout).map(([layerId, angle]) => [
+			layerId,
+			Math.round(normalizeAngle(angle)) % 360
+		])
+	);
 }
 
 function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Layer[] {
@@ -413,8 +457,12 @@ export async function runOptimizer(
 
 	const layerIds = input.layers.map((layer) => layer.id);
 	const simulatedIterations = getIterationCount(layerIds.length);
+	const shouldInitializeRandomly = options?.initializeRandomly ?? false;
+	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
 
-	let state = initializeLayout(input.layers);
+	let state = shouldInitializeRandomly
+		? initializeRandomLayout(input.layers, options?.randomSeed)
+		: initializeLayout(input.layers);
 	let stopReason: OptimizerStopReason = 'max_iteration_count';
 	let completedIterations = 0;
 	let lastAverageForceMagnitude = 0;
@@ -486,6 +534,6 @@ export async function runOptimizer(
 		averageForceMagnitude: lastAverageForceMagnitude
 	});
 
-	const layout = state;
+	const layout = shouldRoundOutputAngles ? roundLayoutAngles(state) : state;
 	return { layout };
 }
