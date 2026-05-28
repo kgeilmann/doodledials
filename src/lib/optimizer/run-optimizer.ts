@@ -26,6 +26,7 @@ const CONVERGENCE_THRESHOLD = 0.001;
 const MAX_ITERATIONS = 536;
 const MIN_OVERLAP_PIXELS = 2;
 const OVERLAP_TEST_STEP = 1;
+const OVERLAP_DIRECTION_SEARCH_STEPS = [1, 2, 4, 8];
 const TIME_STEP_DT = 0.5;
 
 function normalizeAngle(angle: number): number {
@@ -87,37 +88,55 @@ async function calculateOverlapForce(
 		return 0;
 	}
 
-	const positiveState = {
-		...state,
-		[layerId]: normalizeAngle(state[layerId] + OVERLAP_TEST_STEP)
-	};
-	const negativeState = {
-		...state,
-		[layerId]: normalizeAngle(state[layerId] - OVERLAP_TEST_STEP)
-	};
+	let bestDirection: -1 | 0 | 1 = 0;
+	let bestStep = OVERLAP_TEST_STEP;
+	let bestDecrease = 0;
 
-	const [positiveOverlaps, negativeOverlaps] = await Promise.all([
-		detectLayoutOverlaps(input, positiveState),
-		detectLayoutOverlaps(input, negativeState)
-	]);
+	for (const step of OVERLAP_DIRECTION_SEARCH_STEPS) {
+		const positiveState = {
+			...state,
+			[layerId]: normalizeAngle(state[layerId] + step)
+		};
+		const negativeState = {
+			...state,
+			[layerId]: normalizeAngle(state[layerId] - step)
+		};
 
-	let force = 0;
+		const [positiveOverlaps, negativeOverlaps] = await Promise.all([
+			detectLayoutOverlaps(input, positiveState),
+			detectLayoutOverlaps(input, negativeState)
+		]);
 
-	for (const otherLayerId of overlappingLayerIds) {
-		const currentOverlap = getOverlapCount(currentOverlaps, layerId, otherLayerId);
-		const positiveOverlap = getOverlapCount(positiveOverlaps, layerId, otherLayerId);
-		const negativeOverlap = getOverlapCount(negativeOverlaps, layerId, otherLayerId);
-		const positiveDecrease = currentOverlap - positiveOverlap;
-		const negativeDecrease = currentOverlap - negativeOverlap;
+		let positiveTotalDecrease = 0;
+		let negativeTotalDecrease = 0;
 
-		if (positiveDecrease >= negativeDecrease && positiveDecrease > 0) {
-			force += OVERLAP_TEST_STEP;
-		} else if (negativeDecrease > positiveDecrease && negativeDecrease > 0) {
-			force -= OVERLAP_TEST_STEP;
+		for (const otherLayerId of overlappingLayerIds) {
+			const currentOverlap = getOverlapCount(currentOverlaps, layerId, otherLayerId);
+			const positiveOverlap = getOverlapCount(positiveOverlaps, layerId, otherLayerId);
+			const negativeOverlap = getOverlapCount(negativeOverlaps, layerId, otherLayerId);
+			positiveTotalDecrease += Math.max(0, currentOverlap - positiveOverlap);
+			negativeTotalDecrease += Math.max(0, currentOverlap - negativeOverlap);
+		}
+
+		if (positiveTotalDecrease >= negativeTotalDecrease && positiveTotalDecrease > bestDecrease) {
+			bestDecrease = positiveTotalDecrease;
+			bestDirection = 1;
+			bestStep = step;
+		} else if (
+			negativeTotalDecrease > positiveTotalDecrease &&
+			negativeTotalDecrease > bestDecrease
+		) {
+			bestDecrease = negativeTotalDecrease;
+			bestDirection = -1;
+			bestStep = step;
 		}
 	}
 
-	return force;
+	if (bestDirection === 0) {
+		return getExplorationDirection(layerId) * OVERLAP_TEST_STEP;
+	}
+
+	return bestDirection * bestStep;
 }
 
 function calculateRestoringForce(): number {
@@ -134,6 +153,16 @@ function integrateAngle(currentAngle: number, totalForce: number, timeStepDt: nu
 
 function shouldConverge(avgForceMagnitude: number, threshold: number): boolean {
 	return avgForceMagnitude < threshold;
+}
+
+function getExplorationDirection(layerId: string): -1 | 1 {
+	let hash = 0;
+	for (let i = 0; i < layerId.length; i++) {
+		hash = (hash << 5) - hash + layerId.charCodeAt(i);
+		hash |= 0;
+	}
+
+	return Math.abs(hash) % 2 === 0 ? 1 : -1;
 }
 
 export async function runOptimizer(
