@@ -66,8 +66,8 @@ This status reflects the current implementation in src/lib/optimizer/run-optimiz
 - [x] Pairwise overlap detection exists via detectOverlaps and overlap map access.
 - [x] Minimum overlap threshold check exists (MIN_OVERLAP_PIXELS = 2).
 - [x] Directional search exists and compares CW/CCW candidates over multiple step sizes.
-- [ ] Missing refined overlap magnitude model $M = K_{rep} * (\max(0, S_{ij} - 1))^p$ (current code returns only directional step).
-- [ ] Missing explicit weighting constant wiring for overlap magnitude in total force sum.
+- [x] Refined overlap magnitude model is implemented: $M = K_{rep} * (\max(0, S_{ij} - 1))^p$.
+- [x] Overlap magnitude weighting is explicitly wired into the total force sum.
 
 ### B. Restoring Force (Uniform Angular Distribution)
 
@@ -79,8 +79,8 @@ This status reflects the current implementation in src/lib/optimizer/run-optimiz
 
 ### C. Unique Force (Minimum Angular Separation)
 
-- [ ] Not implemented (calculateUniqueForce currently returns 0).
-- [ ] Missing minimum angular distance checks and repulsive push when below threshold.
+- [x] Implemented via pairwise minimum angular distance checks.
+- [x] Repulsive push is applied when angles violate the minimum separation threshold.
 
 ### D. Execution Protocol
 
