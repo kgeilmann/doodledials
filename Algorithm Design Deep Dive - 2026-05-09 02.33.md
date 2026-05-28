@@ -71,8 +71,11 @@ This status reflects the current implementation in src/lib/optimizer/run-optimiz
 
 ### B. Restoring Force (Uniform Angular Distribution)
 
-- [ ] Not implemented (calculateRestoringForce currently returns 0).
-- [ ] Missing sorted-angle gap analysis, ideal gap calculation, and neighbor-based corrective pushes.
+- [x] Implemented with sorted-angle gap analysis and ideal gap calculation.
+- [x] Neighbor-based corrective pushes are implemented via circular gap contributions.
+- [x] Restoring force is weighted and clamped for stability (small active weight, bounded force).
+- [x] Zero-bias normalization is implemented to avoid net rotational drift.
+- [x] Per-iteration restoring diagnostics exist (raw sum vs normalized sum).
 
 ### C. Unique Force (Minimum Angular Separation)
 
@@ -91,18 +94,20 @@ This status reflects the current implementation in src/lib/optimizer/run-optimiz
 
 ### Recommended Next Implementation
 
-Implement B. Restoring Force next.
+Implement C. Unique Force next.
 
 Reason:
-- It directly addresses the soft goal (uniform angular distribution), which is currently not active.
-- It is deterministic and easier to validate with focused unit tests than unique-force clustering behavior.
-- It will improve layout quality immediately, even before tuning the unique force constants.
+
+- Restoring force is now active, tested, and instrumented.
+- Unique-force is the remaining missing core force component from the blueprint.
+- It will reduce angular clustering and improve minimum-separation safety before overlap magnitude tuning.
 
 Suggested follow-up order:
-1. Implement restoring force with sorted circular gaps and neighbor pushes.
-2. Add/expand unit tests for gap equalization behavior.
-3. Implement unique-force minimum angular separation guard.
-4. Add overlap magnitude weighting model and tune coefficients.
+
+1. Implement unique-force minimum angular separation guard with small weight and clamp.
+2. Add/expand unit tests for minimum-separation behavior and force-map invariants.
+3. Add overlap magnitude weighting model and tune coefficients.
+4. Add optional randomized unique-angle initialization and evaluate convergence impact.
 
 ---
 
