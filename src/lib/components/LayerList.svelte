@@ -43,7 +43,23 @@
 	const cutoutGapsMap = $derived(doodledialStore.cutoutGaps);
 
 	function getOverlappingLayers(layerId: string): string[] {
-		return Array.from(overlapsMap.get(layerId) || []);
+		return Array.from((overlapsMap.get(layerId) || new Map()).keys());
+	}
+
+	function getOverlapPixelCount(layerId: string, overlappingLayerId: string): number {
+		return overlapsMap.get(layerId)?.get(overlappingLayerId) || 0;
+	}
+
+	function formatOverlapTooltip(layerId: string): string {
+		const overlappingIds = Array.from((overlapsMap.get(layerId) || new Map()).keys());
+		if (overlappingIds.length === 0) return '';
+		const details = overlappingIds
+			.map(
+				(id) =>
+					`${doodledialStore.getLayer(id)?.name || id} (${getOverlapPixelCount(layerId, id)} px)`
+			)
+			.join(', ');
+		return `Overlaps with: ${details}`;
 	}
 
 	function getCutoutGapLayers(layerId: string): string[] {
@@ -113,9 +129,7 @@
 								{#if getOverlappingLayers(layer.id).length > 0}
 									<span
 										class="inline-flex items-center gap-1 text-xs text-amber-600 ml-1"
-										title="Overlaps with: {getOverlappingLayers(layer.id)
-											.map((id) => doodledialStore.getLayer(id)?.name || id)
-											.join(', ')}"
+										title={formatOverlapTooltip(layer.id)}
 									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"

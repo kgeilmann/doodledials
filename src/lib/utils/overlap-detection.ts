@@ -12,8 +12,8 @@ interface PixelData {
 export async function detectOverlaps(
 	layers: Layer[],
 	combinedSvg: string
-): Promise<Map<string, Set<string>>> {
-	const overlaps = new Map<string, Set<string>>();
+): Promise<Map<string, Map<string, number>>> {
+	const overlaps = new Map<string, Map<string, number>>();
 
 	if (layers.length < 2) {
 		return overlaps;
@@ -30,15 +30,16 @@ export async function detectOverlaps(
 				continue;
 			}
 
-			if (bitmapsOverlap(bitmapA, bitmapB)) {
+			const pixelCount = countOverlapPixels(bitmapA, bitmapB);
+			if (pixelCount > 0) {
 				if (!overlaps.has(layers[i].id)) {
-					overlaps.set(layers[i].id, new Set());
+					overlaps.set(layers[i].id, new Map());
 				}
 				if (!overlaps.has(layers[j].id)) {
-					overlaps.set(layers[j].id, new Set());
+					overlaps.set(layers[j].id, new Map());
 				}
-				overlaps.get(layers[i].id)!.add(layers[j].id);
-				overlaps.get(layers[j].id)!.add(layers[i].id);
+				overlaps.get(layers[i].id)!.set(layers[j].id, pixelCount);
+				overlaps.get(layers[j].id)!.set(layers[i].id, pixelCount);
 			}
 		}
 	}
@@ -110,6 +111,25 @@ function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
 	}
 
 	return false;
+}
+
+function countOverlapPixels(a: PixelData, b: PixelData): number {
+	const { width, height } = a;
+	let count = 0;
+
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const idx = (y * width + x) * 4;
+			const aFilled = a.data[idx + 3] > 0;
+			const bFilled = b.data[idx + 3] > 0;
+
+			if (aFilled && bFilled) {
+				count++;
+			}
+		}
+	}
+
+	return count;
 }
 
 async function renderCutoutWithStroke(
