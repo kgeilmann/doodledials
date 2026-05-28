@@ -15,7 +15,7 @@ This optimizer is separate from the existing force-directed optimizer and should
 In scope:
 - Add a new brute-force optimizer module and public API.
 - Keep existing optimizer untouched as default.
-- Enable optional UI selection of optimizer strategy (force-directed vs brute-force).
+- Integrate brute-force execution via an additional dedicated UI button.
 - Support cancellation, progress reporting, and deterministic execution.
 - Reuse current overlap detection pipeline and overlap caching.
 
@@ -27,8 +27,8 @@ Out of scope:
 ## Operating Assumptions
 
 - Exact-complete runs are expected to be practical for smaller layer counts (for example single-digit `N`) with caching and pruning.
-- For larger `N`, optional `maxNodes` and `maxRuntimeMs` are expected to be used.
-- If guardrails are enabled and hit, returned layout is the best feasible incumbent found so far.
+- For larger `N`, optional `maxRuntimeMs` is expected to be used.
+- If runtime guardrail is enabled and hit, returned layout is the best feasible incumbent found so far.
 
 ## High-Level Approach
 
@@ -67,7 +67,6 @@ Preserve compatibility with existing optimizer shapes where practical:
 - `signal?: AbortSignal`
 - `roundOutputAngles?: boolean` (default `true`)
 - `overlapPairCacheMode?: PairOverlapCacheMode` (default `absolute`)
-- `maxNodes?: number` (optional guardrail, no effect when omitted)
 - `maxRuntimeMs?: number` (optional guardrail, no effect when omitted)
 - `anchorLayerId?: string` (optional; default first layer by stable ordering)
 - `onSearchSnapshot?: (snapshot) => void` (diagnostics)
@@ -77,7 +76,6 @@ Preserve compatibility with existing optimizer shapes where practical:
 Explicit stop metadata for diagnostics and logging:
 - `exact_complete`
 - `cancelled`
-- `node_limit`
 - `time_limit`
 - `no_feasible_solution`
 
@@ -162,8 +160,8 @@ This avoids repeated expensive raster overlap checks.
 
 Progress for brute-force is node-based (not iteration-based), but map to existing UI fields:
 - `iteration`: `nodesVisited`
-- `totalIterations`: `estimatedNodeBudget` (derived from guardrails; fallback to visited so far)
-- `percent`: bounded estimate if `maxNodes`/`maxRuntimeMs` set, else monotonic capped pseudo-progress.
+- `totalIterations`: `estimatedWorkBudget` derived from runtime guardrail; fallback to visited so far.
+- `percent`: bounded estimate if `maxRuntimeMs` is set, else monotonic capped pseudo-progress.
 - `message`: include `Nodes x/y`, `Depth d/n`, `Best min-gap`, `Feasible found yes/no`.
 
 Optional snapshot payload fields:
@@ -177,16 +175,13 @@ Optional snapshot payload fields:
 ## UI Integration Plan
 
 `src/routes/+page.svelte` changes:
-- Add optimizer mode selector in existing run dialog:
-  - `force-directed` (default)
-  - `brute-force`
-- Keep current controls for force-directed mode.
-- Show brute-force specific guardrails only when brute-force selected:
-  - optional `maxNodes`
+- Keep existing `Run Optimizer` button and flow for force-directed mode.
+- Add a second button: `Run Brute Force Optimizer`.
+- Reuse existing dialog shell with brute-force-specific options:
   - optional `maxRuntimeMs`
-- Route execution to selected runner:
-  - `runOptimizer(...)` for force-directed
-  - `runBruteforceOptimizer(...)` for brute-force
+- Route execution based on which button opened the dialog:
+  - force-directed button -> `runOptimizer(...)`
+  - brute-force button -> `runBruteforceOptimizer(...)`
 - Preserve existing progress overlay test text containing `Iterations` to avoid e2e regression.
 
 ## Testing Plan
@@ -197,7 +192,7 @@ Optional snapshot payload fields:
 2. Anchor symmetry reduction preserves feasibility and deterministic orientation.
 3. Rejects/returns no-feasible result when constraints impossible.
 4. Honors cancellation via `AbortSignal`.
-5. Honors `maxNodes` and `maxRuntimeMs` stop reasons.
+5. Honors `maxRuntimeMs` stop reason.
 6. Uses overlap cache mode default and accepts `relative`.
 7. Finds feasible solution when one exists in controlled mock overlap scenario.
 8. Prefers better soft score among multiple feasible solutions.
@@ -218,7 +213,7 @@ Add benchmark-like dev test utility (optional) for representative `N` values to 
 ## Risks and Mitigations
 
 Risk: combinatorial explosion as layer count increases.
-- Mitigation: symmetry reduction, candidate ordering, conservative bounds, optional node/time guardrails.
+- Mitigation: symmetry reduction, candidate ordering, conservative bounds, optional runtime guardrail.
 
 Risk: incorrect pruning from overly aggressive bounds.
 - Mitigation: start with hard-prune + very conservative soft bounds; add property tests and cross-check with exhaustive tiny cases.
@@ -232,7 +227,7 @@ Risk: UI regression from progress text changes.
 ## Rollout Plan
 
 1. Add brute-force core module with tests using mocked overlap detection.
-2. Wire UI strategy selection while keeping force-directed default.
+2. Wire a dedicated brute-force run button while keeping force-directed default.
 3. Add e2e coverage for brute-force mode.
 4. Verify project gates:
    - `pnpm check`
