@@ -57,6 +57,53 @@ This force maintains a minimal angular separation ($\delta_{\text{min}}$).
     d. Update angle: $\theta_i^{\text{new}} = \text{Normalize}(\theta_i^{\text{current}} + \Delta\Theta_{\text{total}, i})$.
 3.  **Termination:** Stop when the average magnitude of all three forces across all paths is below the convergence threshold ($\epsilon_F$).
 
+## 6. IMPLEMENTATION STATUS (CODEBASE SNAPSHOT)
+
+This status reflects the current implementation in src/lib/optimizer/run-optimizer.ts and UI integration in src/routes/+page.svelte.
+
+### A. Overlap Repulsion Force
+
+- [x] Pairwise overlap detection exists via detectOverlaps and overlap map access.
+- [x] Minimum overlap threshold check exists (MIN_OVERLAP_PIXELS = 2).
+- [x] Directional search exists and compares CW/CCW candidates over multiple step sizes.
+- [ ] Missing refined overlap magnitude model $M = K_{rep} * (\max(0, S_{ij} - 1))^p$ (current code returns only directional step).
+- [ ] Missing explicit weighting constant wiring for overlap magnitude in total force sum.
+
+### B. Restoring Force (Uniform Angular Distribution)
+
+- [ ] Not implemented (calculateRestoringForce currently returns 0).
+- [ ] Missing sorted-angle gap analysis, ideal gap calculation, and neighbor-based corrective pushes.
+
+### C. Unique Force (Minimum Angular Separation)
+
+- [ ] Not implemented (calculateUniqueForce currently returns 0).
+- [ ] Missing minimum angular distance checks and repulsive push when below threshold.
+
+### D. Execution Protocol
+
+- [x] Iterative simulation loop exists.
+- [x] Convergence check by average force magnitude exists.
+- [x] Angle normalization exists.
+- [x] Progress reporting per iteration exists.
+- [x] Cancellation support exists via AbortSignal and OptimizerCancelledError.
+- [ ] Initialization from randomized unique angles is missing (current implementation starts from existing layer rotations).
+- [ ] Final rounded integer output angles are missing (current layout values are floating-point).
+
+### Recommended Next Implementation
+
+Implement B. Restoring Force next.
+
+Reason:
+- It directly addresses the soft goal (uniform angular distribution), which is currently not active.
+- It is deterministic and easier to validate with focused unit tests than unique-force clustering behavior.
+- It will improve layout quality immediately, even before tuning the unique force constants.
+
+Suggested follow-up order:
+1. Implement restoring force with sorted circular gaps and neighbor pushes.
+2. Add/expand unit tests for gap equalization behavior.
+3. Implement unique-force minimum angular separation guard.
+4. Add overlap magnitude weighting model and tune coefficients.
+
 ---
 
 This comprehensive specification captures every interaction, constraint, and mathematical adjustment required to solve the problem. If you are ready to move forward, we can now transition into a **Pseudocode Generation Phase** or a **Technology Stack Selection Phase**.
