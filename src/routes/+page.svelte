@@ -5,6 +5,7 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
+	import type { OptimizerTuning } from '$lib/optimizer/run-optimizer';
 	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
@@ -18,6 +19,33 @@
 	let optimizerAbortController = $state<AbortController | null>(null);
 	let optimizerOverlayVisible = $state(false);
 	let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+	let optimizerTuningOpen = $state(false);
+	let optimizerInitializeRandomly = $state(false);
+	let optimizerRoundOutputAngles = $state(true);
+	let optimizerRandomSeedInput = $state('42');
+
+	const optimizerTuningDefaults: Required<OptimizerTuning> = {
+		overlapMagnitudeWeight: 0.1,
+		overlapMagnitudePower: 1.2,
+		maxOverlapForceMagnitude: 8,
+		overlapTestStep: 1,
+		overlapDirectionSearchSteps: [1, 2, 4, 8],
+		timeStepDt: 0.5,
+		restoringForceWeight: 0.02,
+		maxRestoringForce: 2,
+		uniqueForceWeight: 0.02,
+		minUniqueAngleSeparation: 5,
+		maxUniqueForce: 2
+	};
+
+	let optimizerTuning = $state({ ...optimizerTuningDefaults });
+
+	function resetOptimizerTuning() {
+		optimizerTuning = { ...optimizerTuningDefaults };
+		optimizerInitializeRandomly = false;
+		optimizerRoundOutputAngles = true;
+		optimizerRandomSeedInput = '42';
+	}
 
 	function handleCancelOptimizer() {
 		optimizerAbortController?.abort();
@@ -57,6 +85,9 @@
 		let optimizerCancelled = false;
 
 		try {
+			const parsedSeed = Number(optimizerRandomSeedInput);
+			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;
+
 			const result = await runOptimizer(
 				{
 					diameter: doodledialStore.config.diameter,
@@ -71,7 +102,23 @@
 					optimizerIteration = progress.iteration;
 					optimizerTotalIterations = progress.totalIterations;
 				},
-				{ signal: optimizerAbortController.signal }
+				{
+					signal: optimizerAbortController.signal,
+					initializeRandomly: optimizerInitializeRandomly,
+					randomSeed: optimizerInitializeRandomly ? randomSeed : undefined,
+					roundOutputAngles: optimizerRoundOutputAngles,
+					tuning: {
+						overlapMagnitudeWeight: optimizerTuning.overlapMagnitudeWeight,
+						overlapMagnitudePower: optimizerTuning.overlapMagnitudePower,
+						maxOverlapForceMagnitude: optimizerTuning.maxOverlapForceMagnitude,
+						timeStepDt: optimizerTuning.timeStepDt,
+						restoringForceWeight: optimizerTuning.restoringForceWeight,
+						maxRestoringForce: optimizerTuning.maxRestoringForce,
+						uniqueForceWeight: optimizerTuning.uniqueForceWeight,
+						minUniqueAngleSeparation: optimizerTuning.minUniqueAngleSeparation,
+						maxUniqueForce: optimizerTuning.maxUniqueForce
+					}
+				}
 			);
 
 			doodledialStore.applyLayerRotations(result.layout);
@@ -206,6 +253,129 @@
 					<h2 class="text-lg font-semibold text-gray-800">Layer Management</h2>
 				</div>
 				<LayerList />
+			</section>
+
+			<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
+				<div class="flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-800">Optimizer Tuning</h2>
+					<button
+						onclick={() => (optimizerTuningOpen = !optimizerTuningOpen)}
+						class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+					>
+						{optimizerTuningOpen ? 'Hide' : 'Show'}
+					</button>
+				</div>
+
+				{#if optimizerTuningOpen}
+					<div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+						<label class="col-span-2 flex items-center gap-2">
+							<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
+							<span>Initialize Randomly</span>
+						</label>
+						<label class="col-span-2 flex items-center gap-2">
+							<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
+							<span>Round Output Angles</span>
+						</label>
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Random Seed</span>
+							<input
+								type="text"
+								bind:value={optimizerRandomSeedInput}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+
+						<label>
+							<span class="block text-gray-600 mb-1">Overlap Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.overlapMagnitudeWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Overlap Power</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.overlapMagnitudePower}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Max Overlap Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxOverlapForceMagnitude}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Time Step</span>
+							<input
+								type="number"
+								step="0.05"
+								bind:value={optimizerTuning.timeStepDt}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Restoring Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.restoringForceWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Max Restoring Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxRestoringForce}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Unique Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.uniqueForceWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Min Unique Separation</span>
+							<input
+								type="number"
+								step="0.5"
+								bind:value={optimizerTuning.minUniqueAngleSeparation}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Max Unique Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxUniqueForce}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+					</div>
+					<div class="mt-4 flex justify-end">
+						<button
+							onclick={resetOptimizerTuning}
+							class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+						>
+							Reset Defaults
+						</button>
+					</div>
+				{/if}
 			</section>
 		{/if}
 	</div>
