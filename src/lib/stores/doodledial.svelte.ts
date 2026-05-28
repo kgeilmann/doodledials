@@ -15,7 +15,7 @@ function createDoodledialStore() {
 	let selectedLayer = $state<string | null>(null);
 	let labelEditMode = $state<boolean>(false);
 	let checkingOverlaps = $state<boolean>(false);
-	let overlaps = $state<Map<string, Set<string>>>(new Map());
+	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
 	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
 
 	function getLayerArray(): Layer[] {
@@ -134,11 +134,11 @@ function createDoodledialStore() {
 		setCheckingOverlaps(checking: boolean) {
 			checkingOverlaps = checking;
 		},
-		setOverlaps(newOverlaps: Map<string, Set<string>>) {
+		setOverlaps(newOverlaps: Map<string, Map<string, number>>) {
 			overlaps = newOverlaps;
 		},
 		getOverlappingLayers(layerId: string): string[] {
-			return Array.from(overlaps.get(layerId) || []);
+			return Array.from(overlaps.get(layerId)?.keys() || []);
 		},
 		clearOverlaps() {
 			overlaps = new Map();
