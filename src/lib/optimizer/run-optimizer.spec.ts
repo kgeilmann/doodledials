@@ -5,18 +5,25 @@ const { combineDoodledialMock, detectOverlapsMock } = vi.hoisted(() => ({
 	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
 		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
 	),
-	detectOverlapsMock: vi.fn(async (_layers: Layer[], combinedSvg: string) => {
-		const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-		const [firstLayerId, secondLayerId] = Object.keys(rotations);
-		const overlaps = new Map<string, Map<string, number>>();
+	detectOverlapsMock: vi.fn(
+		async (
+			_layers: Layer[],
+			combinedSvg: string,
+			options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
+		) => {
+			void options;
+			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+			const [firstLayerId, secondLayerId] = Object.keys(rotations);
+			const overlaps = new Map<string, Map<string, number>>();
 
-		if (firstLayerId && secondLayerId && rotations[firstLayerId] <= rotations[secondLayerId]) {
-			overlaps.set(firstLayerId, new Map([[secondLayerId, 10]]));
-			overlaps.set(secondLayerId, new Map([[firstLayerId, 10]]));
+			if (firstLayerId && secondLayerId && rotations[firstLayerId] <= rotations[secondLayerId]) {
+				overlaps.set(firstLayerId, new Map([[secondLayerId, 10]]));
+				overlaps.set(secondLayerId, new Map([[firstLayerId, 10]]));
+			}
+
+			return overlaps;
 		}
-
-		return overlaps;
-	})
+	)
 }));
 
 vi.mock('$lib/utils/doodledial', () => ({
@@ -24,7 +31,12 @@ vi.mock('$lib/utils/doodledial', () => ({
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
-	detectOverlaps: detectOverlapsMock
+	detectOverlaps: detectOverlapsMock,
+	createOverlapDetectionCache: () => ({
+		bitmapByLayerAngle: new Map(),
+		overlapByAbsolutePairAngles: new Map(),
+		overlapByRelativePairAngles: new Map()
+	})
 }));
 
 import {
@@ -219,6 +231,72 @@ describe('runOptimizer', () => {
 
 		expect(Number.isFinite(result.layout.layerA)).toBe(true);
 		expect(Number.isFinite(result.layout.layerB)).toBe(true);
+	});
+
+	test('uses absolute overlap pair cache mode by default', async () => {
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+		];
+
+		await runOptimizer({
+			diameter: 200,
+			config: {
+				diameter: 200,
+				minDiameter: 50,
+				maxDiameter: 200,
+				borderWidth: 2,
+				padding: 0.05,
+				offsetX: 0,
+				offsetY: 0,
+				scale: 1
+			},
+			layers,
+			svgContent: {
+				raw: '<svg viewBox="0 0 200 200"></svg>',
+				filename: 'fixture.svg'
+			}
+		});
+
+		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		expect(firstCallOptions).toBeDefined();
+		expect(firstCallOptions?.pairCacheMode).toBe('absolute');
+		expect(firstCallOptions?.cache).toBeDefined();
+	});
+
+	test('supports relative overlap pair cache mode', async () => {
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+		];
+
+		await runOptimizer(
+			{
+				diameter: 200,
+				config: {
+					diameter: 200,
+					minDiameter: 50,
+					maxDiameter: 200,
+					borderWidth: 2,
+					padding: 0.05,
+					offsetX: 0,
+					offsetY: 0,
+					scale: 1
+				},
+				layers,
+				svgContent: {
+					raw: '<svg viewBox="0 0 200 200"></svg>',
+					filename: 'fixture.svg'
+				}
+			},
+			undefined,
+			{ overlapPairCacheMode: 'relative' }
+		);
+
+		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		expect(firstCallOptions).toBeDefined();
+		expect(firstCallOptions?.pairCacheMode).toBe('relative');
+		expect(firstCallOptions?.cache).toBeDefined();
 	});
 
 	test('applies a deterministic exploration nudge when overlap probes cannot reduce pixels', async () => {

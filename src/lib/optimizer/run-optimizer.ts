@@ -1,6 +1,11 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from '$lib/utils/doodledial';
-import { detectOverlaps } from '$lib/utils/overlap-detection';
+import {
+	createOverlapDetectionCache,
+	detectOverlaps,
+	type OverlapDetectionCache,
+	type PairOverlapCacheMode
+} from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
 	diameter: number;
@@ -47,6 +52,7 @@ export interface OptimizerOptions {
 	randomSeed?: number;
 	roundOutputAngles?: boolean;
 	tuning?: OptimizerTuning;
+	overlapPairCacheMode?: PairOverlapCacheMode;
 	onIterationSnapshot?: (snapshot: OptimizerIterationSnapshot) => void;
 }
 
@@ -402,7 +408,9 @@ function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Lay
 
 async function detectLayoutOverlaps(
 	input: OptimizerInput,
-	state: Record<string, number>
+	state: Record<string, number>,
+	overlapCache: OverlapDetectionCache,
+	overlapPairCacheMode: PairOverlapCacheMode
 ): Promise<Map<string, Map<string, number>>> {
 	const layers = buildRotatedLayers(input.layers, state);
 	const combinedSvg = combineDoodledial(
@@ -411,7 +419,10 @@ async function detectLayoutOverlaps(
 		layers
 	);
 
-	return detectOverlaps(layers, combinedSvg);
+	return detectOverlaps(layers, combinedSvg, {
+		cache: overlapCache,
+		pairCacheMode: overlapPairCacheMode
+	});
 }
 
 function getOverlapCount(
@@ -455,7 +466,9 @@ async function calculateOverlapForce(
 	state: Record<string, number>,
 	currentOverlaps: Map<string, Map<string, number>>,
 	layerId: string,
-	tuning: ResolvedOptimizerTuning
+	tuning: ResolvedOptimizerTuning,
+	overlapCache: OverlapDetectionCache,
+	overlapPairCacheMode: PairOverlapCacheMode
 ): Promise<number> {
 	const overlappingLayerIds = input.layers
 		.filter((layer) => layer.id !== layerId)
@@ -491,8 +504,8 @@ async function calculateOverlapForce(
 		};
 
 		const [positiveOverlaps, negativeOverlaps] = await Promise.all([
-			detectLayoutOverlaps(input, positiveState),
-			detectLayoutOverlaps(input, negativeState)
+			detectLayoutOverlaps(input, positiveState, overlapCache, overlapPairCacheMode),
+			detectLayoutOverlaps(input, negativeState, overlapCache, overlapPairCacheMode)
 		]);
 
 		let positiveTotalDecrease = 0;
@@ -564,6 +577,7 @@ export async function runOptimizer(
 	onProgress?: (progress: OptimizerProgress) => void,
 	options?: OptimizerOptions
 ): Promise<OptimizerResult> {
+	const startedAtMs = Date.now();
 	console.log('[optimizer] Frontend optimizer called:', input);
 	throwIfCancelled(options?.signal);
 
@@ -572,6 +586,8 @@ export async function runOptimizer(
 	const shouldInitializeRandomly = options?.initializeRandomly ?? false;
 	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
 	const tuning = resolveOptimizerTuning(options?.tuning);
+	const overlapPairCacheMode = options?.overlapPairCacheMode ?? 'absolute';
+	const overlapCache = createOverlapDetectionCache();
 
 	let state = shouldInitializeRandomly
 		? initializeRandomLayout(input.layers, options?.randomSeed)
@@ -583,7 +599,12 @@ export async function runOptimizer(
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
 		throwIfCancelled(options?.signal);
 		const layoutBefore = { ...state };
-		const currentOverlaps = await detectLayoutOverlaps(input, state);
+		const currentOverlaps = await detectLayoutOverlaps(
+			input,
+			state,
+			overlapCache,
+			overlapPairCacheMode
+		);
 		const restoringContributions = calculateRestoringContributions(state, layerIds);
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds, tuning);
 		const uniqueContributions = calculateUniqueContributions(state, layerIds, tuning);
@@ -605,7 +626,9 @@ export async function runOptimizer(
 				state,
 				currentOverlaps,
 				layerId,
-				tuning
+				tuning,
+				overlapCache,
+				overlapPairCacheMode
 			);
 			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce(layerId, restoringForceMap);
@@ -640,8 +663,11 @@ export async function runOptimizer(
 			totalIterations: simulatedIterations
 		});
 
+		const elapsedMs = Date.now() - startedAtMs;
+
 		console.log('[optimizer] Frontend optimizer iteration:', {
 			iteration,
+			elapsedMs,
 			averageForceMagnitude,
 			overlapAggregate,
 			restoringRawSum,
@@ -665,7 +691,8 @@ export async function runOptimizer(
 		reason: stopReason,
 		iterations: completedIterations,
 		maxIterations: simulatedIterations,
-		averageForceMagnitude: lastAverageForceMagnitude
+		averageForceMagnitude: lastAverageForceMagnitude,
+		elapsedMs: Date.now() - startedAtMs
 	});
 
 	const layout = shouldRoundOutputAngles ? roundLayoutAngles(state) : state;
