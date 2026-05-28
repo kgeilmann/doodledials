@@ -20,7 +20,7 @@
 	let optimizerAbortController = $state<AbortController | null>(null);
 	let optimizerOverlayVisible = $state(false);
 	let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
-	let optimizerTuningOpen = $state(false);
+	let optimizerRunDialogOpen = $state(false);
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
 	let optimizerRandomSeedInput = $state('42');
@@ -52,6 +52,23 @@
 
 	function handleCancelOptimizer() {
 		optimizerAbortController?.abort();
+	}
+
+	function handleOpenOptimizerDialog() {
+		if (!doodledialStore.svgContent || optimizerPending) {
+			return;
+		}
+
+		optimizerRunDialogOpen = true;
+	}
+
+	function handleCloseOptimizerDialog() {
+		optimizerRunDialogOpen = false;
+	}
+
+	async function handleConfirmOptimizerDialogRun() {
+		optimizerRunDialogOpen = false;
+		await handleRunOptimizer();
 	}
 
 	function clearOverlayHideTimer() {
@@ -258,146 +275,13 @@
 				</div>
 				<LayerList />
 			</section>
-
-			<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
-				<div class="flex items-center justify-between gap-3">
-					<h2 class="text-lg font-semibold text-gray-800">Optimizer Tuning</h2>
-					<button
-						onclick={() => (optimizerTuningOpen = !optimizerTuningOpen)}
-						class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						{optimizerTuningOpen ? 'Hide' : 'Show'}
-					</button>
-				</div>
-
-				{#if optimizerTuningOpen}
-					<div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-						<label class="col-span-2 flex items-center gap-2">
-							<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
-							<span>Initialize Randomly</span>
-						</label>
-						<label class="col-span-2 flex items-center gap-2">
-							<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
-							<span>Round Output Angles</span>
-						</label>
-						<label class="col-span-2">
-							<span class="block text-gray-600 mb-1">Random Seed</span>
-							<input
-								type="text"
-								bind:value={optimizerRandomSeedInput}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label class="col-span-2">
-							<span class="block text-gray-600 mb-1">Caching Algorithm</span>
-							<select
-								bind:value={optimizerOverlapPairCacheMode}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1 bg-white"
-							>
-								<option value="absolute">Absolute (layer+angle pair)</option>
-								<option value="relative">Relative (layer pair + angle delta)</option>
-							</select>
-						</label>
-
-						<label>
-							<span class="block text-gray-600 mb-1">Overlap Weight</span>
-							<input
-								type="number"
-								step="0.01"
-								bind:value={optimizerTuning.overlapMagnitudeWeight}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Overlap Power</span>
-							<input
-								type="number"
-								step="0.1"
-								bind:value={optimizerTuning.overlapMagnitudePower}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Max Overlap Force</span>
-							<input
-								type="number"
-								step="0.1"
-								bind:value={optimizerTuning.maxOverlapForceMagnitude}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Time Step</span>
-							<input
-								type="number"
-								step="0.05"
-								bind:value={optimizerTuning.timeStepDt}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Restoring Weight</span>
-							<input
-								type="number"
-								step="0.01"
-								bind:value={optimizerTuning.restoringForceWeight}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Max Restoring Force</span>
-							<input
-								type="number"
-								step="0.1"
-								bind:value={optimizerTuning.maxRestoringForce}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Unique Weight</span>
-							<input
-								type="number"
-								step="0.01"
-								bind:value={optimizerTuning.uniqueForceWeight}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label>
-							<span class="block text-gray-600 mb-1">Min Unique Separation</span>
-							<input
-								type="number"
-								step="0.5"
-								bind:value={optimizerTuning.minUniqueAngleSeparation}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-						<label class="col-span-2">
-							<span class="block text-gray-600 mb-1">Max Unique Force</span>
-							<input
-								type="number"
-								step="0.1"
-								bind:value={optimizerTuning.maxUniqueForce}
-								class="w-full rounded-lg border border-gray-300 px-2 py-1"
-							/>
-						</label>
-					</div>
-					<div class="mt-4 flex justify-end">
-						<button
-							onclick={resetOptimizerTuning}
-							class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-						>
-							Reset Defaults
-						</button>
-					</div>
-				{/if}
-			</section>
 		{/if}
 	</div>
 
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
-				onclick={handleRunOptimizer}
+				onclick={handleOpenOptimizerDialog}
 				disabled={!doodledialStore.svgContent || optimizerPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>
@@ -484,4 +368,177 @@
 		</div>
 	</div>
 	<RasterPreviewModal bind:open={showRasterPreview} />
+
+	{#if optimizerRunDialogOpen}
+		<div
+			class="fixed inset-0 z-30 flex items-center justify-center p-4"
+			data-testid="optimizer-config-dialog"
+		>
+			<button
+				type="button"
+				onclick={handleCloseOptimizerDialog}
+				class="absolute inset-0 bg-slate-900/40"
+				aria-label="Close optimizer dialog"
+			></button>
+
+			<section
+				class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl p-6"
+			>
+				<div class="flex items-start justify-between gap-4 mb-4">
+					<div>
+						<h2 class="text-xl font-semibold text-gray-900">Run Optimizer</h2>
+						<p class="text-sm text-gray-600 mt-1">
+							Configure tuning values, then start optimization.
+						</p>
+					</div>
+					<button
+						type="button"
+						onclick={handleCloseOptimizerDialog}
+						class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+					>
+						Close
+					</button>
+				</div>
+
+				<div class="grid grid-cols-2 gap-3 text-sm">
+					<label class="col-span-2 flex items-center gap-2">
+						<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
+						<span>Initialize Randomly</span>
+					</label>
+					<label class="col-span-2 flex items-center gap-2">
+						<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
+						<span>Round Output Angles</span>
+					</label>
+					<label class="col-span-2">
+						<span class="block text-gray-600 mb-1">Random Seed</span>
+						<input
+							type="text"
+							bind:value={optimizerRandomSeedInput}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label class="col-span-2">
+						<span class="block text-gray-600 mb-1">Caching Algorithm</span>
+						<select
+							bind:value={optimizerOverlapPairCacheMode}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1 bg-white"
+						>
+							<option value="absolute">Absolute (layer+angle pair)</option>
+							<option value="relative">Relative (layer pair + angle delta)</option>
+						</select>
+					</label>
+
+					<label>
+						<span class="block text-gray-600 mb-1">Overlap Weight</span>
+						<input
+							type="number"
+							step="0.01"
+							bind:value={optimizerTuning.overlapMagnitudeWeight}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Overlap Power</span>
+						<input
+							type="number"
+							step="0.1"
+							bind:value={optimizerTuning.overlapMagnitudePower}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Max Overlap Force</span>
+						<input
+							type="number"
+							step="0.1"
+							bind:value={optimizerTuning.maxOverlapForceMagnitude}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Time Step</span>
+						<input
+							type="number"
+							step="0.05"
+							bind:value={optimizerTuning.timeStepDt}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Restoring Weight</span>
+						<input
+							type="number"
+							step="0.01"
+							bind:value={optimizerTuning.restoringForceWeight}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Max Restoring Force</span>
+						<input
+							type="number"
+							step="0.1"
+							bind:value={optimizerTuning.maxRestoringForce}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Unique Weight</span>
+						<input
+							type="number"
+							step="0.01"
+							bind:value={optimizerTuning.uniqueForceWeight}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label>
+						<span class="block text-gray-600 mb-1">Min Unique Separation</span>
+						<input
+							type="number"
+							step="0.5"
+							bind:value={optimizerTuning.minUniqueAngleSeparation}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+					<label class="col-span-2">
+						<span class="block text-gray-600 mb-1">Max Unique Force</span>
+						<input
+							type="number"
+							step="0.1"
+							bind:value={optimizerTuning.maxUniqueForce}
+							class="w-full rounded-lg border border-gray-300 px-2 py-1"
+						/>
+					</label>
+				</div>
+
+				<div class="mt-5 flex items-center justify-between gap-3">
+					<button
+						type="button"
+						onclick={resetOptimizerTuning}
+						class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+					>
+						Reset Defaults
+					</button>
+					<div class="flex items-center gap-2">
+						<button
+							type="button"
+							onclick={handleCloseOptimizerDialog}
+							class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+							data-testid="optimizer-dialog-cancel-button"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onclick={handleConfirmOptimizerDialogRun}
+							class="px-4 py-2 rounded-lg border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700 hover:border-indigo-700"
+							data-testid="optimizer-dialog-run-button"
+						>
+							Start Optimization
+						</button>
+					</div>
+				</div>
+			</section>
+		</div>
+	{/if}
 </main>
