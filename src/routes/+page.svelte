@@ -13,6 +13,8 @@
 	let optimizerProgress = $state(0);
 	let optimizerProgressPhase = $state('Idle');
 	let optimizerProgressMessage = $state('');
+	let optimizerIteration = $state(0);
+	let optimizerTotalIterations = $state(0);
 
 	async function runOptimizer() {
 		if (!doodledialStore.svgContent || optimizerPending) {
@@ -23,6 +25,8 @@
 		optimizerProgress = 0;
 		optimizerProgressPhase = 'Starting';
 		optimizerProgressMessage = 'Preparing optimizer input...';
+		optimizerIteration = 0;
+		optimizerTotalIterations = 0;
 
 		try {
 			const result = await runOptimizerStub(
@@ -35,6 +39,8 @@
 					optimizerProgress = progress.percent;
 					optimizerProgressPhase = progress.phase;
 					optimizerProgressMessage = progress.message;
+					optimizerIteration = progress.iteration;
+					optimizerTotalIterations = progress.totalIterations;
 				}
 			);
 
@@ -46,7 +52,7 @@
 		} finally {
 			optimizerProgress = 100;
 			optimizerProgressPhase = 'complete';
-			optimizerProgressMessage = 'Layout applied to preview and export.';
+			optimizerProgressMessage = `Layout applied after ${optimizerIteration} iterations.`;
 			optimizerPending = false;
 		}
 	}
@@ -202,7 +208,9 @@
 			<section class="mx-4 mb-2 rounded-2xl border border-indigo-200 bg-white shadow-sm px-4 py-3">
 				<div class="flex items-center justify-between text-xs text-slate-600 mb-2">
 					<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
-					<span>{optimizerProgress}%</span>
+					<span data-testid="optimizer-iteration-counter"
+						>Iterations {optimizerIteration}/{optimizerTotalIterations || '?'}</span
+					>
 				</div>
 				<div
 					class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"

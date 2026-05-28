@@ -29,7 +29,8 @@ test.describe('Optimizer Hook', () => {
 
 		await optimizeButton.click();
 		await expect(page.getByTestId('optimizer-progress-track')).toBeVisible();
-		await expect(page.getByTestId('optimizer-progress-message')).toContainText('Simulating');
+		await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Iterations');
+		await expect(page.getByTestId('optimizer-progress-message')).toContainText('Iterations');
 		await frontendLogPromise;
 
 		expect(optimizerApiCalled).toBe(false);

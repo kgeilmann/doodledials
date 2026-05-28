@@ -8,6 +8,8 @@ export interface OptimizerProgress {
 	percent: number;
 	phase: 'initialize_layout' | 'calculate_forces' | 'update_angles' | 'check_convergence';
 	message: string;
+	iteration: number;
+	totalIterations: number;
 }
 
 export interface OptimizerConstantsSnapshot {
@@ -37,6 +39,7 @@ export interface OptimizerResult {
 }
 
 const SIMULATED_PHASE_DELAY_MS = 800;
+const SIMULATED_ITERATION_DELAY_MS = 120;
 
 function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,6 +61,39 @@ function createRandomLayout(layerIds: string[]): Record<string, number> {
 	return randomLayout;
 }
 
+function getSimulatedIterationCount(layerCount: number): number {
+	return Math.min(36, Math.max(12, layerCount * 6));
+}
+
+function initializeLayout(layerIds: string[]): Record<string, number> {
+	return createRandomLayout(layerIds);
+}
+
+function calculateOverlapForce(): number {
+	return (Math.random() - 0.5) * 8;
+}
+
+function calculateRestoringForce(): number {
+	return (Math.random() - 0.5) * 3;
+}
+
+function calculateUniqueForce(): number {
+	return (Math.random() - 0.5) * 2;
+}
+
+function integrateAngle(
+	currentAngle: number,
+	totalForce: number,
+	timeStepDt: number,
+	damping = 0.9
+): number {
+	return normalizeAngle(currentAngle + totalForce * timeStepDt * damping);
+}
+
+function shouldConverge(avgForceMagnitude: number, threshold: number): boolean {
+	return avgForceMagnitude < threshold;
+}
+
 export async function runOptimizerStub(
 	input: OptimizerInput,
 	onProgress?: (progress: OptimizerProgress) => void
@@ -72,35 +108,61 @@ export async function runOptimizerStub(
 		convergenceThreshold: 0.001
 	};
 
-	const progressPlan: OptimizerProgress[] = [
-		{
-			percent: 10,
-			phase: 'initialize_layout',
-			message: 'Seeding random initial angles...'
-		},
-		{
-			percent: 45,
-			phase: 'calculate_forces',
-			message: 'Simulating force components...'
-		},
-		{
-			percent: 75,
-			phase: 'update_angles',
-			message: 'Applying integration step to candidate angles...'
-		},
-		{
-			percent: 100,
-			phase: 'check_convergence',
-			message: 'Finalizing random layout output.'
-		}
-	];
+	const simulatedIterations = getSimulatedIterationCount(input.layerCount);
 
-	for (const progress of progressPlan) {
-		onProgress?.(progress);
-		await sleep(SIMULATED_PHASE_DELAY_MS);
+	onProgress?.({
+		percent: 0,
+		phase: 'initialize_layout',
+		message: 'Initializing random layout state...',
+		iteration: 0,
+		totalIterations: simulatedIterations
+	});
+	await sleep(SIMULATED_PHASE_DELAY_MS);
+
+	const state = initializeLayout(input.layerIds);
+	let iterationsRun = 0;
+
+	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
+		iterationsRun = iteration;
+		let totalForceMagnitude = 0;
+
+		for (const layerId of input.layerIds) {
+			const overlapForce = calculateOverlapForce();
+			const restoringForce = calculateRestoringForce();
+			const uniqueForce = calculateUniqueForce();
+			const totalForce = overlapForce + restoringForce + uniqueForce;
+
+			state[layerId] = integrateAngle(state[layerId], totalForce, constants.timeStepDt);
+			totalForceMagnitude += Math.abs(totalForce);
+		}
+
+		const averageForceMagnitude =
+			input.layerIds.length > 0 ? totalForceMagnitude / input.layerIds.length : 0;
+
+		onProgress?.({
+			percent: Math.round((iteration / simulatedIterations) * 100),
+			phase: 'update_angles',
+			message: `Iterations ${iteration}/${simulatedIterations}`,
+			iteration,
+			totalIterations: simulatedIterations
+		});
+
+		await sleep(SIMULATED_ITERATION_DELAY_MS);
+
+		if (iteration >= 6 && shouldConverge(averageForceMagnitude, constants.convergenceThreshold)) {
+			break;
+		}
 	}
 
-	const randomLayout = createRandomLayout(input.layerIds);
+	onProgress?.({
+		percent: 100,
+		phase: 'check_convergence',
+		message: `Finalized after ${iterationsRun} iterations.`,
+		iteration: iterationsRun,
+		totalIterations: simulatedIterations
+	});
+
+	const randomLayout = state;
 
 	return {
 		ok: true,
@@ -123,7 +185,7 @@ export async function runOptimizerStub(
 				name: 'calculate_forces',
 				status: 'simulated',
 				description:
-					'Will compute overlap, restoring, and unique directional shifts for each path each iteration.',
+					'Computes overlap, restoring, and unique directional shifts per path via simulated helper functions.',
 				outputs: {
 					forceComponents: ['overlap', 'restoring', 'unique'],
 					expectedStateShape:
@@ -144,9 +206,10 @@ export async function runOptimizerStub(
 				name: 'check_convergence',
 				status: 'simulated',
 				description:
-					'Will stop iterations when average total force magnitude drops below threshold.',
+					'Stops iterations when simulated convergence criteria are met or iteration cap is reached.',
 				outputs: {
-					maxIterations: constants.maxIterations,
+					simulatedIterations,
+					iterationsRun,
 					convergenceThreshold: constants.convergenceThreshold
 				}
 			}
