@@ -20,6 +20,17 @@ export interface OptimizerResult {
 	layout: Record<string, number>;
 }
 
+export interface OptimizerOptions {
+	signal?: AbortSignal;
+}
+
+export class OptimizerCancelledError extends Error {
+	constructor(message = 'Optimizer cancelled') {
+		super(message);
+		this.name = 'OptimizerCancelledError';
+	}
+}
+
 type OptimizerStopReason = 'convergence' | 'max_iteration_count';
 
 const CONVERGENCE_THRESHOLD = 0.001;
@@ -165,11 +176,19 @@ function getExplorationDirection(layerId: string): -1 | 1 {
 	return Math.abs(hash) % 2 === 0 ? 1 : -1;
 }
 
+function throwIfCancelled(signal?: AbortSignal): void {
+	if (signal?.aborted) {
+		throw new OptimizerCancelledError();
+	}
+}
+
 export async function runOptimizer(
 	input: OptimizerInput,
-	onProgress?: (progress: OptimizerProgress) => void
+	onProgress?: (progress: OptimizerProgress) => void,
+	options?: OptimizerOptions
 ): Promise<OptimizerResult> {
 	console.log('[optimizer] Frontend optimizer called:', input);
+	throwIfCancelled(options?.signal);
 
 	const layerIds = input.layers.map((layer) => layer.id);
 	const simulatedIterations = getIterationCount(layerIds.length);
@@ -180,14 +199,18 @@ export async function runOptimizer(
 	let lastAverageForceMagnitude = 0;
 
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
+		throwIfCancelled(options?.signal);
 		const layoutBefore = { ...state };
 		const currentOverlaps = await detectLayoutOverlaps(input, state);
+		throwIfCancelled(options?.signal);
 		let totalForceMagnitude = 0;
 		const nextState = { ...state };
 		const layerForces: Record<string, number> = {};
 
 		for (const layerId of layerIds) {
+			throwIfCancelled(options?.signal);
 			const overlapForce = await calculateOverlapForce(input, state, currentOverlaps, layerId);
+			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce();
 			const uniqueForce = calculateUniqueForce();
 			const totalForce = overlapForce + restoringForce + uniqueForce;
