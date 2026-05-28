@@ -5,9 +5,51 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
+	import { runOptimizerStub } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
 	let showRasterPreview = $state(false);
+	let optimizerPending = $state(false);
+	let optimizerProgress = $state(0);
+	let optimizerProgressPhase = $state('Idle');
+	let optimizerProgressMessage = $state('');
+
+	async function runOptimizer() {
+		if (!doodledialStore.svgContent || optimizerPending) {
+			return;
+		}
+
+		optimizerPending = true;
+		optimizerProgress = 0;
+		optimizerProgressPhase = 'Starting';
+		optimizerProgressMessage = 'Preparing optimizer input...';
+
+		try {
+			const result = await runOptimizerStub(
+				{
+					layerCount: doodledialStore.layers.length,
+					diameter: doodledialStore.config.diameter,
+					layerIds: doodledialStore.layers.map((layer) => layer.id)
+				},
+				(progress) => {
+					optimizerProgress = progress.percent;
+					optimizerProgressPhase = progress.phase;
+					optimizerProgressMessage = progress.message;
+				}
+			);
+
+			doodledialStore.applyLayerRotations(result.randomLayout);
+
+			console.log('[optimizer] Frontend optimizer response:', result);
+		} catch (error) {
+			console.error('[optimizer] Frontend optimizer call failed:', error);
+		} finally {
+			optimizerProgress = 100;
+			optimizerProgressPhase = 'complete';
+			optimizerProgressMessage = 'Layout applied to preview and export.';
+			optimizerPending = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -117,6 +159,23 @@
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
+				onclick={runOptimizer}
+				disabled={!doodledialStore.svgContent || optimizerPending}
+				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+				</svg>
+				<span>{optimizerPending ? 'Running Optimizer...' : 'Run Optimizer'}</span>
+			</button>
+			<button
 				onclick={() => (showRasterPreview = true)}
 				disabled={!doodledialStore.svgContent}
 				class="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:hover:border-gray-400 enabled:active:scale-95"
@@ -139,6 +198,27 @@
 			</button>
 			<ExportButton />
 		</div>
+		{#if optimizerPending}
+			<section class="mx-4 mb-2 rounded-2xl border border-indigo-200 bg-white shadow-sm px-4 py-3">
+				<div class="flex items-center justify-between text-xs text-slate-600 mb-2">
+					<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
+					<span>{optimizerProgress}%</span>
+				</div>
+				<div
+					class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"
+					data-testid="optimizer-progress-track"
+				>
+					<div
+						data-testid="optimizer-progress-bar"
+						class="h-full bg-indigo-600 transition-all duration-300"
+						style="width: {optimizerProgress}%;"
+					></div>
+				</div>
+				<p class="mt-2 text-sm text-slate-700" data-testid="optimizer-progress-message">
+					{optimizerProgressMessage}
+				</p>
+			</section>
+		{/if}
 		<div class="flex-1 flex items-center justify-center p-4">
 			<DialPreview />
 		</div>

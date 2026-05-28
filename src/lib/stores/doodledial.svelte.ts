@@ -178,6 +178,17 @@ function createDoodledialStore() {
 			runOverlapDetection();
 			runCutoutGapDetection();
 		},
+		applyLayerRotations(rotations: Record<string, number>) {
+			Object.entries(rotations).forEach(([id, rotation]) => {
+				const layer = layers.get(id);
+				if (layer) {
+					layers.set(id, { ...layer, rotation });
+				}
+			});
+
+			runOverlapDetection();
+			runCutoutGapDetection();
+		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
 			const layer = layers.get(id);
 			if (layer) {
