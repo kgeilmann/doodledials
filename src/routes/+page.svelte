@@ -6,9 +6,15 @@
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
 	import type { PairOverlapCacheMode } from '$lib/utils/overlap-detection';
+	import {
+		BruteforceOptimizerCancelledError,
+		runBruteforceOptimizer
+	} from '$lib/optimizer/run-bruteforce-optimizer';
 	import type { OptimizerTuning } from '$lib/optimizer/run-optimizer';
 	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+
+	type OptimizerMode = 'force-directed' | 'bruteforce';
 
 	let showRasterPreview = $state(false);
 	let optimizerPending = $state(false);
@@ -24,7 +30,9 @@
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
 	let optimizerRandomSeedInput = $state('42');
+	let optimizerMaxRuntimeMsInput = $state('2500');
 	let optimizerOverlapPairCacheMode = $state<PairOverlapCacheMode>('absolute');
+	let optimizerMode = $state<OptimizerMode>('force-directed');
 
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
@@ -47,6 +55,7 @@
 		optimizerInitializeRandomly = false;
 		optimizerRoundOutputAngles = true;
 		optimizerRandomSeedInput = '42';
+		optimizerMaxRuntimeMsInput = '2500';
 		optimizerOverlapPairCacheMode = 'absolute';
 	}
 
@@ -54,11 +63,12 @@
 		optimizerAbortController?.abort();
 	}
 
-	function handleOpenOptimizerDialog() {
+	function handleOpenOptimizerDialog(mode: OptimizerMode) {
 		if (!doodledialStore.svgContent || optimizerPending) {
 			return;
 		}
 
+		optimizerMode = mode;
 		optimizerRunDialogOpen = true;
 	}
 
@@ -68,7 +78,7 @@
 
 	async function handleConfirmOptimizerDialogRun() {
 		optimizerRunDialogOpen = false;
-		await handleRunOptimizer();
+		await handleRunOptimizer(optimizerMode);
 	}
 
 	function clearOverlayHideTimer() {
@@ -86,7 +96,7 @@
 		}, 1200);
 	}
 
-	async function handleRunOptimizer() {
+	async function handleRunOptimizer(mode: OptimizerMode = optimizerMode) {
 		if (!doodledialStore.svgContent || optimizerPending) {
 			return;
 		}
@@ -103,26 +113,55 @@
 
 		let optimizerApplied = false;
 		let optimizerCancelled = false;
+		let optimizerTimeLimited = false;
+		let optimizerNoFeasible = false;
 
 		try {
+			const optimizerInput = {
+				diameter: doodledialStore.config.diameter,
+				config: doodledialStore.config,
+				layers: doodledialStore.layers,
+				svgContent: doodledialStore.svgContent
+			};
 			const parsedSeed = Number(optimizerRandomSeedInput);
 			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;
+			const parsedMaxRuntimeMs = Number(optimizerMaxRuntimeMsInput);
+			const maxRuntimeMs =
+				Number.isFinite(parsedMaxRuntimeMs) && parsedMaxRuntimeMs >= 0
+					? parsedMaxRuntimeMs
+					: undefined;
 
-			const result = await runOptimizer(
-				{
-					diameter: doodledialStore.config.diameter,
-					config: doodledialStore.config,
-					layers: doodledialStore.layers,
-					svgContent: doodledialStore.svgContent
-				},
-				(progress) => {
-					optimizerProgressPhase = 'Optimizing';
-					optimizerProgress = progress.percent;
-					optimizerProgressMessage = progress.message;
-					optimizerIteration = progress.iteration;
-					optimizerTotalIterations = progress.totalIterations;
-				},
-				{
+			const progressHandler = (progress: {
+				percent: number;
+				message: string;
+				iteration: number;
+				totalIterations: number;
+			}) => {
+				optimizerProgressPhase = 'Optimizing';
+				optimizerProgress = progress.percent;
+				optimizerProgressMessage = progress.message;
+				optimizerIteration = progress.iteration;
+				optimizerTotalIterations = progress.totalIterations;
+			};
+
+			if (mode === 'bruteforce') {
+				const bruteForceResult = await runBruteforceOptimizer(optimizerInput, progressHandler, {
+					signal: optimizerAbortController.signal,
+					roundOutputAngles: optimizerRoundOutputAngles,
+					overlapPairCacheMode: optimizerOverlapPairCacheMode,
+					maxRuntimeMs
+				});
+
+				optimizerTimeLimited = bruteForceResult.stopReason === 'time_limit';
+				optimizerNoFeasible = bruteForceResult.stopReason === 'no_feasible_solution';
+				if (bruteForceResult.feasibleSolutionsFound > 0) {
+					doodledialStore.applyLayerRotations(bruteForceResult.layout);
+					optimizerApplied = true;
+				}
+
+				console.log('[optimizer] Frontend optimizer response:', bruteForceResult);
+			} else {
+				const forceDirectedResult = await runOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					initializeRandomly: optimizerInitializeRandomly,
 					randomSeed: optimizerInitializeRandomly ? randomSeed : undefined,
@@ -139,15 +178,17 @@
 						minUniqueAngleSeparation: optimizerTuning.minUniqueAngleSeparation,
 						maxUniqueForce: optimizerTuning.maxUniqueForce
 					}
-				}
-			);
+				});
 
-			doodledialStore.applyLayerRotations(result.layout);
-			optimizerApplied = true;
-
-			console.log('[optimizer] Frontend optimizer response:', result);
+				doodledialStore.applyLayerRotations(forceDirectedResult.layout);
+				optimizerApplied = true;
+				console.log('[optimizer] Frontend optimizer response:', forceDirectedResult);
+			}
 		} catch (error) {
-			if (error instanceof OptimizerCancelledError) {
+			if (
+				error instanceof OptimizerCancelledError ||
+				error instanceof BruteforceOptimizerCancelledError
+			) {
 				optimizerCancelled = true;
 				optimizerProgressPhase = 'Cancelled';
 				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || '?'} - optimization cancelled.`;
@@ -159,8 +200,16 @@
 		} finally {
 			if (optimizerApplied) {
 				optimizerProgress = 100;
-				optimizerProgressPhase = 'Complete';
-				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - layout applied.`;
+				optimizerProgressPhase = optimizerTimeLimited ? 'Time Limit' : 'Complete';
+				optimizerProgressMessage = optimizerTimeLimited
+					? `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - time limit reached, best feasible layout applied.`
+					: `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - layout applied.`;
+			}
+
+			if (optimizerNoFeasible) {
+				optimizerProgress = 100;
+				optimizerProgressPhase = 'No Feasible Layout';
+				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration || '?'} - no feasible non-overlapping layout found.`;
 			}
 
 			if (optimizerCancelled && optimizerProgress === 0) {
@@ -281,7 +330,7 @@
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
-				onclick={handleOpenOptimizerDialog}
+				onclick={() => handleOpenOptimizerDialog('force-directed')}
 				disabled={!doodledialStore.svgContent || optimizerPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>
@@ -296,6 +345,27 @@
 					<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
 				</svg>
 				<span>{optimizerPending ? 'Running Optimizer...' : 'Run Optimizer'}</span>
+			</button>
+			<button
+				onclick={() => handleOpenOptimizerDialog('bruteforce')}
+				disabled={!doodledialStore.svgContent || optimizerPending}
+				class="px-5 py-2.5 bg-emerald-600 text-white border border-emerald-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-emerald-300 disabled:border-emerald-300 disabled:cursor-not-allowed enabled:hover:bg-emerald-700 enabled:hover:border-emerald-700 enabled:active:scale-95"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M9 17v-2a4 4 0 014-4h2m0 0l-3-3m3 3l-3 3m5 5H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"
+					/>
+				</svg>
+				<span>Run Brute Force Optimizer</span>
 			</button>
 			<button
 				onclick={() => (showRasterPreview = true)}
@@ -386,10 +456,10 @@
 			>
 				<div class="flex items-start justify-between gap-4 mb-4">
 					<div>
-						<h2 class="text-xl font-semibold text-gray-900">Run Optimizer</h2>
-						<p class="text-sm text-gray-600 mt-1">
-							Configure tuning values, then start optimization.
-						</p>
+						<h2 class="text-xl font-semibold text-gray-900">
+							{optimizerMode === 'bruteforce' ? 'Run Brute Force Optimizer' : 'Run Optimizer'}
+						</h2>
+						<p class="text-sm text-gray-600 mt-1">Configure options, then start optimization.</p>
 					</div>
 					<button
 						type="button"
@@ -402,21 +472,35 @@
 
 				<div class="grid grid-cols-2 gap-3 text-sm">
 					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
-						<span>Initialize Randomly</span>
-					</label>
-					<label class="col-span-2 flex items-center gap-2">
 						<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
 						<span>Round Output Angles</span>
 					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Random Seed</span>
-						<input
-							type="text"
-							bind:value={optimizerRandomSeedInput}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
+					{#if optimizerMode === 'force-directed'}
+						<label class="col-span-2 flex items-center gap-2">
+							<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
+							<span>Initialize Randomly</span>
+						</label>
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Random Seed</span>
+							<input
+								type="text"
+								bind:value={optimizerRandomSeedInput}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+					{/if}
+					{#if optimizerMode === 'bruteforce'}
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Max Runtime (ms)</span>
+							<input
+								type="number"
+								min="0"
+								step="1"
+								bind:value={optimizerMaxRuntimeMsInput}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+					{/if}
 					<label class="col-span-2">
 						<span class="block text-gray-600 mb-1">Caching Algorithm</span>
 						<select
@@ -428,87 +512,89 @@
 						</select>
 					</label>
 
-					<label>
-						<span class="block text-gray-600 mb-1">Overlap Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={optimizerTuning.overlapMagnitudeWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Overlap Power</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={optimizerTuning.overlapMagnitudePower}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Max Overlap Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={optimizerTuning.maxOverlapForceMagnitude}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Time Step</span>
-						<input
-							type="number"
-							step="0.05"
-							bind:value={optimizerTuning.timeStepDt}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Restoring Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={optimizerTuning.restoringForceWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Max Restoring Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={optimizerTuning.maxRestoringForce}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Unique Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={optimizerTuning.uniqueForceWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Min Unique Separation</span>
-						<input
-							type="number"
-							step="0.5"
-							bind:value={optimizerTuning.minUniqueAngleSeparation}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Max Unique Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={optimizerTuning.maxUniqueForce}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
+					{#if optimizerMode === 'force-directed'}
+						<label>
+							<span class="block text-gray-600 mb-1">Overlap Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.overlapMagnitudeWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Overlap Power</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.overlapMagnitudePower}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Max Overlap Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxOverlapForceMagnitude}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Time Step</span>
+							<input
+								type="number"
+								step="0.05"
+								bind:value={optimizerTuning.timeStepDt}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Restoring Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.restoringForceWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Max Restoring Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxRestoringForce}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Unique Weight</span>
+							<input
+								type="number"
+								step="0.01"
+								bind:value={optimizerTuning.uniqueForceWeight}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label>
+							<span class="block text-gray-600 mb-1">Min Unique Separation</span>
+							<input
+								type="number"
+								step="0.5"
+								bind:value={optimizerTuning.minUniqueAngleSeparation}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Max Unique Force</span>
+							<input
+								type="number"
+								step="0.1"
+								bind:value={optimizerTuning.maxUniqueForce}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+					{/if}
 				</div>
 
 				<div class="mt-5 flex items-center justify-between gap-3">

@@ -1,0 +1,248 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+
+const { combineDoodledialMock, detectOverlapsMock } = vi.hoisted(() => ({
+	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
+		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
+	),
+	detectOverlapsMock: vi.fn(
+		async (
+			_layers: Layer[],
+			combinedSvg: string,
+			options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
+		) => {
+			void options;
+			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+			const layerIds = Object.keys(rotations).sort();
+			const overlaps = new Map<string, Map<string, number>>();
+
+			for (let i = 0; i < layerIds.length; i++) {
+				for (let j = i + 1; j < layerIds.length; j++) {
+					const layerA = layerIds[i];
+					const layerB = layerIds[j];
+					if (rotations[layerA] === rotations[layerB]) {
+						overlaps.set(layerA, new Map([[layerB, 3]]));
+						overlaps.set(layerB, new Map([[layerA, 3]]));
+					}
+				}
+			}
+
+			return overlaps;
+		}
+	)
+}));
+
+vi.mock('$lib/utils/doodledial', () => ({
+	combineDoodledial: combineDoodledialMock
+}));
+
+vi.mock('$lib/utils/overlap-detection', () => ({
+	detectOverlaps: detectOverlapsMock,
+	createOverlapDetectionCache: () => ({
+		bitmapByLayerAngle: new Map(),
+		overlapByAbsolutePairAngles: new Map(),
+		overlapByRelativePairAngles: new Map()
+	})
+}));
+
+import {
+	BruteforceOptimizerCancelledError,
+	runBruteforceOptimizer
+} from './run-bruteforce-optimizer';
+
+function defaultDetectOverlapsMock(
+	_layers: Layer[],
+	combinedSvg: string,
+	options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
+) {
+	void options;
+	const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+	const layerIds = Object.keys(rotations).sort();
+	const overlaps = new Map<string, Map<string, number>>();
+
+	for (let i = 0; i < layerIds.length; i++) {
+		for (let j = i + 1; j < layerIds.length; j++) {
+			const layerA = layerIds[i];
+			const layerB = layerIds[j];
+			if (rotations[layerA] === rotations[layerB]) {
+				overlaps.set(layerA, new Map([[layerB, 3]]));
+				overlaps.set(layerB, new Map([[layerA, 3]]));
+			}
+		}
+	}
+
+	return overlaps;
+}
+
+function buildInput(layers: Layer[]) {
+	return {
+		diameter: 200,
+		config: {
+			diameter: 200,
+			minDiameter: 50,
+			maxDiameter: 200,
+			borderWidth: 2,
+			padding: 0.05,
+			offsetX: 0,
+			offsetY: 0,
+			scale: 1
+		},
+		layers,
+		svgContent: {
+			raw: '<svg viewBox="0 0 200 200"></svg>',
+			filename: 'fixture.svg'
+		}
+	};
+}
+
+function twoLayers(): Layer[] {
+	return [
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 45, visible: true }
+	];
+}
+
+function threeLayers(): Layer[] {
+	return [
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 10, visible: true },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 120, visible: true },
+		{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+	];
+}
+
+describe('runBruteforceOptimizer', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		detectOverlapsMock.mockImplementation(async (...args) => defaultDetectOverlapsMock(...args));
+	});
+
+	test('returns deterministic layout for the same input', async () => {
+		const input = buildInput(twoLayers());
+
+		const first = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
+		const second = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
+
+		expect(second.layout).toEqual(first.layout);
+	});
+
+	test('throws cancellation error when abort signal is already cancelled', async () => {
+		const controller = new AbortController();
+		controller.abort();
+
+		await expect(
+			runBruteforceOptimizer(buildInput(twoLayers()), undefined, { signal: controller.signal })
+		).rejects.toBeInstanceOf(BruteforceOptimizerCancelledError);
+	});
+
+	test('reports time_limit through search snapshot callback', async () => {
+		const snapshots: Array<string | undefined> = [];
+
+		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+			maxRuntimeMs: 0,
+			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
+		});
+
+		expect(result.layout).toBeDefined();
+		expect(snapshots).toContain('time_limit');
+	});
+
+	test('reports exact_complete through search snapshot callback on successful search', async () => {
+		const snapshots: Array<string | undefined> = [];
+
+		const result = await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
+			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
+		});
+
+		expect(result.layout).toBeDefined();
+		expect(snapshots).toContain('exact_complete');
+	});
+
+	test('emits progress messages containing Iterations token', async () => {
+		const progressMessages: string[] = [];
+
+		await runBruteforceOptimizer(
+			buildInput(twoLayers()),
+			(progress) => {
+				progressMessages.push(progress.message);
+			},
+			{ maxRuntimeMs: 1 }
+		);
+
+		expect(progressMessages.some((message) => message.includes('Iterations'))).toBe(true);
+	});
+
+	test('returns integer angles by default', async () => {
+		const result = await runBruteforceOptimizer(buildInput(twoLayers()));
+
+		for (const angle of Object.values(result.layout)) {
+			expect(Number.isInteger(angle)).toBe(true);
+			expect(angle).toBeGreaterThanOrEqual(0);
+			expect(angle).toBeLessThan(360);
+		}
+	});
+
+	test('keeps custom anchorLayerId fixed at zero in output layout', async () => {
+		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+			anchorLayerId: 'layerB',
+			roundOutputAngles: false
+		});
+
+		expect(result.layout.layerB).toBe(0);
+	});
+
+	test('returns a feasible layout with unique angles across all layers', async () => {
+		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+			roundOutputAngles: false
+		});
+
+		const layoutAngles = Object.values(result.layout);
+		expect(new Set(layoutAngles).size).toBe(layoutAngles.length);
+	});
+
+	test('uses absolute overlap pair cache mode by default', async () => {
+		await runBruteforceOptimizer(buildInput(twoLayers()));
+
+		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		expect(firstCallOptions).toBeDefined();
+		expect(firstCallOptions?.pairCacheMode).toBe('absolute');
+		expect(firstCallOptions?.cache).toBeDefined();
+	});
+
+	test('supports relative overlap pair cache mode', async () => {
+		await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
+			overlapPairCacheMode: 'relative'
+		});
+
+		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		expect(firstCallOptions).toBeDefined();
+		expect(firstCallOptions?.pairCacheMode).toBe('relative');
+		expect(firstCallOptions?.cache).toBeDefined();
+	});
+
+	test('reports no_feasible_solution when threshold cannot be satisfied', async () => {
+		detectOverlapsMock.mockImplementation(async (_layers: Layer[], combinedSvg: string) => {
+			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+			const layerIds = Object.keys(rotations).sort();
+			const overlaps = new Map<string, Map<string, number>>();
+
+			for (let i = 0; i < layerIds.length; i++) {
+				for (let j = i + 1; j < layerIds.length; j++) {
+					const layerA = layerIds[i];
+					const layerB = layerIds[j];
+					overlaps.set(layerA, new Map([[layerB, 5]]));
+					overlaps.set(layerB, new Map([[layerA, 5]]));
+				}
+			}
+
+			return overlaps;
+		});
+
+		const snapshots: Array<string | undefined> = [];
+		const result = await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
+			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
+		});
+
+		expect(snapshots).toContain('no_feasible_solution');
+		expect(result.layout.layerA).toBe(0);
+	});
+});
