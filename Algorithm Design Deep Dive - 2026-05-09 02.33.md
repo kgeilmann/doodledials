@@ -89,25 +89,25 @@ This status reflects the current implementation in src/lib/optimizer/run-optimiz
 - [x] Angle normalization exists.
 - [x] Progress reporting per iteration exists.
 - [x] Cancellation support exists via AbortSignal and OptimizerCancelledError.
-- [ ] Initialization from randomized unique angles is missing (current implementation starts from existing layer rotations).
-- [ ] Final rounded integer output angles are missing (current layout values are floating-point).
+- [x] Optional initialization from randomized unique angles is implemented (seeded deterministic mode supported).
+- [x] Final rounded integer output angles are implemented by default (with optional float output for analysis/tests).
 
 ### Recommended Next Implementation
 
-Implement C. Unique Force next.
+Tune and validate force coupling (Overlap + Restoring + Unique) next.
 
 Reason:
 
-- Restoring force is now active, tested, and instrumented.
-- Unique-force is the remaining missing core force component from the blueprint.
-- It will reduce angular clustering and improve minimum-separation safety before overlap magnitude tuning.
+- Unique-force and overlap magnitude weighting are now implemented and covered by focused tests.
+- The next risk is coefficient interaction and stability across real SVGs (oscillation, drift, overcorrection).
+- Systematic tuning and scenario-based regression tests will improve visual quality and convergence reliability.
 
 Suggested follow-up order:
 
-1. Implement unique-force minimum angular separation guard with small weight and clamp.
-2. Add/expand unit tests for minimum-separation behavior and force-map invariants.
-3. Add overlap magnitude weighting model and tune coefficients.
-4. Add optional randomized unique-angle initialization and evaluate convergence impact.
+1. Tune force constants and clamps (overlap, restoring, unique) against representative SVG scenarios.
+2. Add regression tests for coupled-force stability and convergence quality.
+3. Add optional diagnostics summary per run (min gap, overlap aggregate, stop reason metadata).
+4. Decide whether randomized initialization should be default-on for production runs.
 
 ---
 
