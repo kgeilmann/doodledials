@@ -5,6 +5,7 @@
 Add a second optimizer implementation that uses exact global brute force over integer angles.
 
 Optimization goals:
+
 - Hard constraint: pairwise overlap between any two layers must remain below threshold (`MIN_OVERLAP_PIXELS = 2`).
 - Soft goal: among all feasible solutions, prefer the most uniform circular angular distribution.
 
@@ -13,6 +14,7 @@ This optimizer is separate from the existing force-directed optimizer and should
 ## Scope
 
 In scope:
+
 - Add a new brute-force optimizer module and public API.
 - Keep existing optimizer untouched as default.
 - Integrate brute-force execution via an additional dedicated UI button.
@@ -20,6 +22,7 @@ In scope:
 - Reuse current overlap detection pipeline and overlap caching.
 
 Out of scope:
+
 - Replacing force-directed optimizer.
 - Introducing non-integer search space.
 - New rendering stack or server-side optimizer.
@@ -35,6 +38,7 @@ Out of scope:
 The brute-force optimizer uses depth-first branch-and-bound with exact search over integer angles in `[0, 359]`.
 
 Core ideas:
+
 - Symmetry reduction: fix one anchor layer at angle `0` to eliminate rotationally equivalent layouts.
 - Backtracking assignment: assign one layer at a time.
 - Early invalid pruning: when assigning a layer angle, only test overlap against already assigned layers.
@@ -49,6 +53,7 @@ Core ideas:
 `src/lib/optimizer/run-bruteforce-optimizer.ts`
 
 Exports:
+
 - `runBruteforceOptimizer(input, onProgress?, options?) => Promise<OptimizerResult>`
 - `BruteforceOptimizerOptions`
 - `BruteforceOptimizerProgress` (or reuse current shape exactly)
@@ -57,6 +62,7 @@ Exports:
 ### Input and Output Compatibility
 
 Preserve compatibility with existing optimizer shapes where practical:
+
 - Input: same `OptimizerInput` type.
 - Output: same `OptimizerResult` layout map.
 - Progress callback: preserve fields `percent`, `message`, `iteration`, `totalIterations` so UI overlay can remain unchanged.
@@ -64,6 +70,7 @@ Preserve compatibility with existing optimizer shapes where practical:
 ### Options
 
 `BruteforceOptimizerOptions`:
+
 - `signal?: AbortSignal`
 - `roundOutputAngles?: boolean` (default `true`)
 - `overlapPairCacheMode?: PairOverlapCacheMode` (default `absolute`)
@@ -74,6 +81,7 @@ Preserve compatibility with existing optimizer shapes where practical:
 ### Stop Reasons
 
 Explicit stop metadata for diagnostics and logging:
+
 - `exact_complete`
 - `cancelled`
 - `time_limit`
@@ -84,15 +92,18 @@ Explicit stop metadata for diagnostics and logging:
 ### Hard Feasibility
 
 A complete assignment is feasible only if all pair overlaps satisfy:
+
 - `overlap(i, j) < MIN_OVERLAP_PIXELS`
 
 Partial assignment validity:
+
 - When assigning layer `Lk` with candidate angle `a`, test only pairs `(Lk, Li)` for already assigned `Li`.
 - If any pair violates hard constraint, prune immediately.
 
 ### Soft Objective (Lexicographic)
 
 Use deterministic lexicographic optimization among feasible solutions:
+
 1. Maximize minimum circular gap.
 2. Minimize variance of circular gaps.
 3. Minimize absolute deviation sum from ideal gap.
@@ -105,6 +116,7 @@ This gives deterministic and interpretable ranking while preserving hard-constra
 ### Search State
 
 State contains:
+
 - `assignedAngles: Map<layerId, angle>`
 - `usedAngles: boolean[360]`
 - `depth`
@@ -115,16 +127,19 @@ State contains:
 ### Layer Ordering
 
 Use fixed layer order to preserve deterministic behavior, but choose a strong default:
+
 - First layer: anchor.
 - Remaining layers sorted by descending estimated conflict potential.
 
 Conflict potential estimate (cheap heuristic):
+
 - Precompute coarse overlap risk count per layer by sampling a sparse angle set against others.
 - If omitted for simplicity in v1, fallback to stable `layer.id` order.
 
 ### Candidate Angle Ordering
 
 Generate candidate angle list as a deterministic sequence:
+
 - Priority near ideal spacing relative to already assigned anchor and current depth.
 - Then remaining angles in ascending order.
 
@@ -133,6 +148,7 @@ This does not prune possibilities; it only improves incumbent discovery speed.
 ### Bounding
 
 Use safe bounds for pruning while preserving exactness:
+
 - If no incumbent yet: only hard-prune invalid branches.
 - If incumbent exists:
   - Compute optimistic upper bound for minimum gap achievable from current partial assignment.
@@ -140,15 +156,18 @@ Use safe bounds for pruning while preserving exactness:
   - For equal criterion 1 bound, use conservative lower bounds for variance/deviation; prune only when mathematically impossible to beat incumbent.
 
 Implementation note for v1:
+
 - Keep bounds conservative. If bound logic is complex, prefer fewer bound prunes over risking incorrect pruning.
 
 ### Overlap Evaluation Strategy
 
 Reuse existing pipeline:
+
 - Build rotated layers from partial assignment + base angles for unassigned layers only when needed.
 - For pair checks at assignment time, evaluate overlap for single pair configuration.
 
 Caching:
+
 - Reuse `createOverlapDetectionCache`.
 - Add pair-angle memo map in brute-force module:
   - key: `(layerA, angleA, layerB, angleB, cacheMode)` normalized by layer-id ordering.
@@ -159,12 +178,14 @@ This avoids repeated expensive raster overlap checks.
 ## Progress and Diagnostics
 
 Progress for brute-force is node-based (not iteration-based), but map to existing UI fields:
+
 - `iteration`: `nodesVisited`
 - `totalIterations`: `estimatedWorkBudget` derived from runtime guardrail; fallback to visited so far.
 - `percent`: bounded estimate if `maxRuntimeMs` is set, else monotonic capped pseudo-progress.
 - `message`: include `Nodes x/y`, `Depth d/n`, `Best min-gap`, `Feasible found yes/no`.
 
 Optional snapshot payload fields:
+
 - `nodesVisited`
 - `depth`
 - `bestScore`
@@ -175,6 +196,7 @@ Optional snapshot payload fields:
 ## UI Integration Plan
 
 `src/routes/+page.svelte` changes:
+
 - Keep existing `Run Optimizer` button and flow for force-directed mode.
 - Add a second button: `Run Brute Force Optimizer`.
 - Reuse existing dialog shell with brute-force-specific options:
@@ -213,15 +235,19 @@ Add benchmark-like dev test utility (optional) for representative `N` values to 
 ## Risks and Mitigations
 
 Risk: combinatorial explosion as layer count increases.
+
 - Mitigation: symmetry reduction, candidate ordering, conservative bounds, optional runtime guardrail.
 
 Risk: incorrect pruning from overly aggressive bounds.
+
 - Mitigation: start with hard-prune + very conservative soft bounds; add property tests and cross-check with exhaustive tiny cases.
 
 Risk: progress percent ambiguity for unbounded exact search.
+
 - Mitigation: explicit message semantics and reliable node/depth telemetry.
 
 Risk: UI regression from progress text changes.
+
 - Mitigation: preserve `Iterations` token in progress message/counter.
 
 ## Rollout Plan

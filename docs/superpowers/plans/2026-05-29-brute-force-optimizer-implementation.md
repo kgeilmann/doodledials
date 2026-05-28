@@ -26,6 +26,7 @@
 ### Task 1: Add Failing Unit Tests For Brute-Force Runner Contract
 
 **Files:**
+
 - Create: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
 - Test: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
 
@@ -36,28 +37,28 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const { combineDoodledialMock, detectOverlapsMock } = vi.hoisted(() => ({
-  combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
-    JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
-  ),
-  detectOverlapsMock: vi.fn(async () => new Map<string, Map<string, number>>())
+	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
+		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
+	),
+	detectOverlapsMock: vi.fn(async () => new Map<string, Map<string, number>>())
 }));
 
 vi.mock('$lib/utils/doodledial', () => ({
-  combineDoodledial: combineDoodledialMock
+	combineDoodledial: combineDoodledialMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
-  detectOverlaps: detectOverlapsMock,
-  createOverlapDetectionCache: () => ({
-    bitmapByLayerAngle: new Map(),
-    overlapByAbsolutePairAngles: new Map(),
-    overlapByRelativePairAngles: new Map()
-  })
+	detectOverlaps: detectOverlapsMock,
+	createOverlapDetectionCache: () => ({
+		bitmapByLayerAngle: new Map(),
+		overlapByAbsolutePairAngles: new Map(),
+		overlapByRelativePairAngles: new Map()
+	})
 }));
 
 import {
-  runBruteforceOptimizer,
-  BruteforceOptimizerCancelledError
+	runBruteforceOptimizer,
+	BruteforceOptimizerCancelledError
 } from './run-bruteforce-optimizer';
 ```
 
@@ -65,43 +66,43 @@ import {
 
 ```ts
 describe('runBruteforceOptimizer', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
 
-  test('returns deterministic layout for same input', async () => {
-    const input = buildInput([
-      { id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-      { id: 'layerB', index: 1, name: 'Layer B', rotation: 20, visible: true },
-      { id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
-    ]);
+	test('returns deterministic layout for same input', async () => {
+		const input = buildInput([
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 20, visible: true },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+		]);
 
-    const first = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
-    const second = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
+		const first = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
+		const second = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
 
-    expect(second.layout).toEqual(first.layout);
-  });
+		expect(second.layout).toEqual(first.layout);
+	});
 
-  test('throws cancellation error when signal is pre-aborted', async () => {
-    const controller = new AbortController();
-    controller.abort();
+	test('throws cancellation error when signal is pre-aborted', async () => {
+		const controller = new AbortController();
+		controller.abort();
 
-    await expect(
-      runBruteforceOptimizer(buildInput(twoLayers()), undefined, { signal: controller.signal })
-    ).rejects.toBeInstanceOf(BruteforceOptimizerCancelledError);
-  });
+		await expect(
+			runBruteforceOptimizer(buildInput(twoLayers()), undefined, { signal: controller.signal })
+		).rejects.toBeInstanceOf(BruteforceOptimizerCancelledError);
+	});
 
-  test('stops due to time limit and returns best feasible incumbent', async () => {
-    const snapshots: Array<{ stopReason?: string }> = [];
+	test('stops due to time limit and returns best feasible incumbent', async () => {
+		const snapshots: Array<{ stopReason?: string }> = [];
 
-    const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
-      maxRuntimeMs: 1,
-      onSearchSnapshot: (snapshot) => snapshots.push({ stopReason: snapshot.stopReason })
-    });
+		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+			maxRuntimeMs: 1,
+			onSearchSnapshot: (snapshot) => snapshots.push({ stopReason: snapshot.stopReason })
+		});
 
-    expect(result.layout).toBeDefined();
-    expect(snapshots.some((s) => s.stopReason === 'time_limit')).toBe(true);
-  });
+		expect(result.layout).toBeDefined();
+		expect(snapshots.some((s) => s.stopReason === 'time_limit')).toBe(true);
+	});
 });
 ```
 
@@ -109,39 +110,39 @@ describe('runBruteforceOptimizer', () => {
 
 ```ts
 function buildInput(layers: Layer[]) {
-  return {
-    diameter: 200,
-    config: {
-      diameter: 200,
-      minDiameter: 50,
-      maxDiameter: 200,
-      borderWidth: 2,
-      padding: 0.05,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 1
-    },
-    layers,
-    svgContent: {
-      raw: '<svg viewBox="0 0 200 200"></svg>',
-      filename: 'fixture.svg'
-    }
-  };
+	return {
+		diameter: 200,
+		config: {
+			diameter: 200,
+			minDiameter: 50,
+			maxDiameter: 200,
+			borderWidth: 2,
+			padding: 0.05,
+			offsetX: 0,
+			offsetY: 0,
+			scale: 1
+		},
+		layers,
+		svgContent: {
+			raw: '<svg viewBox="0 0 200 200"></svg>',
+			filename: 'fixture.svg'
+		}
+	};
 }
 
 function twoLayers(): Layer[] {
-  return [
-    { id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-    { id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
-  ];
+	return [
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+	];
 }
 
 function threeLayers(): Layer[] {
-  return [
-    { id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-    { id: 'layerB', index: 1, name: 'Layer B', rotation: 90, visible: true },
-    { id: 'layerC', index: 2, name: 'Layer C', rotation: 180, visible: true }
-  ];
+	return [
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 90, visible: true },
+		{ id: 'layerC', index: 2, name: 'Layer C', rotation: 180, visible: true }
+	];
 }
 ```
 
@@ -160,6 +161,7 @@ git commit -m "test: add brute-force optimizer contract tests"
 ### Task 2: Implement Minimal Brute-Force Runner To Pass Core Tests
 
 **Files:**
+
 - Create: `src/lib/optimizer/run-bruteforce-optimizer.ts`
 - Modify: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
 - Test: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
@@ -170,50 +172,50 @@ git commit -m "test: add brute-force optimizer contract tests"
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from '$lib/utils/doodledial';
 import {
-  createOverlapDetectionCache,
-  detectOverlaps,
-  type PairOverlapCacheMode
+	createOverlapDetectionCache,
+	detectOverlaps,
+	type PairOverlapCacheMode
 } from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
-  diameter: number;
-  config: DialConfig;
-  layers: Layer[];
-  svgContent: SVGContent;
+	diameter: number;
+	config: DialConfig;
+	layers: Layer[];
+	svgContent: SVGContent;
 }
 
 export interface OptimizerProgress {
-  percent: number;
-  message: string;
-  iteration: number;
-  totalIterations: number;
+	percent: number;
+	message: string;
+	iteration: number;
+	totalIterations: number;
 }
 
 export interface OptimizerResult {
-  layout: Record<string, number>;
+	layout: Record<string, number>;
 }
 
 export interface BruteforceOptimizerSearchSnapshot {
-  nodesVisited: number;
-  depth: number;
-  feasibleSolutionsFound: number;
-  stopReason?: 'exact_complete' | 'time_limit' | 'no_feasible_solution' | 'cancelled';
+	nodesVisited: number;
+	depth: number;
+	feasibleSolutionsFound: number;
+	stopReason?: 'exact_complete' | 'time_limit' | 'no_feasible_solution' | 'cancelled';
 }
 
 export interface BruteforceOptimizerOptions {
-  signal?: AbortSignal;
-  roundOutputAngles?: boolean;
-  overlapPairCacheMode?: PairOverlapCacheMode;
-  maxRuntimeMs?: number;
-  anchorLayerId?: string;
-  onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
+	signal?: AbortSignal;
+	roundOutputAngles?: boolean;
+	overlapPairCacheMode?: PairOverlapCacheMode;
+	maxRuntimeMs?: number;
+	anchorLayerId?: string;
+	onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
 }
 
 export class BruteforceOptimizerCancelledError extends Error {
-  constructor(message = 'Bruteforce optimizer cancelled') {
-    super(message);
-    this.name = 'BruteforceOptimizerCancelledError';
-  }
+	constructor(message = 'Bruteforce optimizer cancelled') {
+		super(message);
+		this.name = 'BruteforceOptimizerCancelledError';
+	}
 }
 ```
 
@@ -223,138 +225,158 @@ export class BruteforceOptimizerCancelledError extends Error {
 const MIN_OVERLAP_PIXELS = 2;
 
 function normalizeAngle(angle: number): number {
-  return ((angle % 360) + 360) % 360;
+	return ((angle % 360) + 360) % 360;
 }
 
 function throwIfCancelled(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new BruteforceOptimizerCancelledError();
-  }
+	if (signal?.aborted) {
+		throw new BruteforceOptimizerCancelledError();
+	}
 }
 
 export async function runBruteforceOptimizer(
-  input: OptimizerInput,
-  onProgress?: (progress: OptimizerProgress) => void,
-  options?: BruteforceOptimizerOptions
+	input: OptimizerInput,
+	onProgress?: (progress: OptimizerProgress) => void,
+	options?: BruteforceOptimizerOptions
 ): Promise<OptimizerResult> {
-  const startedAtMs = Date.now();
-  const maxRuntimeMs = options?.maxRuntimeMs;
-  const overlapPairCacheMode = options?.overlapPairCacheMode ?? 'absolute';
-  const layerIds = input.layers.map((layer) => layer.id);
-  const anchorLayerId = options?.anchorLayerId ?? layerIds[0];
+	const startedAtMs = Date.now();
+	const maxRuntimeMs = options?.maxRuntimeMs;
+	const overlapPairCacheMode = options?.overlapPairCacheMode ?? 'absolute';
+	const layerIds = input.layers.map((layer) => layer.id);
+	const anchorLayerId = options?.anchorLayerId ?? layerIds[0];
 
-  const assigned = new Map<string, number>([[anchorLayerId, 0]]);
-  const usedAngles = new Array<boolean>(360).fill(false);
-  usedAngles[0] = true;
+	const assigned = new Map<string, number>([[anchorLayerId, 0]]);
+	const usedAngles = new Array<boolean>(360).fill(false);
+	usedAngles[0] = true;
 
-  let nodesVisited = 0;
-  let feasibleSolutionsFound = 0;
-  let bestLayout: Record<string, number> | null = null;
+	let nodesVisited = 0;
+	let feasibleSolutionsFound = 0;
+	let bestLayout: Record<string, number> | null = null;
 
-  const overlapCache = createOverlapDetectionCache();
-  const remainingLayerIds = layerIds.filter((id) => id !== anchorLayerId).sort();
+	const overlapCache = createOverlapDetectionCache();
+	const remainingLayerIds = layerIds.filter((id) => id !== anchorLayerId).sort();
 
-  const isTimedOut = () =>
-    typeof maxRuntimeMs === 'number' && maxRuntimeMs >= 0 && Date.now() - startedAtMs >= maxRuntimeMs;
+	const isTimedOut = () =>
+		typeof maxRuntimeMs === 'number' &&
+		maxRuntimeMs >= 0 &&
+		Date.now() - startedAtMs >= maxRuntimeMs;
 
-  async function isPairValid(layerA: string, angleA: number, layerB: string, angleB: number): Promise<boolean> {
-    const rotations = Object.fromEntries(
-      input.layers.map((layer) => [
-        layer.id,
-        normalizeAngle(layer.id === layerA ? angleA : layer.id === layerB ? angleB : layer.rotation)
-      ])
-    );
+	async function isPairValid(
+		layerA: string,
+		angleA: number,
+		layerB: string,
+		angleB: number
+	): Promise<boolean> {
+		const rotations = Object.fromEntries(
+			input.layers.map((layer) => [
+				layer.id,
+				normalizeAngle(layer.id === layerA ? angleA : layer.id === layerB ? angleB : layer.rotation)
+			])
+		);
 
-    const layers = input.layers.map((layer) => ({ ...layer, rotation: rotations[layer.id] }));
-    const combinedSvg = combineDoodledial(input.svgContent, { ...input.config, diameter: input.diameter }, layers);
-    const overlaps = await detectOverlaps(layers, combinedSvg, {
-      cache: overlapCache,
-      pairCacheMode: overlapPairCacheMode
-    });
+		const layers = input.layers.map((layer) => ({ ...layer, rotation: rotations[layer.id] }));
+		const combinedSvg = combineDoodledial(
+			input.svgContent,
+			{ ...input.config, diameter: input.diameter },
+			layers
+		);
+		const overlaps = await detectOverlaps(layers, combinedSvg, {
+			cache: overlapCache,
+			pairCacheMode: overlapPairCacheMode
+		});
 
-    return (overlaps.get(layerA)?.get(layerB) ?? 0) < MIN_OVERLAP_PIXELS;
-  }
+		return (overlaps.get(layerA)?.get(layerB) ?? 0) < MIN_OVERLAP_PIXELS;
+	}
 
-  async function search(depth: number): Promise<boolean> {
-    throwIfCancelled(options?.signal);
+	async function search(depth: number): Promise<boolean> {
+		throwIfCancelled(options?.signal);
 
-    if (isTimedOut()) {
-      options?.onSearchSnapshot?.({
-        nodesVisited,
-        depth,
-        feasibleSolutionsFound,
-        stopReason: 'time_limit'
-      });
-      return true;
-    }
+		if (isTimedOut()) {
+			options?.onSearchSnapshot?.({
+				nodesVisited,
+				depth,
+				feasibleSolutionsFound,
+				stopReason: 'time_limit'
+			});
+			return true;
+		}
 
-    if (depth >= remainingLayerIds.length) {
-      feasibleSolutionsFound += 1;
-      bestLayout = Object.fromEntries(layerIds.map((id) => [id, assigned.get(id) ?? 0]));
-      return false;
-    }
+		if (depth >= remainingLayerIds.length) {
+			feasibleSolutionsFound += 1;
+			bestLayout = Object.fromEntries(layerIds.map((id) => [id, assigned.get(id) ?? 0]));
+			return false;
+		}
 
-    const layerId = remainingLayerIds[depth];
+		const layerId = remainingLayerIds[depth];
 
-    for (let angle = 0; angle < 360; angle++) {
-      if (usedAngles[angle]) {
-        continue;
-      }
+		for (let angle = 0; angle < 360; angle++) {
+			if (usedAngles[angle]) {
+				continue;
+			}
 
-      nodesVisited += 1;
-      assigned.set(layerId, angle);
+			nodesVisited += 1;
+			assigned.set(layerId, angle);
 
-      let valid = true;
-      for (const [otherLayerId, otherAngle] of assigned.entries()) {
-        if (otherLayerId === layerId) continue;
-        if (!(await isPairValid(layerId, angle, otherLayerId, otherAngle))) {
-          valid = false;
-          break;
-        }
-      }
+			let valid = true;
+			for (const [otherLayerId, otherAngle] of assigned.entries()) {
+				if (otherLayerId === layerId) continue;
+				if (!(await isPairValid(layerId, angle, otherLayerId, otherAngle))) {
+					valid = false;
+					break;
+				}
+			}
 
-      onProgress?.({
-        percent: typeof maxRuntimeMs === 'number' && maxRuntimeMs > 0
-          ? Math.min(99, Math.round(((Date.now() - startedAtMs) / maxRuntimeMs) * 100))
-          : Math.min(99, Math.round((nodesVisited % 1000) / 10)),
-        message: `Iterations ${nodesVisited}/${Math.max(nodesVisited, 1)}`,
-        iteration: nodesVisited,
-        totalIterations: Math.max(nodesVisited, 1)
-      });
+			onProgress?.({
+				percent:
+					typeof maxRuntimeMs === 'number' && maxRuntimeMs > 0
+						? Math.min(99, Math.round(((Date.now() - startedAtMs) / maxRuntimeMs) * 100))
+						: Math.min(99, Math.round((nodesVisited % 1000) / 10)),
+				message: `Iterations ${nodesVisited}/${Math.max(nodesVisited, 1)}`,
+				iteration: nodesVisited,
+				totalIterations: Math.max(nodesVisited, 1)
+			});
 
-      if (valid) {
-        usedAngles[angle] = true;
-        const stopNow = await search(depth + 1);
-        usedAngles[angle] = false;
-        if (stopNow) {
-          assigned.delete(layerId);
-          return true;
-        }
-      }
+			if (valid) {
+				usedAngles[angle] = true;
+				const stopNow = await search(depth + 1);
+				usedAngles[angle] = false;
+				if (stopNow) {
+					assigned.delete(layerId);
+					return true;
+				}
+			}
 
-      assigned.delete(layerId);
-    }
+			assigned.delete(layerId);
+		}
 
-    return false;
-  }
+		return false;
+	}
 
-  await search(0);
+	await search(0);
 
-  if (!bestLayout) {
-    bestLayout = Object.fromEntries(layerIds.map((id) => [id, normalizeAngle(input.layers.find((l) => l.id === id)?.rotation ?? 0)]));
-    options?.onSearchSnapshot?.({
-      nodesVisited,
-      depth: remainingLayerIds.length,
-      feasibleSolutionsFound,
-      stopReason: 'no_feasible_solution'
-    });
-  }
+	if (!bestLayout) {
+		bestLayout = Object.fromEntries(
+			layerIds.map((id) => [
+				id,
+				normalizeAngle(input.layers.find((l) => l.id === id)?.rotation ?? 0)
+			])
+		);
+		options?.onSearchSnapshot?.({
+			nodesVisited,
+			depth: remainingLayerIds.length,
+			feasibleSolutionsFound,
+			stopReason: 'no_feasible_solution'
+		});
+	}
 
-  const layout = options?.roundOutputAngles === false
-    ? bestLayout
-    : Object.fromEntries(Object.entries(bestLayout).map(([id, a]) => [id, Math.round(normalizeAngle(a)) % 360]));
+	const layout =
+		options?.roundOutputAngles === false
+			? bestLayout
+			: Object.fromEntries(
+					Object.entries(bestLayout).map(([id, a]) => [id, Math.round(normalizeAngle(a)) % 360])
+				);
 
-  return { layout };
+	return { layout };
 }
 ```
 
@@ -373,6 +395,7 @@ git commit -m "feat: add brute-force optimizer baseline"
 ### Task 3: Add Soft Scoring And Deterministic Best-Feasible Selection
 
 **Files:**
+
 - Modify: `src/lib/optimizer/run-bruteforce-optimizer.ts`
 - Modify: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
 - Test: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
@@ -381,71 +404,84 @@ git commit -m "feat: add brute-force optimizer baseline"
 
 ```ts
 test('prefers feasible layout with better min-gap score', async () => {
-  const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
-    roundOutputAngles: false,
-    maxRuntimeMs: 200
-  });
+	const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		roundOutputAngles: false,
+		maxRuntimeMs: 200
+	});
 
-  const angles = Object.values(result.layout).sort((a, b) => a - b);
-  expect(angles.length).toBe(3);
-  expect(angles[1] - angles[0]).toBeGreaterThan(0);
+	const angles = Object.values(result.layout).sort((a, b) => a - b);
+	expect(angles.length).toBe(3);
+	expect(angles[1] - angles[0]).toBeGreaterThan(0);
 });
 
 test('keeps deterministic tie-break ordering', async () => {
-  const first = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
-    roundOutputAngles: false,
-    maxRuntimeMs: 200
-  });
-  const second = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
-    roundOutputAngles: false,
-    maxRuntimeMs: 200
-  });
+	const first = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		roundOutputAngles: false,
+		maxRuntimeMs: 200
+	});
+	const second = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		roundOutputAngles: false,
+		maxRuntimeMs: 200
+	});
 
-  expect(second.layout).toEqual(first.layout);
+	expect(second.layout).toEqual(first.layout);
 });
 ```
 
 - [ ] **Step 2: Implement lexicographic score comparison in optimizer**
 
 ```ts
-function analyzeCircularGaps(layout: Record<string, number>): { minGap: number; variance: number; deviationSum: number } {
-  const entries = Object.entries(layout)
-    .map(([layerId, angle]) => ({ layerId, angle: normalizeAngle(angle) }))
-    .sort((a, b) => a.angle - b.angle || a.layerId.localeCompare(b.layerId));
+function analyzeCircularGaps(layout: Record<string, number>): {
+	minGap: number;
+	variance: number;
+	deviationSum: number;
+} {
+	const entries = Object.entries(layout)
+		.map(([layerId, angle]) => ({ layerId, angle: normalizeAngle(angle) }))
+		.sort((a, b) => a.angle - b.angle || a.layerId.localeCompare(b.layerId));
 
-  if (entries.length <= 1) {
-    return { minGap: 360, variance: 0, deviationSum: 0 };
-  }
+	if (entries.length <= 1) {
+		return { minGap: 360, variance: 0, deviationSum: 0 };
+	}
 
-  const gaps: number[] = [];
-  for (let i = 0; i < entries.length; i++) {
-    const current = entries[i];
-    const next = entries[(i + 1) % entries.length];
-    const gap = normalizeAngle(next.angle - current.angle);
-    gaps.push(gap);
-  }
+	const gaps: number[] = [];
+	for (let i = 0; i < entries.length; i++) {
+		const current = entries[i];
+		const next = entries[(i + 1) % entries.length];
+		const gap = normalizeAngle(next.angle - current.angle);
+		gaps.push(gap);
+	}
 
-  const ideal = 360 / entries.length;
-  const minGap = Math.min(...gaps);
-  const mean = gaps.reduce((s, g) => s + g, 0) / gaps.length;
-  const variance = gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / gaps.length;
-  const deviationSum = gaps.reduce((s, g) => s + Math.abs(g - ideal), 0);
-  return { minGap, variance, deviationSum };
+	const ideal = 360 / entries.length;
+	const minGap = Math.min(...gaps);
+	const mean = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+	const variance = gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / gaps.length;
+	const deviationSum = gaps.reduce((s, g) => s + Math.abs(g - ideal), 0);
+	return { minGap, variance, deviationSum };
 }
 
-function isBetterLayout(candidate: Record<string, number>, incumbent: Record<string, number> | null): boolean {
-  if (!incumbent) return true;
+function isBetterLayout(
+	candidate: Record<string, number>,
+	incumbent: Record<string, number> | null
+): boolean {
+	if (!incumbent) return true;
 
-  const c = analyzeCircularGaps(candidate);
-  const i = analyzeCircularGaps(incumbent);
+	const c = analyzeCircularGaps(candidate);
+	const i = analyzeCircularGaps(incumbent);
 
-  if (c.minGap !== i.minGap) return c.minGap > i.minGap;
-  if (c.variance !== i.variance) return c.variance < i.variance;
-  if (c.deviationSum !== i.deviationSum) return c.deviationSum < i.deviationSum;
+	if (c.minGap !== i.minGap) return c.minGap > i.minGap;
+	if (c.variance !== i.variance) return c.variance < i.variance;
+	if (c.deviationSum !== i.deviationSum) return c.deviationSum < i.deviationSum;
 
-  const cKey = Object.entries(candidate).sort(([a], [b]) => a.localeCompare(b)).map(([id, angle]) => `${id}:${angle}`).join('|');
-  const iKey = Object.entries(incumbent).sort(([a], [b]) => a.localeCompare(b)).map(([id, angle]) => `${id}:${angle}`).join('|');
-  return cKey < iKey;
+	const cKey = Object.entries(candidate)
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([id, angle]) => `${id}:${angle}`)
+		.join('|');
+	const iKey = Object.entries(incumbent)
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([id, angle]) => `${id}:${angle}`)
+		.join('|');
+	return cKey < iKey;
 }
 ```
 
@@ -453,12 +489,12 @@ function isBetterLayout(candidate: Record<string, number>, incumbent: Record<str
 
 ```ts
 if (depth >= remainingLayerIds.length) {
-  feasibleSolutionsFound += 1;
-  const candidate = Object.fromEntries(layerIds.map((id) => [id, assigned.get(id) ?? 0]));
-  if (isBetterLayout(candidate, bestLayout)) {
-    bestLayout = candidate;
-  }
-  return false;
+	feasibleSolutionsFound += 1;
+	const candidate = Object.fromEntries(layerIds.map((id) => [id, assigned.get(id) ?? 0]));
+	if (isBetterLayout(candidate, bestLayout)) {
+		bestLayout = candidate;
+	}
+	return false;
 }
 ```
 
@@ -477,6 +513,7 @@ git commit -m "feat: add deterministic scoring for brute-force optimizer"
 ### Task 4: Integrate Brute-Force Runner Into UI With Extra Button
 
 **Files:**
+
 - Modify: `src/routes/+page.svelte`
 - Test: `tests/optimizer-hook.spec.ts`
 
@@ -484,36 +521,41 @@ git commit -m "feat: add deterministic scoring for brute-force optimizer"
 
 ```ts
 test('clicking brute-force optimize calls brute-force frontend runner', async ({ page }) => {
-  const fileInput = page.locator('input[type="file"]');
-  await fileInput.setInputFiles(threePathsSvg);
+	const fileInput = page.locator('input[type="file"]');
+	await fileInput.setInputFiles(threePathsSvg);
 
-  const bruteButton = page.getByRole('button', { name: 'Run Brute Force Optimizer' });
-  await expect(bruteButton).toBeEnabled();
+	const bruteButton = page.getByRole('button', { name: 'Run Brute Force Optimizer' });
+	await expect(bruteButton).toBeEnabled();
 
-  const frontendLogPromise = page.waitForEvent('console', {
-    predicate: (msg) => msg.type() === 'log' && msg.text().includes('[optimizer] Frontend brute-force optimizer called:')
-  });
+	const frontendLogPromise = page.waitForEvent('console', {
+		predicate: (msg) =>
+			msg.type() === 'log' &&
+			msg.text().includes('[optimizer] Frontend brute-force optimizer called:')
+	});
 
-  await bruteButton.click();
-  await expect(page.getByTestId('optimizer-config-dialog')).toBeVisible();
-  await page.getByTestId('optimizer-dialog-run-button').click();
-  await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Iterations');
-  await frontendLogPromise;
+	await bruteButton.click();
+	await expect(page.getByTestId('optimizer-config-dialog')).toBeVisible();
+	await page.getByTestId('optimizer-dialog-run-button').click();
+	await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Iterations');
+	await frontendLogPromise;
 });
 ```
 
 - [ ] **Step 2: Add brute-force import and button state in page script**
 
 ```ts
-import { runBruteforceOptimizer, BruteforceOptimizerCancelledError } from '$lib/optimizer/run-bruteforce-optimizer';
+import {
+	runBruteforceOptimizer,
+	BruteforceOptimizerCancelledError
+} from '$lib/optimizer/run-bruteforce-optimizer';
 
 let optimizerRunMode = $state<'force' | 'bruteforce'>('force');
 let bruteForceMaxRuntimeMsInput = $state('1500');
 
 function handleOpenBruteforceDialog() {
-  if (!doodledialStore.svgContent || optimizerPending) return;
-  optimizerRunMode = 'bruteforce';
-  optimizerRunDialogOpen = true;
+	if (!doodledialStore.svgContent || optimizerPending) return;
+	optimizerRunMode = 'bruteforce';
+	optimizerRunDialogOpen = true;
 }
 ```
 
@@ -521,38 +563,39 @@ function handleOpenBruteforceDialog() {
 
 ```ts
 if (optimizerRunMode === 'bruteforce') {
-  const parsedRuntime = Number(bruteForceMaxRuntimeMsInput);
-  const maxRuntimeMs = Number.isFinite(parsedRuntime) && parsedRuntime > 0 ? parsedRuntime : undefined;
+	const parsedRuntime = Number(bruteForceMaxRuntimeMsInput);
+	const maxRuntimeMs =
+		Number.isFinite(parsedRuntime) && parsedRuntime > 0 ? parsedRuntime : undefined;
 
-  const result = await runBruteforceOptimizer(
-    {
-      diameter: doodledialStore.config.diameter,
-      config: doodledialStore.config,
-      layers: doodledialStore.layers,
-      svgContent: doodledialStore.svgContent
-    },
-    (progress) => {
-      optimizerProgressPhase = 'Optimizing';
-      optimizerProgress = progress.percent;
-      optimizerProgressMessage = progress.message;
-      optimizerIteration = progress.iteration;
-      optimizerTotalIterations = progress.totalIterations;
-    },
-    {
-      signal: optimizerAbortController.signal,
-      roundOutputAngles: optimizerRoundOutputAngles,
-      overlapPairCacheMode: optimizerOverlapPairCacheMode,
-      maxRuntimeMs
-    }
-  );
+	const result = await runBruteforceOptimizer(
+		{
+			diameter: doodledialStore.config.diameter,
+			config: doodledialStore.config,
+			layers: doodledialStore.layers,
+			svgContent: doodledialStore.svgContent
+		},
+		(progress) => {
+			optimizerProgressPhase = 'Optimizing';
+			optimizerProgress = progress.percent;
+			optimizerProgressMessage = progress.message;
+			optimizerIteration = progress.iteration;
+			optimizerTotalIterations = progress.totalIterations;
+		},
+		{
+			signal: optimizerAbortController.signal,
+			roundOutputAngles: optimizerRoundOutputAngles,
+			overlapPairCacheMode: optimizerOverlapPairCacheMode,
+			maxRuntimeMs
+		}
+	);
 
-  doodledialStore.applyLayerRotations(result.layout);
-  console.log('[optimizer] Frontend brute-force optimizer called:', {
-    maxRuntimeMs,
-    layerCount: doodledialStore.layers.length
-  });
+	doodledialStore.applyLayerRotations(result.layout);
+	console.log('[optimizer] Frontend brute-force optimizer called:', {
+		maxRuntimeMs,
+		layerCount: doodledialStore.layers.length
+	});
 } else {
-  // existing runOptimizer(...) path unchanged
+	// existing runOptimizer(...) path unchanged
 }
 ```
 
@@ -560,18 +603,24 @@ if (optimizerRunMode === 'bruteforce') {
 
 ```svelte
 <button
-  onclick={handleOpenBruteforceDialog}
-  disabled={!doodledialStore.svgContent || optimizerPending}
-  class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+	onclick={handleOpenBruteforceDialog}
+	disabled={!doodledialStore.svgContent || optimizerPending}
+	class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
 >
-  <span>{optimizerPending ? 'Running Brute Force...' : 'Run Brute Force Optimizer'}</span>
+	<span>{optimizerPending ? 'Running Brute Force...' : 'Run Brute Force Optimizer'}</span>
 </button>
 
 {#if optimizerRunMode === 'bruteforce'}
-  <label class="text-sm text-slate-700 flex flex-col gap-1">
-    <span class="font-medium">Max Runtime (ms)</span>
-    <input type="number" min="1" step="1" bind:value={bruteForceMaxRuntimeMsInput} class="rounded-lg border border-slate-300 px-3 py-2" />
-  </label>
+	<label class="text-sm text-slate-700 flex flex-col gap-1">
+		<span class="font-medium">Max Runtime (ms)</span>
+		<input
+			type="number"
+			min="1"
+			step="1"
+			bind:value={bruteForceMaxRuntimeMsInput}
+			class="rounded-lg border border-slate-300 px-3 py-2"
+		/>
+	</label>
 {/if}
 ```
 
@@ -590,6 +639,7 @@ git commit -m "feat: add dedicated brute-force optimizer UI action"
 ### Task 5: Finish Brute-Force Test Matrix And Logging/Stop Reason Snapshots
 
 **Files:**
+
 - Modify: `src/lib/optimizer/run-bruteforce-optimizer.ts`
 - Modify: `src/lib/optimizer/run-bruteforce-optimizer.spec.ts`
 
@@ -597,32 +647,54 @@ git commit -m "feat: add dedicated brute-force optimizer UI action"
 
 ```ts
 test('emits progress message containing Iterations token', async () => {
-  const messages: string[] = [];
+	const messages: string[] = [];
 
-  await runBruteforceOptimizer(buildInput(threeLayers()), (progress) => {
-    messages.push(progress.message);
-  }, { maxRuntimeMs: 10 });
+	await runBruteforceOptimizer(
+		buildInput(threeLayers()),
+		(progress) => {
+			messages.push(progress.message);
+		},
+		{ maxRuntimeMs: 10 }
+	);
 
-  expect(messages.some((m) => m.includes('Iterations'))).toBe(true);
+	expect(messages.some((m) => m.includes('Iterations'))).toBe(true);
 });
 
 test('reports no_feasible_solution stop reason when no assignment satisfies overlap threshold', async () => {
-  detectOverlapsMock.mockImplementation(async () => {
-    const map = new Map<string, Map<string, number>>();
-    map.set('layerA', new Map([['layerB', 5], ['layerC', 5]]));
-    map.set('layerB', new Map([['layerA', 5], ['layerC', 5]]));
-    map.set('layerC', new Map([['layerA', 5], ['layerB', 5]]));
-    return map;
-  });
+	detectOverlapsMock.mockImplementation(async () => {
+		const map = new Map<string, Map<string, number>>();
+		map.set(
+			'layerA',
+			new Map([
+				['layerB', 5],
+				['layerC', 5]
+			])
+		);
+		map.set(
+			'layerB',
+			new Map([
+				['layerA', 5],
+				['layerC', 5]
+			])
+		);
+		map.set(
+			'layerC',
+			new Map([
+				['layerA', 5],
+				['layerB', 5]
+			])
+		);
+		return map;
+	});
 
-  const snapshots: string[] = [];
-  await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
-    onSearchSnapshot: (snapshot) => {
-      if (snapshot.stopReason) snapshots.push(snapshot.stopReason);
-    }
-  });
+	const snapshots: string[] = [];
+	await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		onSearchSnapshot: (snapshot) => {
+			if (snapshot.stopReason) snapshots.push(snapshot.stopReason);
+		}
+	});
 
-  expect(snapshots).toContain('no_feasible_solution');
+	expect(snapshots).toContain('no_feasible_solution');
 });
 ```
 
@@ -630,10 +702,10 @@ test('reports no_feasible_solution stop reason when no assignment satisfies over
 
 ```ts
 options?.onSearchSnapshot?.({
-  nodesVisited,
-  depth: remainingLayerIds.length,
-  feasibleSolutionsFound,
-  stopReason: 'exact_complete'
+	nodesVisited,
+	depth: remainingLayerIds.length,
+	feasibleSolutionsFound,
+	stopReason: 'exact_complete'
 });
 ```
 
@@ -667,6 +739,7 @@ git commit -m "test: finalize brute-force stop reason and progress coverage"
 ### Task 6: Project Verification Gates
 
 **Files:**
+
 - Verify all modified files from prior tasks.
 
 - [ ] **Step 1: Run type and Svelte checks**
