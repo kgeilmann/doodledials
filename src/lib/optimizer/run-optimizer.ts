@@ -38,6 +38,9 @@ const MAX_ITERATIONS = 500;
 const MIN_OVERLAP_PIXELS = 2;
 const OVERLAP_TEST_STEP = 1;
 const OVERLAP_DIRECTION_SEARCH_STEPS = [1, 2, 4, 8];
+const OVERLAP_MAGNITUDE_WEIGHT = 0.1;
+const OVERLAP_MAGNITUDE_POWER = 1.2;
+const MAX_OVERLAP_FORCE_MAGNITUDE = 8;
 const TIME_STEP_DT = 0.5;
 const RESTORING_FORCE_WEIGHT = 0.02;
 const MAX_RESTORING_FORCE = 2;
@@ -274,6 +277,29 @@ function getOverlapCount(
 	return overlaps.get(layerId)?.get(otherLayerId) ?? 0;
 }
 
+export function calculateOverlapMagnitudeFromSharedPixels(sharedPixels: number): number {
+	if (sharedPixels < MIN_OVERLAP_PIXELS) {
+		return 0;
+	}
+
+	return (
+		OVERLAP_MAGNITUDE_WEIGHT * Math.pow(Math.max(0, sharedPixels - 1), OVERLAP_MAGNITUDE_POWER)
+	);
+}
+
+function calculateOverlapMagnitude(
+	currentOverlaps: Map<string, Map<string, number>>,
+	layerId: string,
+	overlappingLayerIds: string[]
+): number {
+	const totalMagnitude = overlappingLayerIds.reduce((sum, otherLayerId) => {
+		const overlap = getOverlapCount(currentOverlaps, layerId, otherLayerId);
+		return sum + calculateOverlapMagnitudeFromSharedPixels(overlap);
+	}, 0);
+
+	return Math.min(MAX_OVERLAP_FORCE_MAGNITUDE, totalMagnitude);
+}
+
 async function calculateOverlapForce(
 	input: OptimizerInput,
 	state: Record<string, number>,
@@ -291,6 +317,8 @@ async function calculateOverlapForce(
 	if (overlappingLayerIds.length === 0) {
 		return 0;
 	}
+
+	const overlapMagnitude = calculateOverlapMagnitude(currentOverlaps, layerId, overlappingLayerIds);
 
 	let bestDirection: -1 | 0 | 1 = 0;
 	let bestStep = OVERLAP_TEST_STEP;
@@ -337,10 +365,10 @@ async function calculateOverlapForce(
 	}
 
 	if (bestDirection === 0) {
-		return getExplorationDirection(layerId) * OVERLAP_TEST_STEP;
+		return getExplorationDirection(layerId) * OVERLAP_TEST_STEP * overlapMagnitude;
 	}
 
-	return bestDirection * bestStep;
+	return bestDirection * bestStep * overlapMagnitude;
 }
 
 function calculateRestoringForce(layerId: string, restoringForceMap: LayerForceMap): number {

@@ -30,12 +30,30 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 import {
 	OptimizerCancelledError,
 	analyzeCircularGaps,
+	calculateOverlapMagnitudeFromSharedPixels,
 	calculateRestoringContributions,
 	calculateRestoringForceMap,
 	calculateUniqueContributions,
 	calculateUniqueForceMap,
 	runOptimizer
 } from './run-optimizer';
+
+describe('calculateOverlapMagnitudeFromSharedPixels', () => {
+	test('returns zero below minimum overlap threshold', () => {
+		expect(calculateOverlapMagnitudeFromSharedPixels(0)).toBe(0);
+		expect(calculateOverlapMagnitudeFromSharedPixels(1)).toBe(0);
+	});
+
+	test('returns larger magnitude for larger overlap counts', () => {
+		const small = calculateOverlapMagnitudeFromSharedPixels(2);
+		const medium = calculateOverlapMagnitudeFromSharedPixels(10);
+		const large = calculateOverlapMagnitudeFromSharedPixels(25);
+
+		expect(small).toBeGreaterThan(0);
+		expect(medium).toBeGreaterThan(small);
+		expect(large).toBeGreaterThan(medium);
+	});
+});
 
 describe('analyzeCircularGaps', () => {
 	test('sorts by normalized angle and computes circular gaps including wrap-around', () => {
