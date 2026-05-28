@@ -32,6 +32,8 @@ import {
 	analyzeCircularGaps,
 	calculateRestoringContributions,
 	calculateRestoringForceMap,
+	calculateUniqueContributions,
+	calculateUniqueForceMap,
 	runOptimizer
 } from './run-optimizer';
 
@@ -108,6 +110,54 @@ describe('calculateRestoringForceMap', () => {
 
 	test('returns empty map for empty layer ids', () => {
 		expect(calculateRestoringForceMap({}, [])).toEqual({});
+	});
+});
+
+describe('calculateUniqueContributions', () => {
+	test('returns zero contributions when all layers satisfy minimum separation', () => {
+		const result = calculateUniqueContributions({ layerA: 0, layerB: 120, layerC: 240 }, [
+			'layerA',
+			'layerB',
+			'layerC'
+		]);
+
+		expect(result).toEqual({ layerA: 0, layerB: 0, layerC: 0 });
+	});
+
+	test('applies opposite repulsive pushes when a pair is too close', () => {
+		const result = calculateUniqueContributions({ layerA: 0, layerB: 2, layerC: 200 }, [
+			'layerA',
+			'layerB',
+			'layerC'
+		]);
+
+		expect(result.layerA).toBeLessThan(0);
+		expect(result.layerB).toBeGreaterThan(0);
+		expect(result.layerC).toBe(0);
+		expect(result.layerA + result.layerB + result.layerC).toBeCloseTo(0, 8);
+	});
+});
+
+describe('calculateUniqueForceMap', () => {
+	test('returns a zero-sum unique map after clamp normalization', () => {
+		const layerIds = ['layerA', 'layerB', 'layerC'];
+		const uniqueContributions = {
+			layerA: 12,
+			layerB: -12,
+			layerC: 0
+		};
+
+		const forceMap = calculateUniqueForceMap(uniqueContributions, layerIds);
+		const total = layerIds.reduce((sum, layerId) => sum + forceMap[layerId], 0);
+
+		expect(Math.abs(forceMap.layerA)).toBeLessThanOrEqual(2);
+		expect(Math.abs(forceMap.layerB)).toBeLessThanOrEqual(2);
+		expect(Math.abs(forceMap.layerC)).toBeLessThanOrEqual(2);
+		expect(total).toBeCloseTo(0, 8);
+	});
+
+	test('returns empty map for empty layer ids', () => {
+		expect(calculateUniqueForceMap({}, [])).toEqual({});
 	});
 });
 
@@ -288,5 +338,51 @@ describe('runOptimizer', () => {
 		);
 
 		expect(finalWorstDeviation).toBeLessThan(initialWorstDeviation);
+	});
+
+	test('increases minimum circular gap when layers start too close and no overlaps are present', async () => {
+		detectOverlapsMock.mockImplementation(async () => new Map());
+
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 220, visible: true }
+		];
+
+		const input = {
+			diameter: 200,
+			config: {
+				diameter: 200,
+				minDiameter: 50,
+				maxDiameter: 200,
+				borderWidth: 2,
+				padding: 0.05,
+				offsetX: 0,
+				offsetY: 0,
+				scale: 1
+			},
+			layers,
+			svgContent: {
+				raw: '<svg viewBox="0 0 200 200"></svg>',
+				filename: 'fixture.svg'
+			}
+		};
+
+		const initialState = Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation]));
+		const initialAnalysis = analyzeCircularGaps(
+			initialState as Record<string, number>,
+			layers.map((layer) => layer.id)
+		);
+		const initialMinGap = Math.min(...initialAnalysis.gaps.map((gap) => gap.gap));
+
+		const result = await runOptimizer(input);
+
+		const finalAnalysis = analyzeCircularGaps(
+			result.layout,
+			layers.map((layer) => layer.id)
+		);
+		const finalMinGap = Math.min(...finalAnalysis.gaps.map((gap) => gap.gap));
+
+		expect(finalMinGap).toBeGreaterThan(initialMinGap);
 	});
 });

@@ -41,6 +41,9 @@ const OVERLAP_DIRECTION_SEARCH_STEPS = [1, 2, 4, 8];
 const TIME_STEP_DT = 0.5;
 const RESTORING_FORCE_WEIGHT = 0.02;
 const MAX_RESTORING_FORCE = 2;
+const UNIQUE_FORCE_WEIGHT = 0.02;
+const MIN_UNIQUE_ANGLE_SEPARATION = 5;
+const MAX_UNIQUE_FORCE = 2;
 
 export interface CircularGap {
 	fromLayerId: string;
@@ -62,6 +65,14 @@ function createZeroForceMap(layerIds: string[]): LayerForceMap {
 
 function sumForceMap(forces: LayerForceMap, layerIds: string[]): number {
 	return layerIds.reduce((sum, layerId) => sum + (forces[layerId] ?? 0), 0);
+}
+
+function shortestSignedAngleDifference(fromAngle: number, toAngle: number): number {
+	let difference = normalizeAngle(toAngle - fromAngle);
+	if (difference > 180) {
+		difference -= 360;
+	}
+	return difference;
 }
 
 function normalizeAngle(angle: number): number {
@@ -165,6 +176,63 @@ export function calculateRestoringForceMap(
 
 	const clamped: LayerForceMap = Object.fromEntries(
 		layerIds.map((layerId) => [layerId, clampRestoringForce(restoringContributions[layerId] ?? 0)])
+	);
+
+	const total = layerIds.reduce((sum, layerId) => sum + clamped[layerId], 0);
+	const mean = total / layerIds.length;
+
+	return Object.fromEntries(layerIds.map((layerId) => [layerId, clamped[layerId] - mean]));
+}
+
+export function calculateUniqueContributions(
+	state: Record<string, number>,
+	layerIds: string[]
+): LayerForceMap {
+	const contributions: LayerForceMap = createZeroForceMap(layerIds);
+
+	if (layerIds.length < 2) {
+		return contributions;
+	}
+
+	for (let i = 0; i < layerIds.length; i++) {
+		const layerIdA = layerIds[i];
+		const angleA = normalizeAngle(state[layerIdA] ?? 0);
+
+		for (let j = i + 1; j < layerIds.length; j++) {
+			const layerIdB = layerIds[j];
+			const angleB = normalizeAngle(state[layerIdB] ?? 0);
+			const difference = shortestSignedAngleDifference(angleA, angleB);
+			const distance = Math.abs(difference);
+
+			if (distance >= MIN_UNIQUE_ANGLE_SEPARATION) {
+				continue;
+			}
+
+			const violation = MIN_UNIQUE_ANGLE_SEPARATION - distance;
+			const direction = difference === 0 ? 1 : Math.sign(difference);
+
+			contributions[layerIdA] -= direction * violation;
+			contributions[layerIdB] += direction * violation;
+		}
+	}
+
+	return contributions;
+}
+
+function clampUniqueForce(force: number): number {
+	return Math.max(-MAX_UNIQUE_FORCE, Math.min(MAX_UNIQUE_FORCE, force));
+}
+
+export function calculateUniqueForceMap(
+	uniqueContributions: LayerForceMap,
+	layerIds: string[]
+): LayerForceMap {
+	if (layerIds.length === 0) {
+		return {};
+	}
+
+	const clamped: LayerForceMap = Object.fromEntries(
+		layerIds.map((layerId) => [layerId, clampUniqueForce(uniqueContributions[layerId] ?? 0)])
 	);
 
 	const total = layerIds.reduce((sum, layerId) => sum + clamped[layerId], 0);
@@ -279,8 +347,8 @@ function calculateRestoringForce(layerId: string, restoringForceMap: LayerForceM
 	return restoringForceMap[layerId] ?? 0;
 }
 
-function calculateUniqueForce(): number {
-	return 0;
+function calculateUniqueForce(layerId: string, uniqueForceMap: LayerForceMap): number {
+	return uniqueForceMap[layerId] ?? 0;
 }
 
 function integrateAngle(currentAngle: number, totalForce: number, timeStepDt: number): number {
@@ -329,8 +397,12 @@ export async function runOptimizer(
 		const currentOverlaps = await detectLayoutOverlaps(input, state);
 		const restoringContributions = calculateRestoringContributions(state, layerIds);
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds);
+		const uniqueContributions = calculateUniqueContributions(state, layerIds);
+		const uniqueForceMap = calculateUniqueForceMap(uniqueContributions, layerIds);
 		const restoringRawSum = sumForceMap(restoringContributions, layerIds);
 		const restoringNormalizedSum = sumForceMap(restoringForceMap, layerIds);
+		const uniqueRawSum = sumForceMap(uniqueContributions, layerIds);
+		const uniqueNormalizedSum = sumForceMap(uniqueForceMap, layerIds);
 		throwIfCancelled(options?.signal);
 		let totalForceMagnitude = 0;
 		const nextState = { ...state };
@@ -341,8 +413,9 @@ export async function runOptimizer(
 			const overlapForce = await calculateOverlapForce(input, state, currentOverlaps, layerId);
 			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce(layerId, restoringForceMap);
-			const uniqueForce = calculateUniqueForce();
-			const totalForce = overlapForce + RESTORING_FORCE_WEIGHT * restoringForce + uniqueForce;
+			const uniqueForce = calculateUniqueForce(layerId, uniqueForceMap);
+			const totalForce =
+				overlapForce + RESTORING_FORCE_WEIGHT * restoringForce + UNIQUE_FORCE_WEIGHT * uniqueForce;
 			layerForces[layerId] = totalForce;
 			nextState[layerId] = integrateAngle(state[layerId], totalForce, TIME_STEP_DT);
 			totalForceMagnitude += Math.abs(totalForce);
@@ -363,6 +436,8 @@ export async function runOptimizer(
 			averageForceMagnitude,
 			restoringRawSum,
 			restoringNormalizedSum,
+			uniqueRawSum,
+			uniqueNormalizedSum,
 			forces: layerForces,
 			layoutBefore,
 			layoutAfter: nextState
