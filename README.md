@@ -1,42 +1,50 @@
-# sv
+# Doodle Dials
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This project is a specialized SVG editor for creating doodle dials: circular drawing templates with numbered cutouts.
 
-## Creating a project
+## What Is A Doodle Dial?
 
-If you're seeing this, you've probably already done this step. Congrats!
+A doodle dial is used in rotation steps:
 
-```sh
-# create a new project
-npx sv create my-app
-```
+1. Fix the dial to a piece of paper at its center.
+2. Rotate the dial so cutout mark 1 is at 12 o'clock.
+3. Fill the visible cutout.
+4. Rotate to mark 2 at 12 o'clock and fill again.
+5. Continue until all cutouts are filled.
 
-To recreate this project with the same configuration:
+The final image appears from the combined strokes across all rotation positions.
 
-```sh
-# recreate this project
-pnpm dlx sv@0.14.1 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright sveltekit-adapter="adapter:auto" mcp="ide:opencode,vscode+setup:local" --install pnpm .
-```
+## Historical Note
 
-## Developing
+This editor is inspired by the British Rotadraw toy from 1969 (not the later American release). The tool focuses on the same core idea: sequential rotational alignment and layered cutout drawing to reveal a complete picture.
 
-Once you've created a project and installed dependencies with `pnpm install`, start a development server:
+## Development
 
-```sh
-pnpm run dev
-
-# or start the server and open the app in a new browser tab
-pnpm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+Install dependencies:
 
 ```sh
-pnpm run build
+pnpm install
 ```
 
-You can preview the production build with `pnpm run preview`.
+Start a development server:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+pnpm dev
+
+# or start and open a browser tab
+pnpm dev -- --open
+```
+
+## Build
+
+Create a production build:
+
+```sh
+pnpm build
+```
+
+Preview the production build:
+
+```sh
+pnpm preview
+```
