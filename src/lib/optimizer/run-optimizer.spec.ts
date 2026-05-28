@@ -28,6 +28,7 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 }));
 
 import {
+	type OptimizerIterationSnapshot,
 	OptimizerCancelledError,
 	analyzeCircularGaps,
 	calculateOverlapMagnitudeFromSharedPixels,
@@ -491,5 +492,113 @@ describe('runOptimizer', () => {
 		const finalMinGap = Math.min(...finalAnalysis.gaps.map((gap) => gap.gap));
 
 		expect(finalMinGap).toBeGreaterThan(initialMinGap);
+	});
+
+	test('scenario matrix: no-overlap clustered layout keeps overlap at zero and improves min gap', async () => {
+		detectOverlapsMock.mockImplementation(async () => new Map());
+
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+		];
+
+		const snapshots: OptimizerIterationSnapshot[] = [];
+		const result = await runOptimizer(
+			{
+				diameter: 200,
+				config: {
+					diameter: 200,
+					minDiameter: 50,
+					maxDiameter: 200,
+					borderWidth: 2,
+					padding: 0.05,
+					offsetX: 0,
+					offsetY: 0,
+					scale: 1
+				},
+				layers,
+				svgContent: {
+					raw: '<svg viewBox="0 0 200 200"></svg>',
+					filename: 'fixture.svg'
+				}
+			},
+			undefined,
+			{
+				roundOutputAngles: false,
+				onIterationSnapshot: (snapshot) => snapshots.push(snapshot)
+			}
+		);
+
+		const first = snapshots[0];
+		const last = snapshots[snapshots.length - 1];
+		expect(first.overlapAggregate).toBe(0);
+		expect(last.overlapAggregate).toBe(0);
+		expect(last.minimumGap).toBeGreaterThanOrEqual(first.minimumGap);
+
+		const earlyAvg =
+			snapshots
+				.slice(0, Math.max(1, Math.floor(snapshots.length / 3)))
+				.reduce((sum, s) => sum + s.averageForceMagnitude, 0) /
+			Math.max(1, Math.floor(snapshots.length / 3));
+		const lateSlice = snapshots.slice(-Math.max(1, Math.floor(snapshots.length / 3)));
+		const lateAvg =
+			lateSlice.reduce((sum, s) => sum + s.averageForceMagnitude, 0) / lateSlice.length;
+		expect(lateAvg).toBeLessThanOrEqual(earlyAvg * 1.15);
+
+		const finalAnalysis = analyzeCircularGaps(
+			result.layout,
+			layers.map((layer) => layer.id)
+		);
+		expect(Math.min(...finalAnalysis.gaps.map((gap) => gap.gap))).toBeGreaterThan(1);
+	});
+
+	test('scenario matrix: overlap-heavy layout does not worsen overlap aggregate by end', async () => {
+		const layers: Layer[] = [
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true }
+		];
+
+		const snapshots: OptimizerIterationSnapshot[] = [];
+		await runOptimizer(
+			{
+				diameter: 200,
+				config: {
+					diameter: 200,
+					minDiameter: 50,
+					maxDiameter: 200,
+					borderWidth: 2,
+					padding: 0.05,
+					offsetX: 0,
+					offsetY: 0,
+					scale: 1
+				},
+				layers,
+				svgContent: {
+					raw: '<svg viewBox="0 0 200 200"></svg>',
+					filename: 'fixture.svg'
+				}
+			},
+			undefined,
+			{
+				roundOutputAngles: false,
+				onIterationSnapshot: (snapshot) => snapshots.push(snapshot)
+			}
+		);
+
+		const first = snapshots[0];
+		const last = snapshots[snapshots.length - 1];
+		expect(last.overlapAggregate).toBeLessThanOrEqual(first.overlapAggregate);
+
+		const earlyAvg =
+			snapshots
+				.slice(0, Math.max(1, Math.floor(snapshots.length / 3)))
+				.reduce((sum, s) => sum + s.averageForceMagnitude, 0) /
+			Math.max(1, Math.floor(snapshots.length / 3));
+		const lateSlice = snapshots.slice(-Math.max(1, Math.floor(snapshots.length / 3)));
+		const lateAvg =
+			lateSlice.reduce((sum, s) => sum + s.averageForceMagnitude, 0) / lateSlice.length;
+		expect(lateAvg).toBeLessThanOrEqual(earlyAvg * 1.2);
 	});
 });
