@@ -5,6 +5,7 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
+	import type { PairOverlapCacheMode } from '$lib/utils/overlap-detection';
 	import type { OptimizerTuning } from '$lib/optimizer/run-optimizer';
 	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
@@ -23,6 +24,7 @@
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
 	let optimizerRandomSeedInput = $state('42');
+	let optimizerOverlapPairCacheMode = $state<PairOverlapCacheMode>('absolute');
 
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
@@ -45,6 +47,7 @@
 		optimizerInitializeRandomly = false;
 		optimizerRoundOutputAngles = true;
 		optimizerRandomSeedInput = '42';
+		optimizerOverlapPairCacheMode = 'absolute';
 	}
 
 	function handleCancelOptimizer() {
@@ -107,6 +110,7 @@
 					initializeRandomly: optimizerInitializeRandomly,
 					randomSeed: optimizerInitializeRandomly ? randomSeed : undefined,
 					roundOutputAngles: optimizerRoundOutputAngles,
+					overlapPairCacheMode: optimizerOverlapPairCacheMode,
 					tuning: {
 						overlapMagnitudeWeight: optimizerTuning.overlapMagnitudeWeight,
 						overlapMagnitudePower: optimizerTuning.overlapMagnitudePower,
@@ -283,6 +287,16 @@
 								bind:value={optimizerRandomSeedInput}
 								class="w-full rounded-lg border border-gray-300 px-2 py-1"
 							/>
+						</label>
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Caching Algorithm</span>
+							<select
+								bind:value={optimizerOverlapPairCacheMode}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1 bg-white"
+							>
+								<option value="absolute">Absolute (layer+angle pair)</option>
+								<option value="relative">Relative (layer pair + angle delta)</option>
+							</select>
 						</label>
 
 						<label>

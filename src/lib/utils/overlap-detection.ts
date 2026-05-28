@@ -3,43 +3,139 @@ import type { Layer } from '$lib/types/doodledial';
 
 const RENDER_SIZE = 200;
 
+const ANGLE_CACHE_PRECISION = 6;
+
 interface PixelData {
 	data: Uint8ClampedArray;
 	width: number;
 	height: number;
 }
 
+export type PairOverlapCacheMode = 'absolute' | 'relative';
+
+export interface OverlapDetectionCache {
+	bitmapByLayerAngle: Map<string, PixelData>;
+	overlapByAbsolutePairAngles: Map<string, number>;
+	overlapByRelativePairAngles: Map<string, number>;
+}
+
+export interface DetectOverlapsOptions {
+	cache?: OverlapDetectionCache;
+	pairCacheMode?: PairOverlapCacheMode;
+}
+
+export function createOverlapDetectionCache(): OverlapDetectionCache {
+	return {
+		bitmapByLayerAngle: new Map(),
+		overlapByAbsolutePairAngles: new Map(),
+		overlapByRelativePairAngles: new Map()
+	};
+}
+
+function roundAngleForCache(angle: number): number {
+	return Number(normalizeAngle(angle).toFixed(ANGLE_CACHE_PRECISION));
+}
+
+function normalizeAngle(angle: number): number {
+	return ((angle % 360) + 360) % 360;
+}
+
+function toLayerBitmapCacheKey(layerId: string, angle: number): string {
+	return `${layerId}:${roundAngleForCache(angle)}`;
+}
+
+function toAbsolutePairCacheKey(
+	firstLayerId: string,
+	firstAngle: number,
+	secondLayerId: string,
+	secondAngle: number
+): string {
+	if (firstLayerId <= secondLayerId) {
+		return `${firstLayerId}:${roundAngleForCache(firstAngle)}|${secondLayerId}:${roundAngleForCache(secondAngle)}`;
+	}
+
+	return `${secondLayerId}:${roundAngleForCache(secondAngle)}|${firstLayerId}:${roundAngleForCache(firstAngle)}`;
+}
+
+function toRelativePairCacheKey(
+	firstLayerId: string,
+	firstAngle: number,
+	secondLayerId: string,
+	secondAngle: number
+): string {
+	if (firstLayerId <= secondLayerId) {
+		const delta = roundAngleForCache(firstAngle - secondAngle);
+		return `${firstLayerId}|${secondLayerId}|${delta}`;
+	}
+
+	const delta = roundAngleForCache(secondAngle - firstAngle);
+	return `${secondLayerId}|${firstLayerId}|${delta}`;
+}
+
 export async function detectOverlaps(
 	layers: Layer[],
-	combinedSvg: string
+	combinedSvg: string,
+	options?: DetectOverlapsOptions
 ): Promise<Map<string, Map<string, number>>> {
 	const overlaps = new Map<string, Map<string, number>>();
+	const pairCacheMode = options?.pairCacheMode ?? 'absolute';
 
 	if (layers.length < 2) {
 		return overlaps;
 	}
 
-	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg);
+	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg, options?.cache);
 
 	for (let i = 0; i < layers.length; i++) {
 		for (let j = i + 1; j < layers.length; j++) {
-			const bitmapA = layerBitmaps.get(layers[i].id);
-			const bitmapB = layerBitmaps.get(layers[j].id);
+			const layerA = layers[i];
+			const layerB = layers[j];
+			const bitmapA = layerBitmaps.get(layerA.id);
+			const bitmapB = layerBitmaps.get(layerB.id);
 
 			if (!bitmapA || !bitmapB) {
 				continue;
 			}
 
-			const pixelCount = countOverlapPixels(bitmapA, bitmapB);
+			const absoluteKey = toAbsolutePairCacheKey(
+				layerA.id,
+				layerA.rotation,
+				layerB.id,
+				layerB.rotation
+			);
+			const relativeKey = toRelativePairCacheKey(
+				layerA.id,
+				layerA.rotation,
+				layerB.id,
+				layerB.rotation
+			);
+
+			let pixelCount: number | undefined;
+			if (options?.cache) {
+				if (pairCacheMode === 'relative') {
+					pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
+				} else {
+					pixelCount = options.cache.overlapByAbsolutePairAngles.get(absoluteKey);
+				}
+			}
+
+			if (pixelCount === undefined) {
+				pixelCount = countOverlapPixels(bitmapA, bitmapB);
+				if (options?.cache) {
+					options.cache.overlapByAbsolutePairAngles.set(absoluteKey, pixelCount);
+					options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
+				}
+			}
+
 			if (pixelCount > 0) {
-				if (!overlaps.has(layers[i].id)) {
-					overlaps.set(layers[i].id, new Map());
+				if (!overlaps.has(layerA.id)) {
+					overlaps.set(layerA.id, new Map());
 				}
-				if (!overlaps.has(layers[j].id)) {
-					overlaps.set(layers[j].id, new Map());
+				if (!overlaps.has(layerB.id)) {
+					overlaps.set(layerB.id, new Map());
 				}
-				overlaps.get(layers[i].id)!.set(layers[j].id, pixelCount);
-				overlaps.get(layers[j].id)!.set(layers[i].id, pixelCount);
+				overlaps.get(layerA.id)!.set(layerB.id, pixelCount);
+				overlaps.get(layerB.id)!.set(layerA.id, pixelCount);
 			}
 		}
 	}
@@ -49,11 +145,19 @@ export async function detectOverlaps(
 
 async function renderLayersToBitmaps(
 	layers: Layer[],
-	combinedSvg: string
+	combinedSvg: string,
+	cache?: OverlapDetectionCache
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
 
 	for (const layer of layers) {
+		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
+		const cachedBitmap = cache?.bitmapByLayerAngle.get(cacheKey);
+		if (cachedBitmap) {
+			bitmaps.set(layer.id, cachedBitmap);
+			continue;
+		}
+
 		const tempDoc = SVG(combinedSvg) as Svg;
 
 		tempDoc.find(':not(.cutout)').forEach((e) => {
@@ -65,6 +169,7 @@ async function renderLayersToBitmaps(
 
 		const bitmap = await renderSvgToBitmap(tempDoc.svg(), RENDER_SIZE, RENDER_SIZE);
 		bitmaps.set(layer.id, bitmap);
+		cache?.bitmapByLayerAngle.set(cacheKey, bitmap);
 	}
 
 	return bitmaps;
