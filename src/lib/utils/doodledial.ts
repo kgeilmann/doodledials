@@ -56,7 +56,7 @@ export function parseSvgPaths(svgContent: string): {
 	doc
 		.circle(maxImageDimension * Math.SQRT2)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
-		.id('disc')
+		.id('disc');
 
 	const layers: { id: string; name: string; index: number }[] = [];
 
@@ -154,13 +154,13 @@ export function combineDoodledial(
 
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
-	
+
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
 		svgLayer.attr('visibility', layer.visible ? 'visible' : 'hidden');
 		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
 		svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
-	
+
 		if (layer.id === highlightedLayerId) highlighted = svgLayer;
 		if (layer.id === selectedLayerId) selected = svgLayer;
 

@@ -13,5 +13,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Install kld-intersections library for path-label intersection detection. Add to package.json dependencies.
+
 <!-- SECTION:DESCRIPTION:END -->

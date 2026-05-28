@@ -12,13 +12,17 @@ dependencies: []
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 When clicking on the mark label, the cursor changes to an text input cursor, additionally the text can be selected with the mouse. As we cannot edit the text and we also do not want to copy it, this is not needed.
 
 The only interaction needed with the label is clicking for layer selection, hovering for layer hightlighting and dragging for layer rotation.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
+
 <!-- AC:BEGIN -->
+
 - [ ] #1 Clicking on label shows pointer cursor, not text input cursor
 - [ ] #2 Text cannot be selected with mouse drag
 - [ ] #3 Hover highlighting still works
@@ -28,15 +32,19 @@ The only interaction needed with the label is clicking for layer selection, hove
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ## Implementation Plan
 
 ### Problem
+
 When clicking on the mark label (layer number), the cursor shows a text input cursor and text can be selected with the mouse. This is unnecessary since the text cannot be edited.
 
 ### Solution
+
 Add CSS to make the `.layer-label` non-selectable.
 
 ### Steps
+
 1. Add CSS rules to `.layer-label` class in `src/lib/utils/doodledial.ts`:
    - `user-select: none` - prevents text selection
    - `cursor: pointer` - shows pointer cursor for click interaction
@@ -47,4 +55,4 @@ Add CSS to make the `.layer-label` non-selectable.
    - Text cannot be selected with mouse
    - Hover highlighting still works
    - Click for layer selection still works
-<!-- SECTION:PLAN:END -->
+   <!-- SECTION:PLAN:END -->

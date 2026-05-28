@@ -14,5 +14,7 @@ ordinal: 400
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 In doodledial.ts lines 70-72, stroke-width '5' is applied to the entire group including the mark line and label. Modify to only apply stroke-width to path elements, not to the mark line or label text.
+
 <!-- SECTION:DESCRIPTION:END -->

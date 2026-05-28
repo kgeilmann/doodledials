@@ -13,5 +13,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Create utility function to detect label-label collisions using bounding box intersection. Returns true if two labels overlap.
+
 <!-- SECTION:DESCRIPTION:END -->

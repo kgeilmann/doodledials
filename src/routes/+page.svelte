@@ -143,5 +143,5 @@
 			<DialPreview />
 		</div>
 	</div>
-	<RasterPreviewModal bind:open={showRasterPreview} />	
+	<RasterPreviewModal bind:open={showRasterPreview} />
 </main>
