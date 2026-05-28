@@ -28,6 +28,8 @@ test.describe('Optimizer Hook', () => {
 		});
 
 		await optimizeButton.click();
+		await expect(page.getByTestId('optimizer-config-dialog')).toBeVisible();
+		await page.getByTestId('optimizer-dialog-run-button').click();
 		await expect(page.getByTestId('optimizer-progress-track')).toBeVisible();
 		await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Iterations');
 		await expect(page.getByTestId('optimizer-progress-message')).toContainText('Iterations');
