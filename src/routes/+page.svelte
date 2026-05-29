@@ -96,6 +96,10 @@
 		}, 1200);
 	}
 
+	function formatIterationsLabel(total: number | string): string {
+		return `Iterations ${optimizerIteration}/${total}`;
+	}
+
 	async function handleRunOptimizer(mode: OptimizerMode = optimizerMode) {
 		if (!doodledialStore.svgContent || optimizerPending) {
 			return;
@@ -191,7 +195,7 @@
 			) {
 				optimizerCancelled = true;
 				optimizerProgressPhase = 'Cancelled';
-				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || '?'} - optimization cancelled.`;
+				optimizerProgressMessage = `${formatIterationsLabel(optimizerTotalIterations || '?')} - optimization cancelled.`;
 			} else {
 				optimizerProgressPhase = 'Error';
 				optimizerProgressMessage = 'Optimization failed. Please try again.';
@@ -202,14 +206,14 @@
 				optimizerProgress = 100;
 				optimizerProgressPhase = optimizerTimeLimited ? 'Time Limit' : 'Complete';
 				optimizerProgressMessage = optimizerTimeLimited
-					? `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - time limit reached, best feasible layout applied.`
-					: `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration} - layout applied.`;
+					? `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration)} - time limit reached, best feasible layout applied.`
+					: `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration)} - layout applied.`;
 			}
 
 			if (optimizerNoFeasible) {
 				optimizerProgress = 100;
 				optimizerProgressPhase = 'No Feasible Layout';
-				optimizerProgressMessage = `Iterations ${optimizerIteration}/${optimizerTotalIterations || optimizerIteration || '?'} - no feasible non-overlapping layout found.`;
+				optimizerProgressMessage = `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration || '?')} - no feasible non-overlapping layout found.`;
 			}
 
 			if (optimizerCancelled && optimizerProgress === 0) {

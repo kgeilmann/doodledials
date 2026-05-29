@@ -275,40 +275,36 @@ export async function runBruteforceOptimizer(
 	onProgress?: (progress: OptimizerProgress) => void,
 	options?: BruteforceOptimizerOptions
 ): Promise<OptimizerResult> {
+	const emitTerminalProgressAndSnapshot = (
+		feasibleSolutionsFound: number,
+		stopReason: BruteforceOptimizerStopReason
+	): void => {
+		onProgress?.({
+			percent: 100,
+			message: 'Iterations 0/0',
+			iteration: 0,
+			totalIterations: 0
+		});
+		options?.onSearchSnapshot?.({
+			nodesVisited: 0,
+			depth: 0,
+			feasibleSolutionsFound,
+			stopReason
+		});
+	};
+
 	const startedAtMs = Date.now();
 	console.log('[optimizer] Frontend brute-force optimizer called:', input);
 	throwIfCancelled(options?.signal);
 
 	const layerIds = input.layers.map((layer) => layer.id);
 	if (layerIds.length === 0) {
-		onProgress?.({
-			percent: 100,
-			message: 'Iterations 0/0',
-			iteration: 0,
-			totalIterations: 0
-		});
-		options?.onSearchSnapshot?.({
-			nodesVisited: 0,
-			depth: 0,
-			feasibleSolutionsFound: 1,
-			stopReason: 'exact_complete'
-		});
+		emitTerminalProgressAndSnapshot(1, 'exact_complete');
 		return { layout: {}, stopReason: 'exact_complete', feasibleSolutionsFound: 1 };
 	}
 
 	if (layerIds.length > 360) {
-		onProgress?.({
-			percent: 100,
-			message: 'Iterations 0/0',
-			iteration: 0,
-			totalIterations: 0
-		});
-		options?.onSearchSnapshot?.({
-			nodesVisited: 0,
-			depth: 0,
-			feasibleSolutionsFound: 0,
-			stopReason: 'no_feasible_solution'
-		});
+		emitTerminalProgressAndSnapshot(0, 'no_feasible_solution');
 		const fallbackLayout = buildDefaultLayout(input.layers, layerIds[0], layerIds);
 		const fallback =
 			(options?.roundOutputAngles ?? true) ? roundLayoutAngles(fallbackLayout) : fallbackLayout;
