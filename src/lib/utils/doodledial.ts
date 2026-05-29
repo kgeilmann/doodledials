@@ -149,17 +149,17 @@ export interface CombineDoodledialOptions {
 export interface OptimizerSvgTemplate {
 	rawTemplate: string;
 	layerIds: string[];
+	rotationPlaceholderByLayerId: Record<string, string>;
 }
 
-const OPTIMIZER_ROTATION_TOKEN_PREFIX = '__DDL_ROT_';
-const OPTIMIZER_ROTATION_TOKEN_REGEX = /__DDL_ROT_([A-Za-z0-9_-]+)__/g;
+const OPTIMIZER_ROTATION_PLACEHOLDER_BASE = 1_000_000;
 
 function normalizeAngle(angle: number): number {
 	return ((angle % 360) + 360) % 360;
 }
 
-function toOptimizerRotationToken(layerId: string): string {
-	return `${OPTIMIZER_ROTATION_TOKEN_PREFIX}${layerId}__`;
+function toOptimizerRotationPlaceholder(index: number, cx: number, cy: number): string {
+	return `rotate(${OPTIMIZER_ROTATION_PLACEHOLDER_BASE + index}, ${cx}, ${cy})`;
 }
 
 export function createOptimizerSvgTemplate(
@@ -172,6 +172,7 @@ export function createOptimizerSvgTemplate(
 	const cy = doc.viewbox().cy;
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
+	const rotationPlaceholderByLayerId: Record<string, string> = {};
 
 	doc.find('.cutout').forEach((cutout) => {
 		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
@@ -181,15 +182,18 @@ export function createOptimizerSvgTemplate(
 		label.remove();
 	});
 
-	for (const layerId of layerIds) {
+	for (const [index, layerId] of layerIds.entries()) {
 		const svgLayer = doc.findOne('#' + layerId) as G | null;
 		if (!svgLayer) {
 			continue;
 		}
 
+		const rotationPlaceholder = toOptimizerRotationPlaceholder(index, cx, cy);
+		rotationPlaceholderByLayerId[layerId] = rotationPlaceholder;
+
 		svgLayer.attr('visibility', 'visible');
 		svgLayer.attr('highlighted', null);
-		svgLayer.attr('transform', `rotate(${toOptimizerRotationToken(layerId)}, ${cx}, ${cy})`);
+		svgLayer.attr('transform', rotationPlaceholder);
 	}
 
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
@@ -198,7 +202,8 @@ export function createOptimizerSvgTemplate(
 
 	return {
 		rawTemplate: doc.svg(),
-		layerIds
+		layerIds,
+		rotationPlaceholderByLayerId
 	};
 }
 
@@ -206,11 +211,25 @@ export function combineOptimizerSvgTemplate(
 	template: OptimizerSvgTemplate,
 	rotationsByLayerId: Record<string, number>
 ): string {
-	void template.layerIds;
-	return template.rawTemplate.replace(OPTIMIZER_ROTATION_TOKEN_REGEX, (_match, layerId) => {
-		const angle = rotationsByLayerId[layerId] ?? 0;
-		return String(normalizeAngle(angle));
-	});
+	let combinedSvg = template.rawTemplate;
+
+	for (const layerId of template.layerIds) {
+		const rotationPlaceholder = template.rotationPlaceholderByLayerId[layerId];
+		if (!rotationPlaceholder) {
+			continue;
+		}
+
+		const angle = normalizeAngle(rotationsByLayerId[layerId] ?? 0);
+		combinedSvg = combinedSvg.replace(
+			rotationPlaceholder,
+			rotationPlaceholder.replace(
+				String(OPTIMIZER_ROTATION_PLACEHOLDER_BASE + template.layerIds.indexOf(layerId)),
+				String(angle)
+			)
+		);
+	}
+
+	return combinedSvg;
 }
 
 export function precomputeOptimizerSvgContent(content: SVGContent, config: DialConfig): SVGContent {

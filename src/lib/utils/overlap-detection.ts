@@ -167,6 +167,8 @@ async function renderLayersToBitmaps(
 	cache?: OverlapDetectionCache
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
+	const parsedSvgRoot = parseSvgRoot(combinedSvg);
+	const serializer = new XMLSerializer();
 
 	for (const layer of layers) {
 		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
@@ -176,21 +178,84 @@ async function renderLayersToBitmaps(
 			continue;
 		}
 
-		const tempDoc = SVG(combinedSvg) as Svg;
+		const cutoutOnlySvg = buildCutoutOnlyLayerSvg(parsedSvgRoot, layer.id, serializer);
+		if (!cutoutOnlySvg) {
+			continue;
+		}
 
-		tempDoc.find(':not(.cutout)').forEach((e) => {
-			e.attr('visibility', 'hidden');
-		});
-
-		const l = tempDoc.findOne('#' + layer.id);
-		l!.attr('visibility', 'visible');
-
-		const bitmap = await renderSvgToBitmap(tempDoc.svg(), RENDER_SIZE, RENDER_SIZE);
+		const bitmap = await renderSvgToBitmap(cutoutOnlySvg, RENDER_SIZE, RENDER_SIZE);
 		bitmaps.set(layer.id, bitmap);
 		cache?.bitmapByLayerAngle.set(cacheKey, bitmap);
 	}
 
 	return bitmaps;
+}
+
+function parseSvgRoot(svgString: string): SVGSVGElement {
+	const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+	return doc.documentElement as unknown as SVGSVGElement;
+}
+
+function copySvgRootAttributes(source: SVGSVGElement, target: SVGSVGElement): void {
+	for (const attr of Array.from(source.attributes)) {
+		target.setAttribute(attr.name, attr.value);
+	}
+}
+
+function cloneSharedSvgChildren(sourceRoot: SVGSVGElement, targetRoot: SVGSVGElement): void {
+	for (const child of Array.from(sourceRoot.children)) {
+		const tagName = child.tagName.toLowerCase();
+		if (tagName === 'defs' || tagName === 'style') {
+			targetRoot.appendChild(child.cloneNode(true));
+		}
+	}
+}
+
+function escapeAttributeValue(value: string): string {
+	return value.replace(/"/g, '\\"');
+}
+
+function pruneToCutoutSubtree(element: Element): boolean {
+	let keepElement = element.classList.contains('cutout');
+
+	for (const child of Array.from(element.children)) {
+		const shouldKeepChild = pruneToCutoutSubtree(child);
+		if (!shouldKeepChild) {
+			child.remove();
+			continue;
+		}
+
+		keepElement = true;
+	}
+
+	return keepElement;
+}
+
+function buildCutoutOnlyLayerSvg(
+	sourceRoot: SVGSVGElement,
+	layerId: string,
+	serializer: XMLSerializer
+): string | null {
+	const layerSelector = `[id="${escapeAttributeValue(layerId)}"]`;
+	const sourceLayer = sourceRoot.querySelector(layerSelector);
+	if (!sourceLayer) {
+		return null;
+	}
+
+	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
+	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
+	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
+
+	copySvgRootAttributes(sourceRoot, isolatedRoot);
+	cloneSharedSvgChildren(sourceRoot, isolatedRoot);
+
+	const layerClone = sourceLayer.cloneNode(true) as Element;
+	if (!pruneToCutoutSubtree(layerClone)) {
+		return null;
+	}
+
+	isolatedRoot.appendChild(layerClone);
+	return serializer.serializeToString(isolatedRoot);
 }
 
 async function renderSvgToBitmap(
