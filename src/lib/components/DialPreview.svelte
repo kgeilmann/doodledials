@@ -12,8 +12,9 @@
 
 	let isDraggingLabel = $state(false);
 	let dragLabelLayerId = $state<string | null>(null);
-	let labelDragStartX = $state(0);
-	let labelDragStartY = $state(0);
+	let labelDragStartSvgX = $state(0);
+	let labelDragStartSvgY = $state(0);
+	let labelDragLayerRotation = $state(0);
 	let labelInitialOffsetX = $state(0);
 	let labelInitialOffsetY = $state(0);
 
@@ -32,6 +33,22 @@
 		};
 	}
 
+	function getSvgPoint(clientX: number, clientY: number): { x: number; y: number } | null {
+		if (!svgContainer) return null;
+		const svgEl = svgContainer.querySelector('svg') as SVGSVGElement | null;
+		if (!svgEl) return null;
+
+		const ctm = svgEl.getScreenCTM();
+		if (!ctm) return null;
+
+		const point = svgEl.createSVGPoint();
+		point.x = clientX;
+		point.y = clientY;
+		const transformed = point.matrixTransform(ctm.inverse());
+
+		return { x: transformed.x, y: transformed.y };
+	}
+
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target as HTMLElement;
 		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
@@ -47,9 +64,17 @@
 			const layer = doodledialStore.getLayer(layerId);
 			labelInitialOffsetX = layer?.labelOffsetX || 0;
 			labelInitialOffsetY = layer?.labelOffsetY || 0;
+			labelDragLayerRotation = layer?.rotation || 0;
 
-			labelDragStartX = e.clientX;
-			labelDragStartY = e.clientY;
+			const startPoint = getSvgPoint(e.clientX, e.clientY);
+			if (!startPoint) {
+				isDraggingLabel = false;
+				dragLabelLayerId = null;
+				return;
+			}
+
+			labelDragStartSvgX = startPoint.x;
+			labelDragStartSvgY = startPoint.y;
 
 			(target as HTMLElement).setPointerCapture(e.pointerId);
 		} else if (!doodledialStore.labelEditMode && !isPathLabel) {
@@ -61,11 +86,22 @@
 
 	function handlePointerMove(e: PointerEvent) {
 		if (isDraggingLabel && dragLabelLayerId) {
-			const deltaX = e.clientX - labelDragStartX;
-			const deltaY = e.clientY - labelDragStartY;
+			const currentPoint = getSvgPoint(e.clientX, e.clientY);
+			if (!currentPoint) return;
 
-			const newOffsetX = labelInitialOffsetX + deltaX;
-			const newOffsetY = labelInitialOffsetY + deltaY;
+			const deltaX = currentPoint.x - labelDragStartSvgX;
+			const deltaY = currentPoint.y - labelDragStartSvgY;
+
+			// Labels live inside rotated layer groups, so convert screen-space movement
+			// back into layer-local coordinates to keep dragging aligned with the pointer.
+			const theta = (labelDragLayerRotation * Math.PI) / 180;
+			const cosTheta = Math.cos(theta);
+			const sinTheta = Math.sin(theta);
+			const localDeltaX = deltaX * cosTheta + deltaY * sinTheta;
+			const localDeltaY = -deltaX * sinTheta + deltaY * cosTheta;
+
+			const newOffsetX = labelInitialOffsetX + localDeltaX;
+			const newOffsetY = labelInitialOffsetY + localDeltaY;
 
 			doodledialStore.setLayerLabelOffset(dragLabelLayerId, newOffsetX, newOffsetY);
 		} else if (isDragging && dragLayerId && !doodledialStore.labelEditMode) {

@@ -303,12 +303,9 @@ export function combineDoodledial(
 		if (includePathLabels && applyCutoutTransforms) {
 			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
 				const pathLabel = label as Text;
-				const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
-				const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
-				pathLabel.translate(
-					offsetXPx * config.scale + labelOffsetX,
-					offsetYPx * config.scale + labelOffsetY
-				);
+				const labelOffsetX = layer.labelOffsetX || 0;
+				const labelOffsetY = layer.labelOffsetY || 0;
+				pathLabel.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
 			});
 		}
 	});
