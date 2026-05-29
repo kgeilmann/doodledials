@@ -103,7 +103,7 @@
 			const newOffsetX = labelInitialOffsetX + localDeltaX;
 			const newOffsetY = labelInitialOffsetY + localDeltaY;
 
-			doodledialStore.setLayerLabelOffset(dragLabelLayerId, newOffsetX, newOffsetY);
+			doodledialStore.setLayerLabelOffsetManual(dragLabelLayerId, newOffsetX, newOffsetY);
 		} else if (isDragging && dragLayerId && !doodledialStore.labelEditMode) {
 			const { cx, cy } = getDiscCenter();
 			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
