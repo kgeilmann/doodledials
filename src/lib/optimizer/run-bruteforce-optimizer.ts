@@ -281,7 +281,7 @@ export async function runBruteforceOptimizer(
 	): void => {
 		onProgress?.({
 			percent: 100,
-			message: 'Iterations 0/0',
+			message: 'Combinations 0/0',
 			iteration: 0,
 			totalIterations: 0
 		});
@@ -356,7 +356,7 @@ export async function runBruteforceOptimizer(
 
 		onProgress?.({
 			percent,
-			message: `Iterations ${nodesVisited}/${totalIterations}`,
+			message: `Combinations ${nodesVisited}/${totalIterations}`,
 			iteration: nodesVisited,
 			totalIterations
 		});

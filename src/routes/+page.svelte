@@ -33,6 +33,9 @@
 	let optimizerMaxRuntimeMsInput = $state('2500');
 	let optimizerOverlapPairCacheMode = $state<PairOverlapCacheMode>('absolute');
 	let optimizerMode = $state<OptimizerMode>('force-directed');
+	let optimizerActiveMode = $state<OptimizerMode>('force-directed');
+	let optimizerElapsedMs = $state(0);
+	let optimizerMaxRuntimeMs = $state<number | null>(null);
 
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
@@ -96,8 +99,16 @@
 		}, 1200);
 	}
 
-	function formatIterationsLabel(total: number | string): string {
+	function formatProgressCountLabel(mode: OptimizerMode, total: number | string): string {
+		if (mode === 'bruteforce') {
+			return `Combinations ${optimizerIteration}/${total}`;
+		}
+
 		return `Iterations ${optimizerIteration}/${total}`;
+	}
+
+	function formatDurationMs(durationMs: number): string {
+		return `${(durationMs / 1000).toFixed(1)}s`;
 	}
 
 	async function handleRunOptimizer(mode: OptimizerMode = optimizerMode) {
@@ -111,9 +122,13 @@
 		optimizerProgressMessage = 'Preparing optimizer input...';
 		optimizerIteration = 0;
 		optimizerTotalIterations = 0;
+		optimizerElapsedMs = 0;
+		optimizerMaxRuntimeMs = null;
+		optimizerActiveMode = mode;
 		optimizerOverlayVisible = true;
 		clearOverlayHideTimer();
 		optimizerAbortController = new AbortController();
+		const runStartedAtMs = Date.now();
 
 		let optimizerApplied = false;
 		let optimizerCancelled = false;
@@ -146,9 +161,11 @@
 				optimizerProgressMessage = progress.message;
 				optimizerIteration = progress.iteration;
 				optimizerTotalIterations = progress.totalIterations;
+				optimizerElapsedMs = Date.now() - runStartedAtMs;
 			};
 
 			if (mode === 'bruteforce') {
+				optimizerMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
 				const bruteForceResult = await runBruteforceOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					roundOutputAngles: optimizerRoundOutputAngles,
@@ -195,25 +212,27 @@
 			) {
 				optimizerCancelled = true;
 				optimizerProgressPhase = 'Cancelled';
-				optimizerProgressMessage = `${formatIterationsLabel(optimizerTotalIterations || '?')} - optimization cancelled.`;
+				optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || '?')} - optimization cancelled.`;
 			} else {
 				optimizerProgressPhase = 'Error';
 				optimizerProgressMessage = 'Optimization failed. Please try again.';
 				console.error('[optimizer] Frontend optimizer call failed:', error);
 			}
 		} finally {
+			optimizerElapsedMs = Date.now() - runStartedAtMs;
+
 			if (optimizerApplied) {
 				optimizerProgress = 100;
 				optimizerProgressPhase = optimizerTimeLimited ? 'Time Limit' : 'Complete';
 				optimizerProgressMessage = optimizerTimeLimited
-					? `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration)} - time limit reached, best feasible layout applied.`
-					: `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration)} - layout applied.`;
+					? `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || optimizerIteration)} - time limit reached, best feasible layout applied.`
+					: `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || optimizerIteration)} - layout applied.`;
 			}
 
 			if (optimizerNoFeasible) {
 				optimizerProgress = 100;
 				optimizerProgressPhase = 'No Feasible Layout';
-				optimizerProgressMessage = `${formatIterationsLabel(optimizerTotalIterations || optimizerIteration || '?')} - no feasible non-overlapping layout found.`;
+				optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || optimizerIteration || '?')} - no feasible non-overlapping layout found.`;
 			}
 
 			if (optimizerCancelled && optimizerProgress === 0) {
@@ -408,9 +427,25 @@
 							<div class="flex items-center justify-between text-xs text-slate-600 mb-2 gap-4">
 								<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
 								<span data-testid="optimizer-iteration-counter"
-									>Iterations {optimizerIteration}/{optimizerTotalIterations || '?'}</span
+									>{formatProgressCountLabel(
+										optimizerActiveMode,
+										optimizerTotalIterations || '?'
+									)}</span
 								>
 							</div>
+							{#if optimizerActiveMode === 'bruteforce'}
+								<div
+									class="mb-2 flex items-center justify-between text-xs text-slate-600"
+									data-testid="optimizer-time-counter"
+								>
+									<span>Elapsed {formatDurationMs(optimizerElapsedMs)}</span>
+									<span>
+										Max {optimizerMaxRuntimeMs === null
+											? 'No limit'
+											: formatDurationMs(optimizerMaxRuntimeMs)}
+									</span>
+								</div>
+							{/if}
 							<div
 								class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"
 								data-testid="optimizer-progress-track"
