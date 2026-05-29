@@ -291,6 +291,13 @@ function createDoodledialStore() {
 				layers.set(id, { ...layer, labelPlacementMode: 'auto' });
 			}
 		},
+		requestLayerLabelAutoPlacement(id: string) {
+			if (!layers.has(id)) {
+				return Promise.resolve();
+			}
+
+			return executeAutoPlacementNow();
+		},
 		showAllLayers() {
 			layers.forEach((layer) => {
 				layers.set(layer.id, { ...layer, visible: true });
@@ -326,3 +333,8 @@ function createDoodledialStore() {
 }
 
 export const doodledialStore = createDoodledialStore();
+
+if (typeof window !== 'undefined') {
+	(window as typeof window & { __doodledialStore?: typeof doodledialStore }).__doodledialStore =
+		doodledialStore;
+}

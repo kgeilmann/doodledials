@@ -166,8 +166,43 @@
 										</svg>
 									</span>
 								{/if}
+								{#if doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+									<span
+										class="inline-flex items-center gap-1 text-xs text-rose-600 ml-1"
+										data-label-placement-error={layer.id}
+										title="Label auto placement failed"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M18 10A8 8 0 114 3.08V5a1 1 0 11-2 0V1a1 1 0 011-1h4a1 1 0 110 2H4.51A6 6 0 1016 10a1 1 0 112 0zm-9-3a1 1 0 012 0v3a1 1 0 11-2 0V7zm1 8a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 15z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									</span>
+								{/if}
 							</span>
 							<div class="flex items-center gap-2 shrink-0">
+								{#if doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+									<button
+										type="button"
+										data-reset-label-auto={layer.id}
+										onclick={(e) => {
+											e.stopPropagation();
+											doodledialStore.resetLayerLabelPlacementMode(layer.id);
+											void doodledialStore.requestLayerLabelAutoPlacement(layer.id);
+										}}
+										class="text-xs px-2 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100"
+										title="Retry automatic label placement"
+									>
+										Reset Auto
+									</button>
+								{/if}
 								<RotationKnob
 									value={layer.rotation}
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}

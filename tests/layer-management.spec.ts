@@ -75,4 +75,44 @@ test.describe('Layer Management', () => {
 
 		await expect(layerItems).toHaveCount(3);
 	});
+
+	test('shows placement error indicator and allows reset-to-auto', async ({ page }) => {
+		const fileInput = page.locator('input[type="file"]');
+		await fileInput.setInputFiles(threePathsSvg);
+
+		const firstLayerRow = page.locator('li[role="menuitem"]').first();
+		await firstLayerRow.click();
+		await expect(firstLayerRow).toHaveClass(/bg-indigo-50/);
+
+		await page.evaluate(() => {
+			const store = (
+				window as Window & {
+					__doodledialStore?: {
+						setLayerLabelPlacementStatus: (id: string, status: unknown) => void;
+						setAutoPlacementRunner: (runner: () => Promise<void>) => void;
+					};
+				}
+			).__doodledialStore;
+
+			if (!store) {
+				throw new Error('doodledialStore test handle is not available');
+			}
+
+			store.setLayerLabelPlacementStatus('layer-1', {
+				status: 'error',
+				reason: 'no-valid-position-within-radius'
+			});
+			store.setAutoPlacementRunner(async () => {
+				store.setLayerLabelPlacementStatus('layer-1', { status: 'placed' });
+			});
+		});
+
+		const errorIndicator = page.locator('[data-label-placement-error="layer-1"]');
+		await expect(errorIndicator).toBeVisible();
+
+		await page.locator('[data-reset-label-auto="layer-1"]').click();
+
+		await expect(errorIndicator).toHaveCount(0);
+		await expect(firstLayerRow).toHaveClass(/bg-indigo-50/);
+	});
 });
