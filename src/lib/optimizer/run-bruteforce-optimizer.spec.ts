@@ -124,7 +124,7 @@ describe('runBruteforceOptimizer', () => {
 		expect(snapshots).toContain('exact_complete');
 	});
 
-	test('emits progress messages containing Iterations token', async () => {
+	test('emits progress messages containing Combinations token', async () => {
 		const progressMessages: string[] = [];
 
 		await runBruteforceOptimizer(
@@ -135,7 +135,7 @@ describe('runBruteforceOptimizer', () => {
 			{ maxRuntimeMs: 1 }
 		);
 
-		expect(progressMessages.some((message) => message.includes('Iterations'))).toBe(true);
+		expect(progressMessages.some((message) => message.includes('Combinations'))).toBe(true);
 	});
 
 	test('returns integer angles by default', async () => {
