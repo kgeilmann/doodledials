@@ -3,8 +3,7 @@ import { combineDoodledial } from '$lib/utils/doodledial';
 import {
 	createOverlapDetectionCache,
 	detectOverlaps,
-	type OverlapDetectionCache,
-	type PairOverlapCacheMode
+	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
@@ -52,7 +51,6 @@ export interface OptimizerOptions {
 	randomSeed?: number;
 	roundOutputAngles?: boolean;
 	tuning?: OptimizerTuning;
-	overlapPairCacheMode?: PairOverlapCacheMode;
 	onIterationSnapshot?: (snapshot: OptimizerIterationSnapshot) => void;
 }
 
@@ -409,19 +407,21 @@ function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Lay
 async function detectLayoutOverlaps(
 	input: OptimizerInput,
 	state: Record<string, number>,
-	overlapCache: OverlapDetectionCache,
-	overlapPairCacheMode: PairOverlapCacheMode
+	overlapCache: OverlapDetectionCache
 ): Promise<Map<string, Map<string, number>>> {
 	const layers = buildRotatedLayers(input.layers, state);
 	const combinedSvg = combineDoodledial(
 		input.svgContent,
 		{ ...input.config, diameter: input.diameter },
-		layers
+		layers,
+		null,
+		null,
+		{ includePathLabels: false }
 	);
 
 	return detectOverlaps(layers, combinedSvg, {
 		cache: overlapCache,
-		pairCacheMode: overlapPairCacheMode
+		pairCacheMode: 'relative'
 	});
 }
 
@@ -467,8 +467,7 @@ async function calculateOverlapForce(
 	currentOverlaps: Map<string, Map<string, number>>,
 	layerId: string,
 	tuning: ResolvedOptimizerTuning,
-	overlapCache: OverlapDetectionCache,
-	overlapPairCacheMode: PairOverlapCacheMode
+	overlapCache: OverlapDetectionCache
 ): Promise<number> {
 	const overlappingLayerIds = input.layers
 		.filter((layer) => layer.id !== layerId)
@@ -504,8 +503,8 @@ async function calculateOverlapForce(
 		};
 
 		const [positiveOverlaps, negativeOverlaps] = await Promise.all([
-			detectLayoutOverlaps(input, positiveState, overlapCache, overlapPairCacheMode),
-			detectLayoutOverlaps(input, negativeState, overlapCache, overlapPairCacheMode)
+			detectLayoutOverlaps(input, positiveState, overlapCache),
+			detectLayoutOverlaps(input, negativeState, overlapCache)
 		]);
 
 		let positiveTotalDecrease = 0;
@@ -586,7 +585,6 @@ export async function runOptimizer(
 	const shouldInitializeRandomly = options?.initializeRandomly ?? false;
 	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
 	const tuning = resolveOptimizerTuning(options?.tuning);
-	const overlapPairCacheMode = options?.overlapPairCacheMode ?? 'absolute';
 	const overlapCache = createOverlapDetectionCache();
 
 	let state = shouldInitializeRandomly
@@ -599,12 +597,7 @@ export async function runOptimizer(
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
 		throwIfCancelled(options?.signal);
 		const layoutBefore = { ...state };
-		const currentOverlaps = await detectLayoutOverlaps(
-			input,
-			state,
-			overlapCache,
-			overlapPairCacheMode
-		);
+		const currentOverlaps = await detectLayoutOverlaps(input, state, overlapCache);
 		const restoringContributions = calculateRestoringContributions(state, layerIds);
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds, tuning);
 		const uniqueContributions = calculateUniqueContributions(state, layerIds, tuning);
@@ -627,8 +620,7 @@ export async function runOptimizer(
 				currentOverlaps,
 				layerId,
 				tuning,
-				overlapCache,
-				overlapPairCacheMode
+				overlapCache
 			);
 			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce(layerId, restoringForceMap);
