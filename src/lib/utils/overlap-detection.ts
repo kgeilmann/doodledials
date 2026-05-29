@@ -6,7 +6,7 @@ const RENDER_SIZE = 200;
 const ANGLE_CACHE_PRECISION = 6;
 
 interface PixelData {
-	data: Uint8ClampedArray;
+	alpha: Uint8ClampedArray;
 	width: number;
 	height: number;
 }
@@ -167,16 +167,27 @@ async function renderLayersToBitmaps(
 	cache?: OverlapDetectionCache
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
-	const parsedSvgRoot = parseSvgRoot(combinedSvg);
-	const serializer = new XMLSerializer();
+	const missingLayers: Layer[] = [];
 
 	for (const layer of layers) {
 		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
 		const cachedBitmap = cache?.bitmapByLayerAngle.get(cacheKey);
 		if (cachedBitmap) {
 			bitmaps.set(layer.id, cachedBitmap);
-			continue;
+		} else {
+			missingLayers.push(layer);
 		}
+	}
+
+	if (missingLayers.length === 0) {
+		return bitmaps;
+	}
+
+	const parsedSvgRoot = parseSvgRoot(combinedSvg);
+	const serializer = new XMLSerializer();
+
+	for (const layer of missingLayers) {
+		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
 
 		const cutoutOnlySvg = buildCutoutOnlyLayerSvg(parsedSvgRoot, layer.id, serializer);
 		if (!cutoutOnlySvg) {
@@ -263,38 +274,63 @@ async function renderSvgToBitmap(
 	width: number,
 	height: number
 ): Promise<PixelData> {
-	const canvas = document.createElement('canvas');
-	canvas.width = width;
-	canvas.height = height;
-	const ctx = canvas.getContext('2d')!;
+	const context = acquireRenderContext(width, height);
+	context.clearRect(0, 0, width, height);
 
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 		img.onload = () => {
-			ctx.drawImage(img, 0, 0, width, height);
-			resolve({
-				data: ctx.getImageData(0, 0, width, height).data,
-				width,
-				height
-			});
+			context.drawImage(img, 0, 0, width, height);
+			const imageData = context.getImageData(0, 0, width, height).data;
+			const alpha = new Uint8ClampedArray(width * height);
+			for (let sourceIndex = 3, alphaIndex = 0; sourceIndex < imageData.length; sourceIndex += 4) {
+				alpha[alphaIndex] = imageData[sourceIndex];
+				alphaIndex += 1;
+			}
+
+			URL.revokeObjectURL(img.src);
+			resolve({ alpha, width, height });
 		};
-		img.onerror = reject;
-		img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+		img.onerror = (error) => {
+			URL.revokeObjectURL(img.src);
+			reject(error);
+		};
+
+		const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+		img.src = URL.createObjectURL(svgBlob);
 	});
 }
 
+let pooledCanvas: HTMLCanvasElement | null = null;
+let pooledContext: CanvasRenderingContext2D | null = null;
+
+function acquireRenderContext(width: number, height: number): CanvasRenderingContext2D {
+	if (!pooledCanvas) {
+		pooledCanvas = document.createElement('canvas');
+	}
+
+	if (!pooledContext) {
+		pooledContext = pooledCanvas.getContext('2d', { willReadFrequently: true });
+	}
+
+	if (!pooledContext) {
+		throw new Error('Unable to acquire 2D canvas context for overlap detection');
+	}
+
+	if (pooledCanvas.width !== width) {
+		pooledCanvas.width = width;
+	}
+	if (pooledCanvas.height !== height) {
+		pooledCanvas.height = height;
+	}
+
+	return pooledContext;
+}
+
 function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
-	const { width, height } = a;
-
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			const idx = (y * width + x) * 4;
-			const aFilled = a.data[idx + 3] > 0;
-			const bFilled = b.data[idx + 3] > 0;
-
-			if (aFilled && bFilled) {
-				return true;
-			}
+	for (let index = 0; index < a.alpha.length; index++) {
+		if (a.alpha[index] > 0 && b.alpha[index] > 0) {
+			return true;
 		}
 	}
 
@@ -302,18 +338,11 @@ function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
 }
 
 function countOverlapPixels(a: PixelData, b: PixelData): number {
-	const { width, height } = a;
 	let count = 0;
 
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			const idx = (y * width + x) * 4;
-			const aFilled = a.data[idx + 3] > 0;
-			const bFilled = b.data[idx + 3] > 0;
-
-			if (aFilled && bFilled) {
-				count++;
-			}
+	for (let index = 0; index < a.alpha.length; index++) {
+		if (a.alpha[index] > 0 && b.alpha[index] > 0) {
+			count += 1;
 		}
 	}
 
