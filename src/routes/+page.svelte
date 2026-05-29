@@ -30,7 +30,7 @@
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
 	let optimizerRandomSeedInput = $state('42');
-	let optimizerMaxRuntimeMsInput = $state('2500');
+	let optimizerMaxRuntimeSInput = $state('120');
 	let optimizerMode = $state<OptimizerMode>('force-directed');
 	let optimizerActiveMode = $state<OptimizerMode>('force-directed');
 	let optimizerElapsedMs = $state(0);
@@ -57,7 +57,7 @@
 		optimizerInitializeRandomly = false;
 		optimizerRoundOutputAngles = true;
 		optimizerRandomSeedInput = '42';
-		optimizerMaxRuntimeMsInput = '2500';
+		optimizerMaxRuntimeSInput = '120';
 	}
 
 	function handleCancelOptimizer() {
@@ -176,10 +176,10 @@
 			};
 			const parsedSeed = Number(optimizerRandomSeedInput);
 			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;
-			const parsedMaxRuntimeMs = Number(optimizerMaxRuntimeMsInput);
+			const parsedMaxRuntimeS = Math.round(Number(optimizerMaxRuntimeSInput));
 			const maxRuntimeMs =
-				Number.isFinite(parsedMaxRuntimeMs) && parsedMaxRuntimeMs >= 0
-					? parsedMaxRuntimeMs
+				Number.isFinite(parsedMaxRuntimeS) && parsedMaxRuntimeS >= 0
+					? parsedMaxRuntimeS * 1000
 					: undefined;
 
 			const progressHandler = (progress: {
@@ -543,11 +543,11 @@
 				</div>
 
 				<div class="grid grid-cols-2 gap-3 text-sm">
-					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
-						<span>Round Output Angles</span>
-					</label>
 					{#if optimizerMode === 'force-directed'}
+						<label class="col-span-2 flex items-center gap-2">
+							<input type="checkbox" bind:checked={optimizerRoundOutputAngles} />
+							<span>Round Output Angles</span>
+						</label>
 						<label class="col-span-2 flex items-center gap-2">
 							<input type="checkbox" bind:checked={optimizerInitializeRandomly} />
 							<span>Initialize Randomly</span>
@@ -563,12 +563,12 @@
 					{/if}
 					{#if optimizerMode === 'bruteforce'}
 						<label class="col-span-2">
-							<span class="block text-gray-600 mb-1">Max Runtime (ms)</span>
+							<span class="block text-gray-600 mb-1">Max Runtime (s)</span>
 							<input
 								type="number"
 								min="0"
 								step="1"
-								bind:value={optimizerMaxRuntimeMsInput}
+								bind:value={optimizerMaxRuntimeSInput}
 								class="w-full rounded-lg border border-gray-300 px-2 py-1"
 							/>
 						</label>
