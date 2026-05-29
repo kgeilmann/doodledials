@@ -1,3 +1,9 @@
+export type LabelPlacementMode = 'auto' | 'manual';
+
+export type LabelPlacementStatus =
+	| { status: 'placed' }
+	| { status: 'error'; reason: 'no-valid-position-within-radius' };
+
 export interface Layer {
 	id: string;
 	name: string;
@@ -6,6 +12,8 @@ export interface Layer {
 	rotation: number;
 	labelOffsetX?: number;
 	labelOffsetY?: number;
+	labelPlacementMode?: LabelPlacementMode;
+	labelPlacementStatus?: LabelPlacementStatus;
 }
 
 export interface DialConfig {

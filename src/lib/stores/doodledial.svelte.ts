@@ -1,4 +1,4 @@
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { DialConfig, LabelPlacementStatus, Layer, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
@@ -157,7 +157,9 @@ function createDoodledialStore() {
 				name: name,
 				index: index,
 				visible: true,
-				rotation: 0
+				rotation: 0,
+				labelPlacementMode: 'auto',
+				labelPlacementStatus: { status: 'placed' }
 			};
 			layers.set(layerId, newLayer);
 			overlaps = new Map();
@@ -189,9 +191,30 @@ function createDoodledialStore() {
 			runCutoutGapDetection();
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
+			this.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
+		},
+		setLayerLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
 			const layer = layers.get(id);
 			if (layer) {
-				layers.set(id, { ...layer, labelOffsetX, labelOffsetY });
+				layers.set(id, {
+					...layer,
+					labelOffsetX,
+					labelOffsetY,
+					labelPlacementMode: 'manual'
+				});
+			}
+			runOverlapDetection();
+			runCutoutGapDetection();
+		},
+		setLayerLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
+			const layer = layers.get(id);
+			if (layer) {
+				layers.set(id, {
+					...layer,
+					labelOffsetX,
+					labelOffsetY,
+					labelPlacementMode: 'auto'
+				});
 			}
 			runOverlapDetection();
 			runCutoutGapDetection();
@@ -205,6 +228,24 @@ function createDoodledialStore() {
 				};
 			}
 			return undefined;
+		},
+		getLayerLabelPlacementMode(id: string): 'auto' | 'manual' {
+			return layers.get(id)?.labelPlacementMode || 'auto';
+		},
+		setLayerLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
+			const layer = layers.get(id);
+			if (layer) {
+				layers.set(id, { ...layer, labelPlacementStatus: status });
+			}
+		},
+		getLayerLabelPlacementStatus(id: string): LabelPlacementStatus {
+			return layers.get(id)?.labelPlacementStatus || { status: 'placed' };
+		},
+		resetLayerLabelPlacementMode(id: string) {
+			const layer = layers.get(id);
+			if (layer) {
+				layers.set(id, { ...layer, labelPlacementMode: 'auto' });
+			}
 		},
 		showAllLayers() {
 			layers.forEach((layer) => {
