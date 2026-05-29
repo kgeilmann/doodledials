@@ -353,10 +353,32 @@ export async function runBruteforceOptimizer(
 		return Date.now() - startedAtMs >= maxRuntimeMs;
 	};
 
-	const reportProgress = (): void => {
+	const PROGRESS_REPORT_INTERVAL_MS = 50;
+	const UI_YIELD_INTERVAL_MS = 16;
+	let lastProgressReportedAtMs = 0;
+	let lastUiYieldAtMs = startedAtMs;
+
+	const yieldToEventLoopIfNeeded = async (): Promise<void> => {
+		const now = Date.now();
+		if (now - lastUiYieldAtMs < UI_YIELD_INTERVAL_MS) {
+			return;
+		}
+
+		lastUiYieldAtMs = now;
+		// Yield to let the browser render progress/timer updates during long async loops.
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	};
+
+	const reportProgress = (force = false): void => {
+		const now = Date.now();
+		if (!force && now - lastProgressReportedAtMs < PROGRESS_REPORT_INTERVAL_MS) {
+			return;
+		}
+
+		lastProgressReportedAtMs = now;
 		const percent =
 			typeof maxRuntimeMs === 'number' && maxRuntimeMs > 0
-				? Math.min(99, Math.round(((Date.now() - startedAtMs) / maxRuntimeMs) * 100))
+				? Math.min(99, Math.round(((now - startedAtMs) / maxRuntimeMs) * 100))
 				: Math.min(99, Math.round((nodesVisited / totalIterations) * 100));
 
 		onProgress?.({
@@ -367,7 +389,7 @@ export async function runBruteforceOptimizer(
 		});
 	};
 
-	reportProgress();
+	reportProgress(true);
 
 	const isPairFeasible = async (
 		firstLayerId: string,
@@ -428,6 +450,15 @@ export async function runBruteforceOptimizer(
 			const domain = new Uint8Array(360);
 			let count = 0;
 			for (let angle = 0; angle < 360; angle++) {
+				throwIfCancelled(options?.signal);
+				if (isTimedOut()) {
+					stopReason = 'time_limit';
+					return false;
+				}
+
+				reportProgress();
+				await yieldToEventLoopIfNeeded();
+
 				if (usedAngles[angle]) {
 					continue;
 				}
@@ -444,6 +475,8 @@ export async function runBruteforceOptimizer(
 				return false;
 			}
 		}
+
+		reportProgress(true);
 
 		return true;
 	};
@@ -517,6 +550,8 @@ export async function runBruteforceOptimizer(
 					continue;
 				}
 
+				await yieldToEventLoopIfNeeded();
+
 				if (!(await isPairFeasible(layerId, angle, assignedLayerId, assignedAngle))) {
 					domain[angle] = 0;
 					domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
@@ -546,7 +581,7 @@ export async function runBruteforceOptimizer(
 	};
 
 	const domainsInitialized = await initializeDomains();
-	if (!domainsInitialized) {
+	if (!domainsInitialized && !stopReason) {
 		stopReason = 'no_feasible_solution';
 	}
 
@@ -594,6 +629,7 @@ export async function runBruteforceOptimizer(
 			throwIfCancelled(options?.signal);
 			nodesVisited += 1;
 			reportProgress();
+			await yieldToEventLoopIfNeeded();
 
 			assigned.set(layerId, angle);
 			usedAngles[angle] = true;
