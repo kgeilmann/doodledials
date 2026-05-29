@@ -1,10 +1,6 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from '$lib/utils/doodledial';
-import {
-	createOverlapDetectionCache,
-	detectPairOverlapPixels,
-	type PairOverlapCacheMode
-} from '$lib/utils/overlap-detection';
+import { createOverlapDetectionCache, detectPairOverlapPixels } from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
 	diameter: number;
@@ -42,7 +38,6 @@ export interface BruteforceOptimizerSearchSnapshot {
 export interface BruteforceOptimizerOptions {
 	signal?: AbortSignal;
 	roundOutputAngles?: boolean;
-	overlapPairCacheMode?: PairOverlapCacheMode;
 	maxRuntimeMs?: number;
 	anchorLayerId?: string;
 	onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
@@ -315,7 +310,6 @@ export async function runBruteforceOptimizer(
 		};
 	}
 
-	const overlapPairCacheMode = options?.overlapPairCacheMode ?? 'absolute';
 	const maxRuntimeMs = options?.maxRuntimeMs;
 	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
 	const requestedAnchorLayerId = options?.anchorLayerId;
@@ -399,13 +393,15 @@ export async function runBruteforceOptimizer(
 			}
 		];
 
-		const combinedSvg = combineDoodledial(input.svgContent, input.config, pairLayers);
+		const combinedSvg = combineDoodledial(input.svgContent, input.config, pairLayers, null, null, {
+			includePathLabels: false
+		});
 		const overlapPixels = await detectPairOverlapPixels({
 			firstLayer: pairLayers[0],
 			secondLayer: pairLayers[1],
 			combinedSvg,
 			cache: overlapCache,
-			pairCacheMode: overlapPairCacheMode
+			pairCacheMode: 'relative'
 		});
 
 		const feasible = overlapPixels < MIN_OVERLAP_PIXELS;

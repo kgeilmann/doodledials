@@ -5,7 +5,6 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
-	import type { PairOverlapCacheMode } from '$lib/utils/overlap-detection';
 	import {
 		BruteforceOptimizerCancelledError,
 		runBruteforceOptimizer
@@ -31,7 +30,6 @@
 	let optimizerRoundOutputAngles = $state(true);
 	let optimizerRandomSeedInput = $state('42');
 	let optimizerMaxRuntimeMsInput = $state('2500');
-	let optimizerOverlapPairCacheMode = $state<PairOverlapCacheMode>('absolute');
 	let optimizerMode = $state<OptimizerMode>('force-directed');
 	let optimizerActiveMode = $state<OptimizerMode>('force-directed');
 	let optimizerElapsedMs = $state(0);
@@ -59,7 +57,6 @@
 		optimizerRoundOutputAngles = true;
 		optimizerRandomSeedInput = '42';
 		optimizerMaxRuntimeMsInput = '2500';
-		optimizerOverlapPairCacheMode = 'absolute';
 	}
 
 	function handleCancelOptimizer() {
@@ -169,7 +166,6 @@
 				const bruteForceResult = await runBruteforceOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					roundOutputAngles: optimizerRoundOutputAngles,
-					overlapPairCacheMode: optimizerOverlapPairCacheMode,
 					maxRuntimeMs
 				});
 
@@ -187,7 +183,6 @@
 					initializeRandomly: optimizerInitializeRandomly,
 					randomSeed: optimizerInitializeRandomly ? randomSeed : undefined,
 					roundOutputAngles: optimizerRoundOutputAngles,
-					overlapPairCacheMode: optimizerOverlapPairCacheMode,
 					tuning: {
 						overlapMagnitudeWeight: optimizerTuning.overlapMagnitudeWeight,
 						overlapMagnitudePower: optimizerTuning.overlapMagnitudePower,
@@ -540,17 +535,6 @@
 							/>
 						</label>
 					{/if}
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Caching Algorithm</span>
-						<select
-							bind:value={optimizerOverlapPairCacheMode}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1 bg-white"
-						>
-							<option value="absolute">Absolute (layer+angle pair)</option>
-							<option value="relative">Relative (layer pair + angle delta)</option>
-						</select>
-					</label>
-
 					{#if optimizerMode === 'force-directed'}
 						<label>
 							<span class="block text-gray-600 mb-1">Overlap Weight</span>

@@ -11,11 +11,10 @@ interface PixelData {
 	height: number;
 }
 
-export type PairOverlapCacheMode = 'absolute' | 'relative';
+export type PairOverlapCacheMode = 'relative';
 
 export interface OverlapDetectionCache {
 	bitmapByLayerAngle: Map<string, PixelData>;
-	overlapByAbsolutePairAngles: Map<string, number>;
 	overlapByRelativePairAngles: Map<string, number>;
 }
 
@@ -33,7 +32,6 @@ export interface DetectPairOverlapOptions extends DetectOverlapsOptions {
 export function createOverlapDetectionCache(): OverlapDetectionCache {
 	return {
 		bitmapByLayerAngle: new Map(),
-		overlapByAbsolutePairAngles: new Map(),
 		overlapByRelativePairAngles: new Map()
 	};
 }
@@ -48,19 +46,6 @@ function normalizeAngle(angle: number): number {
 
 function toLayerBitmapCacheKey(layerId: string, angle: number): string {
 	return `${layerId}:${roundAngleForCache(angle)}`;
-}
-
-function toAbsolutePairCacheKey(
-	firstLayerId: string,
-	firstAngle: number,
-	secondLayerId: string,
-	secondAngle: number
-): string {
-	if (firstLayerId <= secondLayerId) {
-		return `${firstLayerId}:${roundAngleForCache(firstAngle)}|${secondLayerId}:${roundAngleForCache(secondAngle)}`;
-	}
-
-	return `${secondLayerId}:${roundAngleForCache(secondAngle)}|${firstLayerId}:${roundAngleForCache(firstAngle)}`;
 }
 
 function toRelativePairCacheKey(
@@ -84,7 +69,6 @@ export async function detectOverlaps(
 	options?: DetectOverlapsOptions
 ): Promise<Map<string, Map<string, number>>> {
 	const overlaps = new Map<string, Map<string, number>>();
-	const pairCacheMode = options?.pairCacheMode ?? 'absolute';
 
 	if (layers.length < 2) {
 		return overlaps;
@@ -103,12 +87,6 @@ export async function detectOverlaps(
 				continue;
 			}
 
-			const absoluteKey = toAbsolutePairCacheKey(
-				layerA.id,
-				layerA.rotation,
-				layerB.id,
-				layerB.rotation
-			);
 			const relativeKey = toRelativePairCacheKey(
 				layerA.id,
 				layerA.rotation,
@@ -118,17 +96,12 @@ export async function detectOverlaps(
 
 			let pixelCount: number | undefined;
 			if (options?.cache) {
-				if (pairCacheMode === 'relative') {
-					pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
-				} else {
-					pixelCount = options.cache.overlapByAbsolutePairAngles.get(absoluteKey);
-				}
+				pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
 			}
 
 			if (pixelCount === undefined) {
 				pixelCount = countOverlapPixels(bitmapA, bitmapB);
 				if (options?.cache) {
-					options.cache.overlapByAbsolutePairAngles.set(absoluteKey, pixelCount);
 					options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
 				}
 			}
@@ -150,16 +123,9 @@ export async function detectOverlaps(
 }
 
 export async function detectPairOverlapPixels(options: DetectPairOverlapOptions): Promise<number> {
-	const pairCacheMode = options.pairCacheMode ?? 'absolute';
 	const firstLayer = options.firstLayer;
 	const secondLayer = options.secondLayer;
 
-	const absoluteKey = toAbsolutePairCacheKey(
-		firstLayer.id,
-		firstLayer.rotation,
-		secondLayer.id,
-		secondLayer.rotation
-	);
 	const relativeKey = toRelativePairCacheKey(
 		firstLayer.id,
 		firstLayer.rotation,
@@ -169,10 +135,7 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 
 	let pixelCount: number | undefined;
 	if (options.cache) {
-		pixelCount =
-			pairCacheMode === 'relative'
-				? options.cache.overlapByRelativePairAngles.get(relativeKey)
-				: options.cache.overlapByAbsolutePairAngles.get(absoluteKey);
+		pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
 	}
 
 	if (pixelCount !== undefined) {
@@ -192,7 +155,6 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 
 	pixelCount = countOverlapPixels(firstBitmap, secondBitmap);
 	if (options.cache) {
-		options.cache.overlapByAbsolutePairAngles.set(absoluteKey, pixelCount);
 		options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
 	}
 

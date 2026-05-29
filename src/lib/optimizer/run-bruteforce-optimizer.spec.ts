@@ -2,8 +2,20 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const { combineDoodledialMock, detectPairOverlapPixelsMock } = vi.hoisted(() => ({
-	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
-		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
+	combineDoodledialMock: vi.fn(
+		(
+			_content: SVGContent,
+			_config: DialConfig,
+			layers: Layer[] = [],
+			_highlightedLayerId?: string | null,
+			_selectedLayerId?: string | null,
+			_options?: { includePathLabels?: boolean }
+		) => {
+			void _highlightedLayerId;
+			void _selectedLayerId;
+			void _options;
+			return JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])));
+		}
 	),
 	detectPairOverlapPixelsMock: vi.fn(
 		async ({
@@ -12,7 +24,7 @@ const { combineDoodledialMock, detectPairOverlapPixelsMock } = vi.hoisted(() => 
 		}: {
 			firstLayer: Layer;
 			secondLayer: Layer;
-			pairCacheMode?: 'absolute' | 'relative';
+			pairCacheMode?: 'relative';
 			cache?: unknown;
 			combinedSvg: string;
 		}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
@@ -27,7 +39,6 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 	detectPairOverlapPixels: detectPairOverlapPixelsMock,
 	createOverlapDetectionCache: () => ({
 		bitmapByLayerAngle: new Map(),
-		overlapByAbsolutePairAngles: new Map(),
 		overlapByRelativePairAngles: new Map()
 	})
 }));
@@ -166,24 +177,21 @@ describe('runBruteforceOptimizer', () => {
 		expect(new Set(layoutAngles).size).toBe(layoutAngles.length);
 	});
 
-	test('uses absolute overlap pair cache mode by default', async () => {
+	test('uses relative overlap pair cache mode', async () => {
 		await runBruteforceOptimizer(buildInput(twoLayers()));
-
-		const firstCallOptions = detectPairOverlapPixelsMock.mock.calls[0]?.[0];
-		expect(firstCallOptions).toBeDefined();
-		expect(firstCallOptions?.pairCacheMode).toBe('absolute');
-		expect(firstCallOptions?.cache).toBeDefined();
-	});
-
-	test('supports relative overlap pair cache mode', async () => {
-		await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
-			overlapPairCacheMode: 'relative'
-		});
 
 		const firstCallOptions = detectPairOverlapPixelsMock.mock.calls[0]?.[0];
 		expect(firstCallOptions).toBeDefined();
 		expect(firstCallOptions?.pairCacheMode).toBe('relative');
 		expect(firstCallOptions?.cache).toBeDefined();
+	});
+
+	test('disables path labels while combining overlap pairs', async () => {
+		await runBruteforceOptimizer(buildInput(twoLayers()));
+
+		const firstCombineCall = combineDoodledialMock.mock.calls[0];
+		expect(firstCombineCall).toBeDefined();
+		expect(firstCombineCall?.[5]).toEqual({ includePathLabels: false });
 	});
 
 	test('reports no_feasible_solution when threshold cannot be satisfied', async () => {

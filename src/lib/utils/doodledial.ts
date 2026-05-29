@@ -143,11 +143,13 @@ export function combineDoodledial(
 	config: DialConfig,
 	layers?: Layer[],
 	highlightedLayerId?: string | null,
-	selectedLayerId?: string | null
+	selectedLayerId?: string | null,
+	options?: { includePathLabels?: boolean }
 ): string {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
+	const includePathLabels = options?.includePathLabels ?? true;
 
 	let highlighted: G;
 	let selected: G;
@@ -168,15 +170,17 @@ export function combineDoodledial(
 			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 		});
 
-		svgLayer.find('#path-label-' + layer.id).forEach((label) => {
-			const pathLabel = label as Text;
-			const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
-			const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
-			pathLabel.translate(
-				offsetXPx * config.scale + labelOffsetX,
-				offsetYPx * config.scale + labelOffsetY
-			);
-		});
+		if (includePathLabels) {
+			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
+				const pathLabel = label as Text;
+				const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
+				const labelOffsetY = (layer.labelOffsetY || 0) * config.scale;
+				pathLabel.translate(
+					offsetXPx * config.scale + labelOffsetX,
+					offsetYPx * config.scale + labelOffsetY
+				);
+			});
+		}
 	});
 
 	const allLayers = doc.findOne('#all');
