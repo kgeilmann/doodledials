@@ -24,6 +24,12 @@ export interface DetectOverlapsOptions {
 	pairCacheMode?: PairOverlapCacheMode;
 }
 
+export interface DetectPairOverlapOptions extends DetectOverlapsOptions {
+	firstLayer: Layer;
+	secondLayer: Layer;
+	combinedSvg: string;
+}
+
 export function createOverlapDetectionCache(): OverlapDetectionCache {
 	return {
 		bitmapByLayerAngle: new Map(),
@@ -141,6 +147,56 @@ export async function detectOverlaps(
 	}
 
 	return overlaps;
+}
+
+export async function detectPairOverlapPixels(options: DetectPairOverlapOptions): Promise<number> {
+	const pairCacheMode = options.pairCacheMode ?? 'absolute';
+	const firstLayer = options.firstLayer;
+	const secondLayer = options.secondLayer;
+
+	const absoluteKey = toAbsolutePairCacheKey(
+		firstLayer.id,
+		firstLayer.rotation,
+		secondLayer.id,
+		secondLayer.rotation
+	);
+	const relativeKey = toRelativePairCacheKey(
+		firstLayer.id,
+		firstLayer.rotation,
+		secondLayer.id,
+		secondLayer.rotation
+	);
+
+	let pixelCount: number | undefined;
+	if (options.cache) {
+		pixelCount =
+			pairCacheMode === 'relative'
+				? options.cache.overlapByRelativePairAngles.get(relativeKey)
+				: options.cache.overlapByAbsolutePairAngles.get(absoluteKey);
+	}
+
+	if (pixelCount !== undefined) {
+		return pixelCount;
+	}
+
+	const layerBitmaps = await renderLayersToBitmaps(
+		[firstLayer, secondLayer],
+		options.combinedSvg,
+		options.cache
+	);
+	const firstBitmap = layerBitmaps.get(firstLayer.id);
+	const secondBitmap = layerBitmaps.get(secondLayer.id);
+	if (!firstBitmap || !secondBitmap) {
+		return 0;
+	}
+
+	pixelCount = countOverlapPixels(firstBitmap, secondBitmap);
+	if (options.cache) {
+		options.cache.overlapByAbsolutePairAngles.set(absoluteKey, pixelCount);
+		options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
+	}
+
+	return pixelCount;
 }
 
 async function renderLayersToBitmaps(

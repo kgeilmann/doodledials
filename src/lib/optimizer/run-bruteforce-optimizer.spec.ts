@@ -1,36 +1,51 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const { combineDoodledialMock, detectOverlapsMock } = vi.hoisted(() => ({
-	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
-		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
-	),
-	detectOverlapsMock: vi.fn(
-		async (
-			_layers: Layer[],
-			combinedSvg: string,
-			options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
-		) => {
-			void options;
-			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-			const layerIds = Object.keys(rotations).sort();
-			const overlaps = new Map<string, Map<string, number>>();
+const { combineDoodledialMock, detectOverlapsMock, detectPairOverlapPixelsMock } = vi.hoisted(
+	() => ({
+		combineDoodledialMock: vi.fn(
+			(_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
+				JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
+		),
+		detectOverlapsMock: vi.fn(
+			async (
+				_layers: Layer[],
+				combinedSvg: string,
+				options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
+			) => {
+				void options;
+				const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+				const layerIds = Object.keys(rotations).sort();
+				const overlaps = new Map<string, Map<string, number>>();
 
-			for (let i = 0; i < layerIds.length; i++) {
-				for (let j = i + 1; j < layerIds.length; j++) {
-					const layerA = layerIds[i];
-					const layerB = layerIds[j];
-					if (rotations[layerA] === rotations[layerB]) {
-						overlaps.set(layerA, new Map([[layerB, 3]]));
-						overlaps.set(layerB, new Map([[layerA, 3]]));
+				for (let i = 0; i < layerIds.length; i++) {
+					for (let j = i + 1; j < layerIds.length; j++) {
+						const layerA = layerIds[i];
+						const layerB = layerIds[j];
+						if (rotations[layerA] === rotations[layerB]) {
+							overlaps.set(layerA, new Map([[layerB, 3]]));
+							overlaps.set(layerB, new Map([[layerA, 3]]));
+						}
 					}
 				}
-			}
 
-			return overlaps;
-		}
-	)
-}));
+				return overlaps;
+			}
+		),
+		detectPairOverlapPixelsMock: vi.fn(
+			async ({
+				firstLayer,
+				secondLayer
+			}: {
+				firstLayer: Layer;
+				secondLayer: Layer;
+				pairCacheMode?: 'absolute' | 'relative';
+				cache?: unknown;
+				combinedSvg: string;
+			}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
+		)
+	})
+);
 
 vi.mock('$lib/utils/doodledial', () => ({
 	combineDoodledial: combineDoodledialMock
@@ -38,6 +53,7 @@ vi.mock('$lib/utils/doodledial', () => ({
 
 vi.mock('$lib/utils/overlap-detection', () => ({
 	detectOverlaps: detectOverlapsMock,
+	detectPairOverlapPixels: detectPairOverlapPixelsMock,
 	createOverlapDetectionCache: () => ({
 		bitmapByLayerAngle: new Map(),
 		overlapByAbsolutePairAngles: new Map(),
@@ -47,6 +63,7 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 
 import {
 	BruteforceOptimizerCancelledError,
+	calculateAssignedMinGapUpperBound,
 	runBruteforceOptimizer
 } from './run-bruteforce-optimizer';
 
@@ -114,6 +131,10 @@ describe('runBruteforceOptimizer', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		detectOverlapsMock.mockImplementation(async (...args) => defaultDetectOverlapsMock(...args));
+		detectPairOverlapPixelsMock.mockImplementation(
+			async ({ firstLayer, secondLayer }: { firstLayer: Layer; secondLayer: Layer }) =>
+				firstLayer.rotation === secondLayer.rotation ? 3 : 0
+		);
 	});
 
 	test('returns deterministic layout for the same input', async () => {
@@ -202,7 +223,7 @@ describe('runBruteforceOptimizer', () => {
 	test('uses absolute overlap pair cache mode by default', async () => {
 		await runBruteforceOptimizer(buildInput(twoLayers()));
 
-		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		const firstCallOptions = detectPairOverlapPixelsMock.mock.calls[0]?.[0];
 		expect(firstCallOptions).toBeDefined();
 		expect(firstCallOptions?.pairCacheMode).toBe('absolute');
 		expect(firstCallOptions?.cache).toBeDefined();
@@ -213,29 +234,14 @@ describe('runBruteforceOptimizer', () => {
 			overlapPairCacheMode: 'relative'
 		});
 
-		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
+		const firstCallOptions = detectPairOverlapPixelsMock.mock.calls[0]?.[0];
 		expect(firstCallOptions).toBeDefined();
 		expect(firstCallOptions?.pairCacheMode).toBe('relative');
 		expect(firstCallOptions?.cache).toBeDefined();
 	});
 
 	test('reports no_feasible_solution when threshold cannot be satisfied', async () => {
-		detectOverlapsMock.mockImplementation(async (_layers: Layer[], combinedSvg: string) => {
-			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-			const layerIds = Object.keys(rotations).sort();
-			const overlaps = new Map<string, Map<string, number>>();
-
-			for (let i = 0; i < layerIds.length; i++) {
-				for (let j = i + 1; j < layerIds.length; j++) {
-					const layerA = layerIds[i];
-					const layerB = layerIds[j];
-					overlaps.set(layerA, new Map([[layerB, 5]]));
-					overlaps.set(layerB, new Map([[layerA, 5]]));
-				}
-			}
-
-			return overlaps;
-		});
+		detectPairOverlapPixelsMock.mockImplementation(async () => 5);
 
 		const snapshots: Array<string | undefined> = [];
 		const result = await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
@@ -244,5 +250,18 @@ describe('runBruteforceOptimizer', () => {
 
 		expect(snapshots).toContain('no_feasible_solution');
 		expect(result.layout.layerA).toBe(0);
+	});
+});
+
+describe('calculateAssignedMinGapUpperBound', () => {
+	test('returns infinity for zero or one assigned angle', () => {
+		expect(calculateAssignedMinGapUpperBound([])).toBe(Number.POSITIVE_INFINITY);
+		expect(calculateAssignedMinGapUpperBound([0])).toBe(Number.POSITIVE_INFINITY);
+	});
+
+	test('returns current minimum circular gap for assigned angles', () => {
+		expect(calculateAssignedMinGapUpperBound([0, 120, 240])).toBe(120);
+		expect(calculateAssignedMinGapUpperBound([0, 90, 200])).toBe(90);
+		expect(calculateAssignedMinGapUpperBound([350, 10, 120])).toBe(20);
 	});
 });
