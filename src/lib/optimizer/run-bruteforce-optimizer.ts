@@ -1,5 +1,5 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
-import { combineDoodledial } from '$lib/utils/doodledial';
+import { combineOptimizerSvgTemplate, createOptimizerSvgTemplate } from '$lib/utils/doodledial';
 import { createOverlapDetectionCache, detectPairOverlapPixels } from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
@@ -321,6 +321,17 @@ export async function runBruteforceOptimizer(
 	const totalIterations = computeTotalIterations(remainingLayerIds.length);
 
 	const overlapCache = createOverlapDetectionCache();
+	const optimizerSvgTemplate = createOptimizerSvgTemplate(
+		input.svgContent,
+		{
+			...input.config,
+			diameter: input.diameter
+		},
+		input.layers.map((layer) => layer.id)
+	);
+	const optimizerRotationsByLayerId = Object.fromEntries(
+		input.layers.map((layer) => [layer.id, 0])
+	) as Record<string, number>;
 	const pairFeasibilityMemo = new Map<string, boolean>();
 	const layerById = new Map(input.layers.map((layer) => [layer.id, layer]));
 	const assigned = new Map<string, number>();
@@ -393,9 +404,12 @@ export async function runBruteforceOptimizer(
 			}
 		];
 
-		const combinedSvg = combineDoodledial(input.svgContent, input.config, pairLayers, null, null, {
-			includePathLabels: false
-		});
+		optimizerRotationsByLayerId[firstLayerId] = pairLayers[0].rotation;
+		optimizerRotationsByLayerId[secondLayerId] = pairLayers[1].rotation;
+		const combinedSvg = combineOptimizerSvgTemplate(
+			optimizerSvgTemplate,
+			optimizerRotationsByLayerId
+		);
 		const overlapPixels = await detectPairOverlapPixels({
 			firstLayer: pairLayers[0],
 			secondLayer: pairLayers[1],

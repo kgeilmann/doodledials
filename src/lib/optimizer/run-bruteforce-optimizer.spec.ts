@@ -1,21 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const { combineDoodledialMock, detectPairOverlapPixelsMock } = vi.hoisted(() => ({
-	combineDoodledialMock: vi.fn(
+const {
+	createOptimizerSvgTemplateMock,
+	combineOptimizerSvgTemplateMock,
+	detectPairOverlapPixelsMock
+} = vi.hoisted(() => ({
+	createOptimizerSvgTemplateMock: vi.fn(
+		(_content: SVGContent, _config: DialConfig, layerIds: string[]) => ({
+			rawTemplate: 'template',
+			layerIds
+		})
+	),
+	combineOptimizerSvgTemplateMock: vi.fn(
 		(
-			_content: SVGContent,
-			_config: DialConfig,
-			layers: Layer[] = [],
-			_highlightedLayerId?: string | null,
-			_selectedLayerId?: string | null,
-			_options?: { includePathLabels?: boolean }
-		) => {
-			void _highlightedLayerId;
-			void _selectedLayerId;
-			void _options;
-			return JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])));
-		}
+			_template: { rawTemplate: string; layerIds: string[] },
+			rotationsByLayerId: Record<string, number>
+		) => JSON.stringify(rotationsByLayerId)
 	),
 	detectPairOverlapPixelsMock: vi.fn(
 		async ({
@@ -32,7 +33,8 @@ const { combineDoodledialMock, detectPairOverlapPixelsMock } = vi.hoisted(() => 
 }));
 
 vi.mock('$lib/utils/doodledial', () => ({
-	combineDoodledial: combineDoodledialMock
+	createOptimizerSvgTemplate: createOptimizerSvgTemplateMock,
+	combineOptimizerSvgTemplate: combineOptimizerSvgTemplateMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
@@ -186,12 +188,11 @@ describe('runBruteforceOptimizer', () => {
 		expect(firstCallOptions?.cache).toBeDefined();
 	});
 
-	test('disables path labels while combining overlap pairs', async () => {
+	test('creates optimizer svg template once and combines via template replacement', async () => {
 		await runBruteforceOptimizer(buildInput(twoLayers()));
 
-		const firstCombineCall = combineDoodledialMock.mock.calls[0];
-		expect(firstCombineCall).toBeDefined();
-		expect(firstCombineCall?.[5]).toEqual({ includePathLabels: false });
+		expect(createOptimizerSvgTemplateMock).toHaveBeenCalledTimes(1);
+		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
 	});
 
 	test('reports no_feasible_solution when threshold cannot be satisfied', async () => {

@@ -1,45 +1,44 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const { combineDoodledialMock, detectOverlapsMock } = vi.hoisted(() => ({
-	combineDoodledialMock: vi.fn(
-		(
-			_content: SVGContent,
-			_config: DialConfig,
-			layers: Layer[] = [],
-			_highlightedLayerId?: string | null,
-			_selectedLayerId?: string | null,
-			_options?: { includePathLabels?: boolean }
-		) => {
-			void _highlightedLayerId;
-			void _selectedLayerId;
-			void _options;
-			return JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])));
-		}
-	),
-	detectOverlapsMock: vi.fn(
-		async (
-			_layers: Layer[],
-			combinedSvg: string,
-			options?: { pairCacheMode?: 'relative'; cache?: unknown }
-		) => {
-			void options;
-			const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-			const [firstLayerId, secondLayerId] = Object.keys(rotations);
-			const overlaps = new Map<string, Map<string, number>>();
+const { createOptimizerSvgTemplateMock, combineOptimizerSvgTemplateMock, detectOverlapsMock } =
+	vi.hoisted(() => ({
+		createOptimizerSvgTemplateMock: vi.fn(
+			(_content: SVGContent, _config: DialConfig, layerIds: string[]) => ({
+				rawTemplate: 'template',
+				layerIds
+			})
+		),
+		combineOptimizerSvgTemplateMock: vi.fn(
+			(
+				_template: { rawTemplate: string; layerIds: string[] },
+				rotationsByLayerId: Record<string, number>
+			) => JSON.stringify(rotationsByLayerId)
+		),
+		detectOverlapsMock: vi.fn(
+			async (
+				_layers: Layer[],
+				combinedSvg: string,
+				options?: { pairCacheMode?: 'relative'; cache?: unknown }
+			) => {
+				void options;
+				const rotations = JSON.parse(combinedSvg) as Record<string, number>;
+				const [firstLayerId, secondLayerId] = Object.keys(rotations);
+				const overlaps = new Map<string, Map<string, number>>();
 
-			if (firstLayerId && secondLayerId && rotations[firstLayerId] <= rotations[secondLayerId]) {
-				overlaps.set(firstLayerId, new Map([[secondLayerId, 10]]));
-				overlaps.set(secondLayerId, new Map([[firstLayerId, 10]]));
+				if (firstLayerId && secondLayerId && rotations[firstLayerId] <= rotations[secondLayerId]) {
+					overlaps.set(firstLayerId, new Map([[secondLayerId, 10]]));
+					overlaps.set(secondLayerId, new Map([[firstLayerId, 10]]));
+				}
+
+				return overlaps;
 			}
-
-			return overlaps;
-		}
-	)
-}));
+		)
+	}));
 
 vi.mock('$lib/utils/doodledial', () => ({
-	combineDoodledial: combineDoodledialMock
+	createOptimizerSvgTemplate: createOptimizerSvgTemplateMock,
+	combineOptimizerSvgTemplate: combineOptimizerSvgTemplateMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
@@ -233,7 +232,8 @@ describe('runOptimizer', () => {
 			}
 		});
 
-		expect(combineDoodledialMock).toHaveBeenCalled();
+		expect(createOptimizerSvgTemplateMock).toHaveBeenCalled();
+		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
 		expect(detectOverlapsMock).toHaveBeenCalled();
 
 		const svgSnapshots = detectOverlapsMock.mock.calls.map(([, svg]) => svg);
@@ -275,7 +275,7 @@ describe('runOptimizer', () => {
 		expect(firstCallOptions?.cache).toBeDefined();
 	});
 
-	test('disables path labels while combining overlap snapshots', async () => {
+	test('creates optimizer svg template once and combines via template replacement', async () => {
 		const layers: Layer[] = [
 			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
 			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
@@ -300,9 +300,8 @@ describe('runOptimizer', () => {
 			}
 		});
 
-		const firstCombineCall = combineDoodledialMock.mock.calls[0];
-		expect(firstCombineCall).toBeDefined();
-		expect(firstCombineCall?.[5]).toEqual({ includePathLabels: false });
+		expect(createOptimizerSvgTemplateMock).toHaveBeenCalledTimes(1);
+		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
 	});
 
 	test('applies a deterministic exploration nudge when overlap probes cannot reduce pixels', async () => {
