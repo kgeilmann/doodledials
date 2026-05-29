@@ -29,6 +29,12 @@ export interface DetectPairOverlapOptions extends DetectOverlapsOptions {
 	combinedSvg: string;
 }
 
+export interface DetectCutoutLabelOverlapPixelsInput {
+	combinedSvg: string;
+	labelCorners: Array<{ x: number; y: number }>;
+	visibleLayerIds: string[];
+}
+
 export function createOverlapDetectionCache(): OverlapDetectionCache {
 	return {
 		bitmapByLayerAngle: new Map(),
@@ -161,6 +167,35 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 	return pixelCount;
 }
 
+export async function detectCutoutLabelOverlapPixels(
+	input: DetectCutoutLabelOverlapPixelsInput
+): Promise<number> {
+	if (input.visibleLayerIds.length === 0 || input.labelCorners.length < 3) {
+		return 0;
+	}
+
+	const parsedSvgRoot = parseSvgRoot(input.combinedSvg);
+	const serializer = new XMLSerializer();
+	const cutoutMaskSvg = buildCutoutOnlyVisibleLayersSvg(
+		parsedSvgRoot,
+		input.visibleLayerIds,
+		serializer
+	);
+	if (!cutoutMaskSvg) {
+		return 0;
+	}
+
+	const labelMaskSvg = buildLabelPolygonMaskSvg(parsedSvgRoot, input.labelCorners, serializer);
+	if (!labelMaskSvg) {
+		return 0;
+	}
+
+	const cutoutMaskBitmap = await renderSvgToBitmap(cutoutMaskSvg, RENDER_SIZE, RENDER_SIZE);
+	const labelMaskBitmap = await renderSvgToBitmap(labelMaskSvg, RENDER_SIZE, RENDER_SIZE);
+
+	return countOverlapPixels(cutoutMaskBitmap, labelMaskBitmap);
+}
+
 async function renderLayersToBitmaps(
 	layers: Layer[],
 	combinedSvg: string,
@@ -266,6 +301,78 @@ function buildCutoutOnlyLayerSvg(
 	}
 
 	isolatedRoot.appendChild(layerClone);
+	return serializer.serializeToString(isolatedRoot);
+}
+
+function buildCutoutOnlyVisibleLayersSvg(
+	sourceRoot: SVGSVGElement,
+	visibleLayerIds: string[],
+	serializer: XMLSerializer
+): string | null {
+	if (visibleLayerIds.length === 0) {
+		return null;
+	}
+
+	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
+	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
+	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
+
+	copySvgRootAttributes(sourceRoot, isolatedRoot);
+	cloneSharedSvgChildren(sourceRoot, isolatedRoot);
+
+	let hasCutoutLayer = false;
+	const uniqueVisibleLayerIds = new Set(visibleLayerIds);
+
+	for (const layerId of uniqueVisibleLayerIds) {
+		const layerSelector = `[id="${escapeAttributeValue(layerId)}"]`;
+		const sourceLayer = sourceRoot.querySelector(layerSelector);
+		if (!sourceLayer) {
+			continue;
+		}
+
+		const layerClone = sourceLayer.cloneNode(true) as Element;
+		if (!pruneToCutoutSubtree(layerClone)) {
+			continue;
+		}
+
+		hasCutoutLayer = true;
+		isolatedRoot.appendChild(layerClone);
+	}
+
+	if (!hasCutoutLayer) {
+		return null;
+	}
+
+	return serializer.serializeToString(isolatedRoot);
+}
+
+function buildLabelPolygonMaskSvg(
+	sourceRoot: SVGSVGElement,
+	labelCorners: Array<{ x: number; y: number }>,
+	serializer: XMLSerializer
+): string | null {
+	if (labelCorners.length < 3) {
+		return null;
+	}
+
+	for (const corner of labelCorners) {
+		if (!Number.isFinite(corner.x) || !Number.isFinite(corner.y)) {
+			return null;
+		}
+	}
+
+	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
+	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
+	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
+
+	copySvgRootAttributes(sourceRoot, isolatedRoot);
+
+	const polygon = isolatedDoc.createElementNS(svgNamespace, 'polygon');
+	polygon.setAttribute('points', labelCorners.map((corner) => `${corner.x},${corner.y}`).join(' '));
+	polygon.setAttribute('fill', 'white');
+	polygon.setAttribute('stroke', 'none');
+
+	isolatedRoot.appendChild(polygon);
 	return serializer.serializeToString(isolatedRoot);
 }
 
