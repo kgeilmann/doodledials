@@ -2,7 +2,7 @@ import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from '$lib/utils/doodledial';
 import {
 	createOverlapDetectionCache,
-	detectOverlaps,
+	detectPairOverlapPixels,
 	type PairOverlapCacheMode
 } from '$lib/utils/overlap-detection';
 
@@ -120,6 +120,80 @@ function analyzeCircularGaps(layout: Record<string, number>): {
 	return { minGap, variance, deviationSum };
 }
 
+export function calculateAssignedMinGapUpperBound(assignedAngles: number[]): number {
+	if (assignedAngles.length <= 1) {
+		return Number.POSITIVE_INFINITY;
+	}
+
+	const normalizedAngles = assignedAngles
+		.map((angle) => normalizeAngle(angle))
+		.sort((left, right) => left - right);
+
+	let minimumGap = Number.POSITIVE_INFINITY;
+	for (let index = 0; index < normalizedAngles.length; index++) {
+		const currentAngle = normalizedAngles[index];
+		const nextAngle = normalizedAngles[(index + 1) % normalizedAngles.length];
+		const gap = normalizeAngle(nextAngle - currentAngle);
+		minimumGap = Math.min(minimumGap, gap);
+	}
+
+	return minimumGap;
+}
+
+export function calculateTighterMinGapUpperBound(
+	assignedAngles: number[],
+	remainingLayerCount: number
+): number {
+	if (remainingLayerCount <= 0) {
+		return calculateAssignedMinGapUpperBound(assignedAngles);
+	}
+
+	if (assignedAngles.length <= 1) {
+		return Math.floor(360 / (remainingLayerCount + assignedAngles.length));
+	}
+
+	const normalizedAngles = assignedAngles
+		.map((angle) => normalizeAngle(angle))
+		.sort((left, right) => left - right);
+	const gaps: number[] = [];
+	for (let index = 0; index < normalizedAngles.length; index++) {
+		const currentAngle = normalizedAngles[index];
+		const nextAngle = normalizedAngles[(index + 1) % normalizedAngles.length];
+		gaps.push(normalizeAngle(nextAngle - currentAngle));
+	}
+
+	const canPlaceAtMinGap = (targetGap: number): boolean => {
+		if (targetGap <= 0) {
+			return true;
+		}
+
+		let capacity = 0;
+		for (const gap of gaps) {
+			capacity += Math.max(0, Math.floor(gap / targetGap) - 1);
+			if (capacity >= remainingLayerCount) {
+				return true;
+			}
+		}
+
+		return capacity >= remainingLayerCount;
+	};
+
+	let lower = 1;
+	let upper = 360;
+	let best = 0;
+	while (lower <= upper) {
+		const middle = Math.floor((lower + upper) / 2);
+		if (canPlaceAtMinGap(middle)) {
+			best = middle;
+			lower = middle + 1;
+		} else {
+			upper = middle - 1;
+		}
+	}
+
+	return best;
+}
+
 function isBetterLayout(
 	candidate: Record<string, number>,
 	incumbent: Record<string, number> | null
@@ -179,6 +253,21 @@ function buildDefaultLayout(
 	}
 
 	return layout;
+}
+
+function buildPairFeasibilityMemoKey(
+	firstLayerId: string,
+	firstAngle: number,
+	secondLayerId: string,
+	secondAngle: number
+): string {
+	const normalizedFirstAngle = normalizeAngle(firstAngle);
+	const normalizedSecondAngle = normalizeAngle(secondAngle);
+	if (firstLayerId < secondLayerId) {
+		return `${firstLayerId}:${normalizedFirstAngle}|${secondLayerId}:${normalizedSecondAngle}`;
+	}
+
+	return `${secondLayerId}:${normalizedSecondAngle}|${firstLayerId}:${normalizedFirstAngle}`;
 }
 
 export async function runBruteforceOptimizer(
@@ -242,9 +331,12 @@ export async function runBruteforceOptimizer(
 	const totalIterations = computeTotalIterations(remainingLayerIds.length);
 
 	const overlapCache = createOverlapDetectionCache();
+	const pairFeasibilityMemo = new Map<string, boolean>();
 	const layerById = new Map(input.layers.map((layer) => [layer.id, layer]));
 	const assigned = new Map<string, number>();
 	const usedAngles = new Array<boolean>(360).fill(false);
+	const domainByLayer = new Map<string, Uint8Array>();
+	const domainCountByLayer = new Map<string, number>();
 	assigned.set(anchorLayerId, 0);
 	usedAngles[0] = true;
 
@@ -274,19 +366,33 @@ export async function runBruteforceOptimizer(
 		});
 	};
 
+	reportProgress();
+
 	const isPairFeasible = async (
 		firstLayerId: string,
 		firstAngle: number,
 		secondLayerId: string,
 		secondAngle: number
 	): Promise<boolean> => {
+		const memoKey = buildPairFeasibilityMemoKey(
+			firstLayerId,
+			firstAngle,
+			secondLayerId,
+			secondAngle
+		);
+		const cached = pairFeasibilityMemo.get(memoKey);
+		if (typeof cached === 'boolean') {
+			return cached;
+		}
+
 		const firstLayer = layerById.get(firstLayerId);
 		const secondLayer = layerById.get(secondLayerId);
 		if (!firstLayer || !secondLayer) {
+			pairFeasibilityMemo.set(memoKey, false);
 			return false;
 		}
 
-		const pairLayers: Layer[] = [
+		const pairLayers: [Layer, Layer] = [
 			{
 				...firstLayer,
 				rotation: normalizeAngle(firstAngle)
@@ -297,26 +403,164 @@ export async function runBruteforceOptimizer(
 			}
 		];
 
-		const combinedSvg = combineDoodledial(
-			input.svgContent,
-			{ ...input.config, diameter: input.diameter },
-			pairLayers
-		);
-
-		const overlaps = await detectOverlaps(pairLayers, combinedSvg, {
+		const combinedSvg = combineDoodledial(input.svgContent, input.config, pairLayers);
+		const overlapPixels = await detectPairOverlapPixels({
+			firstLayer: pairLayers[0],
+			secondLayer: pairLayers[1],
+			combinedSvg,
 			cache: overlapCache,
 			pairCacheMode: overlapPairCacheMode
 		});
 
-		return (overlaps.get(firstLayerId)?.get(secondLayerId) ?? 0) < MIN_OVERLAP_PIXELS;
+		const feasible = overlapPixels < MIN_OVERLAP_PIXELS;
+		pairFeasibilityMemo.set(memoKey, feasible);
+		return feasible;
 	};
 
-	const search = async (depth: number): Promise<void> => {
+	const initializeDomains = async (): Promise<boolean> => {
+		for (const layerId of remainingLayerIds) {
+			const domain = new Uint8Array(360);
+			let count = 0;
+			for (let angle = 0; angle < 360; angle++) {
+				if (usedAngles[angle]) {
+					continue;
+				}
+
+				if (await isPairFeasible(layerId, angle, anchorLayerId, 0)) {
+					domain[angle] = 1;
+					count += 1;
+				}
+			}
+
+			domainByLayer.set(layerId, domain);
+			domainCountByLayer.set(layerId, count);
+			if (count === 0) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	const selectLayerByMrv = (
+		unassignedLayerIds: string[]
+	): { layerId: string; feasibleAngles: number[] } | null => {
+		let bestLayerId: string | null = null;
+		let bestCount = Number.POSITIVE_INFINITY;
+
+		for (const layerId of unassignedLayerIds) {
+			const domainCount = domainCountByLayer.get(layerId) ?? 0;
+			if (domainCount === 0) {
+				return null;
+			}
+
+			if (
+				domainCount < bestCount ||
+				(domainCount === bestCount && (!bestLayerId || layerId < bestLayerId))
+			) {
+				bestLayerId = layerId;
+				bestCount = domainCount;
+			}
+		}
+
+		if (!bestLayerId) {
+			return null;
+		}
+
+		const domain = domainByLayer.get(bestLayerId);
+		if (!domain) {
+			return null;
+		}
+
+		const feasibleAngles: number[] = [];
+		for (let angle = 0; angle < 360; angle++) {
+			if (domain[angle]) {
+				feasibleAngles.push(angle);
+			}
+		}
+
+		return {
+			layerId: bestLayerId,
+			feasibleAngles
+		};
+	};
+
+	type DomainTrailEntry = { layerId: string; angle: number };
+
+	const applyAssignmentConstraints = async (
+		assignedLayerId: string,
+		assignedAngle: number,
+		affectedLayerIds: string[]
+	): Promise<{ valid: boolean; trail: DomainTrailEntry[] }> => {
+		const trail: DomainTrailEntry[] = [];
+
+		for (const layerId of affectedLayerIds) {
+			const domain = domainByLayer.get(layerId);
+			if (!domain) {
+				continue;
+			}
+
+			if (domain[assignedAngle]) {
+				domain[assignedAngle] = 0;
+				domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
+				trail.push({ layerId, angle: assignedAngle });
+			}
+
+			for (let angle = 0; angle < 360; angle++) {
+				if (!domain[angle]) {
+					continue;
+				}
+
+				if (!(await isPairFeasible(layerId, angle, assignedLayerId, assignedAngle))) {
+					domain[angle] = 0;
+					domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
+					trail.push({ layerId, angle });
+				}
+			}
+
+			if ((domainCountByLayer.get(layerId) ?? 0) === 0) {
+				return { valid: false, trail };
+			}
+		}
+
+		return { valid: true, trail };
+	};
+
+	const rollbackDomainChanges = (trail: DomainTrailEntry[]): void => {
+		for (let index = trail.length - 1; index >= 0; index--) {
+			const { layerId, angle } = trail[index];
+			const domain = domainByLayer.get(layerId);
+			if (!domain || domain[angle]) {
+				continue;
+			}
+
+			domain[angle] = 1;
+			domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) + 1);
+		}
+	};
+
+	const domainsInitialized = await initializeDomains();
+	if (!domainsInitialized) {
+		stopReason = 'no_feasible_solution';
+	}
+
+	const search = async (depth: number, unassignedLayerIds: string[]): Promise<void> => {
 		throwIfCancelled(options?.signal);
 
 		if (isTimedOut()) {
 			stopReason = 'time_limit';
 			return;
+		}
+
+		if (bestLayout) {
+			const assignedMinGapUpperBound = calculateTighterMinGapUpperBound(
+				[...assigned.values()],
+				unassignedLayerIds.length
+			);
+			const incumbentMinGap = analyzeCircularGaps(bestLayout).minGap;
+			if (assignedMinGapUpperBound < incumbentMinGap) {
+				return;
+			}
 		}
 
 		if (depth >= remainingLayerIds.length) {
@@ -330,36 +574,35 @@ export async function runBruteforceOptimizer(
 			return;
 		}
 
-		const layerId = remainingLayerIds[depth];
+		const mrvSelection = selectLayerByMrv(unassignedLayerIds);
+		if (!mrvSelection) {
+			return;
+		}
 
-		for (let angle = 0; angle < 360; angle++) {
-			if (usedAngles[angle]) {
-				continue;
-			}
+		const { layerId, feasibleAngles } = mrvSelection;
+		const nextUnassignedLayerIds = unassignedLayerIds.filter(
+			(unassignedLayerId) => unassignedLayerId !== layerId
+		);
 
+		for (const angle of feasibleAngles) {
 			throwIfCancelled(options?.signal);
 			nodesVisited += 1;
 			reportProgress();
 
 			assigned.set(layerId, angle);
-			let pairwiseValid = true;
+			usedAngles[angle] = true;
+			const { valid, trail } = await applyAssignmentConstraints(
+				layerId,
+				angle,
+				nextUnassignedLayerIds
+			);
 
-			for (const [otherLayerId, otherAngle] of assigned.entries()) {
-				if (otherLayerId === layerId) {
-					continue;
-				}
-
-				if (!(await isPairFeasible(layerId, angle, otherLayerId, otherAngle))) {
-					pairwiseValid = false;
-					break;
-				}
+			if (valid) {
+				await search(depth + 1, nextUnassignedLayerIds);
 			}
 
-			if (pairwiseValid) {
-				usedAngles[angle] = true;
-				await search(depth + 1);
-				usedAngles[angle] = false;
-			}
+			rollbackDomainChanges(trail);
+			usedAngles[angle] = false;
 
 			assigned.delete(layerId);
 
@@ -370,7 +613,9 @@ export async function runBruteforceOptimizer(
 	};
 
 	try {
-		await search(0);
+		if (!stopReason) {
+			await search(0, remainingLayerIds);
+		}
 	} catch (error) {
 		if (error instanceof BruteforceOptimizerCancelledError) {
 			stopReason = 'cancelled';
