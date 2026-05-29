@@ -25,6 +25,7 @@
 	let optimizerAbortController = $state<AbortController | null>(null);
 	let optimizerOverlayVisible = $state(false);
 	let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+	let optimizerLiveTimer: ReturnType<typeof setInterval> | null = null;
 	let optimizerRunDialogOpen = $state(false);
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
@@ -96,6 +97,39 @@
 		}, 1200);
 	}
 
+	function clearOptimizerLiveTimer() {
+		if (optimizerLiveTimer) {
+			clearInterval(optimizerLiveTimer);
+			optimizerLiveTimer = null;
+		}
+	}
+
+	function startOptimizerLiveTimer(runStartedAtMs: number) {
+		clearOptimizerLiveTimer();
+
+		const tick = () => {
+			if (!optimizerPending) {
+				clearOptimizerLiveTimer();
+				return;
+			}
+
+			const elapsedMs = Date.now() - runStartedAtMs;
+			optimizerElapsedMs = elapsedMs;
+
+			if (
+				optimizerActiveMode === 'bruteforce' &&
+				typeof optimizerMaxRuntimeMs === 'number' &&
+				optimizerMaxRuntimeMs > 0
+			) {
+				const runtimePercent = Math.min(99, Math.round((elapsedMs / optimizerMaxRuntimeMs) * 100));
+				optimizerProgress = Math.max(optimizerProgress, runtimePercent);
+			}
+		};
+
+		tick();
+		optimizerLiveTimer = setInterval(tick, 100);
+	}
+
 	function formatProgressCountLabel(mode: OptimizerMode, total: number | string): string {
 		if (mode === 'bruteforce') {
 			return `Combinations ${optimizerIteration}/${total}`;
@@ -124,6 +158,7 @@
 		optimizerActiveMode = mode;
 		optimizerOverlayVisible = true;
 		clearOverlayHideTimer();
+		clearOptimizerLiveTimer();
 		optimizerAbortController = new AbortController();
 		const runStartedAtMs = Date.now();
 
@@ -154,7 +189,7 @@
 				totalIterations: number;
 			}) => {
 				optimizerProgressPhase = 'Optimizing';
-				optimizerProgress = progress.percent;
+				optimizerProgress = Math.max(optimizerProgress, progress.percent);
 				optimizerProgressMessage = progress.message;
 				optimizerIteration = progress.iteration;
 				optimizerTotalIterations = progress.totalIterations;
@@ -163,6 +198,7 @@
 
 			if (mode === 'bruteforce') {
 				optimizerMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
+				startOptimizerLiveTimer(runStartedAtMs);
 				const bruteForceResult = await runBruteforceOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					roundOutputAngles: optimizerRoundOutputAngles,
@@ -178,6 +214,7 @@
 
 				console.log('[optimizer] Frontend optimizer response:', bruteForceResult);
 			} else {
+				startOptimizerLiveTimer(runStartedAtMs);
 				const forceDirectedResult = await runOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					initializeRandomly: optimizerInitializeRandomly,
@@ -214,6 +251,7 @@
 				console.error('[optimizer] Frontend optimizer call failed:', error);
 			}
 		} finally {
+			clearOptimizerLiveTimer();
 			optimizerElapsedMs = Date.now() - runStartedAtMs;
 
 			if (optimizerApplied) {

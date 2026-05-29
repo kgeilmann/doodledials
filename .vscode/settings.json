@@ -3,6 +3,7 @@
 		"pnpm": true,
 		"git add": true,
 		"git commit": true,
-		"git rev-parse": true
+		"git rev-parse": true,
+		"git -C c:\\Users\\kge\\Repositories\\Experimente\\private\\doodledials": true
 	}
 }
