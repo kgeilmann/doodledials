@@ -14,7 +14,7 @@ test.describe('Layer Management', () => {
 
 		await expect(page.locator('text=Layer Management')).toBeVisible();
 
-		const layerItems = page.locator('[class*="hover:bg-gray-50"]');
+		const layerItems = page.locator('li[role="menuitem"]');
 		await expect(layerItems).toHaveCount(3);
 	});
 
@@ -68,7 +68,7 @@ test.describe('Layer Management', () => {
 		const fileInput = page.locator('input[type="file"]');
 		await fileInput.setInputFiles(threePathsSvg);
 
-		const layerItems = page.locator('[class*="hover:bg-gray-50"]');
+		const layerItems = page.locator('li[role="menuitem"]');
 		await expect(layerItems).toHaveCount(3);
 
 		await fileInput.setInputFiles(threePathsSvg);
