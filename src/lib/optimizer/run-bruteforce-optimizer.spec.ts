@@ -1,58 +1,29 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const { combineDoodledialMock, detectOverlapsMock, detectPairOverlapPixelsMock } = vi.hoisted(
-	() => ({
-		combineDoodledialMock: vi.fn(
-			(_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
-				JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
-		),
-		detectOverlapsMock: vi.fn(
-			async (
-				_layers: Layer[],
-				combinedSvg: string,
-				options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
-			) => {
-				void options;
-				const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-				const layerIds = Object.keys(rotations).sort();
-				const overlaps = new Map<string, Map<string, number>>();
-
-				for (let i = 0; i < layerIds.length; i++) {
-					for (let j = i + 1; j < layerIds.length; j++) {
-						const layerA = layerIds[i];
-						const layerB = layerIds[j];
-						if (rotations[layerA] === rotations[layerB]) {
-							overlaps.set(layerA, new Map([[layerB, 3]]));
-							overlaps.set(layerB, new Map([[layerA, 3]]));
-						}
-					}
-				}
-
-				return overlaps;
-			}
-		),
-		detectPairOverlapPixelsMock: vi.fn(
-			async ({
-				firstLayer,
-				secondLayer
-			}: {
-				firstLayer: Layer;
-				secondLayer: Layer;
-				pairCacheMode?: 'absolute' | 'relative';
-				cache?: unknown;
-				combinedSvg: string;
-			}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
-		)
-	})
-);
+const { combineDoodledialMock, detectPairOverlapPixelsMock } = vi.hoisted(() => ({
+	combineDoodledialMock: vi.fn((_content: SVGContent, _config: DialConfig, layers: Layer[] = []) =>
+		JSON.stringify(Object.fromEntries(layers.map((layer) => [layer.id, layer.rotation])))
+	),
+	detectPairOverlapPixelsMock: vi.fn(
+		async ({
+			firstLayer,
+			secondLayer
+		}: {
+			firstLayer: Layer;
+			secondLayer: Layer;
+			pairCacheMode?: 'absolute' | 'relative';
+			cache?: unknown;
+			combinedSvg: string;
+		}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
+	)
+}));
 
 vi.mock('$lib/utils/doodledial', () => ({
 	combineDoodledial: combineDoodledialMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
-	detectOverlaps: detectOverlapsMock,
 	detectPairOverlapPixels: detectPairOverlapPixelsMock,
 	createOverlapDetectionCache: () => ({
 		bitmapByLayerAngle: new Map(),
@@ -66,30 +37,6 @@ import {
 	calculateAssignedMinGapUpperBound,
 	runBruteforceOptimizer
 } from './run-bruteforce-optimizer';
-
-function defaultDetectOverlapsMock(
-	_layers: Layer[],
-	combinedSvg: string,
-	options?: { pairCacheMode?: 'absolute' | 'relative'; cache?: unknown }
-) {
-	void options;
-	const rotations = JSON.parse(combinedSvg) as Record<string, number>;
-	const layerIds = Object.keys(rotations).sort();
-	const overlaps = new Map<string, Map<string, number>>();
-
-	for (let i = 0; i < layerIds.length; i++) {
-		for (let j = i + 1; j < layerIds.length; j++) {
-			const layerA = layerIds[i];
-			const layerB = layerIds[j];
-			if (rotations[layerA] === rotations[layerB]) {
-				overlaps.set(layerA, new Map([[layerB, 3]]));
-				overlaps.set(layerB, new Map([[layerA, 3]]));
-			}
-		}
-	}
-
-	return overlaps;
-}
 
 function buildInput(layers: Layer[]) {
 	return {
@@ -130,7 +77,6 @@ function threeLayers(): Layer[] {
 describe('runBruteforceOptimizer', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		detectOverlapsMock.mockImplementation(async (...args) => defaultDetectOverlapsMock(...args));
 		detectPairOverlapPixelsMock.mockImplementation(
 			async ({ firstLayer, secondLayer }: { firstLayer: Layer; secondLayer: Layer }) =>
 				firstLayer.rotation === secondLayer.rotation ? 3 : 0
