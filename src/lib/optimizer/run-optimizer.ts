@@ -1,5 +1,9 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
-import { combineDoodledial } from '$lib/utils/doodledial';
+import {
+	combineOptimizerSvgTemplate,
+	createOptimizerSvgTemplate,
+	type OptimizerSvgTemplate
+} from '$lib/utils/doodledial';
 import {
 	createOverlapDetectionCache,
 	detectOverlaps,
@@ -407,17 +411,11 @@ function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Lay
 async function detectLayoutOverlaps(
 	input: OptimizerInput,
 	state: Record<string, number>,
-	overlapCache: OverlapDetectionCache
+	overlapCache: OverlapDetectionCache,
+	optimizerSvgTemplate: OptimizerSvgTemplate
 ): Promise<Map<string, Map<string, number>>> {
 	const layers = buildRotatedLayers(input.layers, state);
-	const combinedSvg = combineDoodledial(
-		input.svgContent,
-		{ ...input.config, diameter: input.diameter },
-		layers,
-		null,
-		null,
-		{ includePathLabels: false }
-	);
+	const combinedSvg = combineOptimizerSvgTemplate(optimizerSvgTemplate, state);
 
 	return detectOverlaps(layers, combinedSvg, {
 		cache: overlapCache,
@@ -467,7 +465,8 @@ async function calculateOverlapForce(
 	currentOverlaps: Map<string, Map<string, number>>,
 	layerId: string,
 	tuning: ResolvedOptimizerTuning,
-	overlapCache: OverlapDetectionCache
+	overlapCache: OverlapDetectionCache,
+	optimizerSvgTemplate: OptimizerSvgTemplate
 ): Promise<number> {
 	const overlappingLayerIds = input.layers
 		.filter((layer) => layer.id !== layerId)
@@ -503,8 +502,8 @@ async function calculateOverlapForce(
 		};
 
 		const [positiveOverlaps, negativeOverlaps] = await Promise.all([
-			detectLayoutOverlaps(input, positiveState, overlapCache),
-			detectLayoutOverlaps(input, negativeState, overlapCache)
+			detectLayoutOverlaps(input, positiveState, overlapCache, optimizerSvgTemplate),
+			detectLayoutOverlaps(input, negativeState, overlapCache, optimizerSvgTemplate)
 		]);
 
 		let positiveTotalDecrease = 0;
@@ -586,6 +585,14 @@ export async function runOptimizer(
 	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
 	const tuning = resolveOptimizerTuning(options?.tuning);
 	const overlapCache = createOverlapDetectionCache();
+	const optimizerSvgTemplate = createOptimizerSvgTemplate(
+		input.svgContent,
+		{
+			...input.config,
+			diameter: input.diameter
+		},
+		input.layers.map((layer) => layer.id)
+	);
 
 	let state = shouldInitializeRandomly
 		? initializeRandomLayout(input.layers, options?.randomSeed)
@@ -597,7 +604,12 @@ export async function runOptimizer(
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
 		throwIfCancelled(options?.signal);
 		const layoutBefore = { ...state };
-		const currentOverlaps = await detectLayoutOverlaps(input, state, overlapCache);
+		const currentOverlaps = await detectLayoutOverlaps(
+			input,
+			state,
+			overlapCache,
+			optimizerSvgTemplate
+		);
 		const restoringContributions = calculateRestoringContributions(state, layerIds);
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds, tuning);
 		const uniqueContributions = calculateUniqueContributions(state, layerIds, tuning);
@@ -620,7 +632,8 @@ export async function runOptimizer(
 				currentOverlaps,
 				layerId,
 				tuning,
-				overlapCache
+				overlapCache,
+				optimizerSvgTemplate
 			);
 			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce(layerId, restoringForceMap);

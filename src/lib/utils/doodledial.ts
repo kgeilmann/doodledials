@@ -138,18 +138,122 @@ function createPathLabel(layerId: string, layerIndex: number, path: Path): Text 
 	return pathLabel;
 }
 
+export interface CombineDoodledialOptions {
+	includePathLabels?: boolean;
+	includeHighlighting?: boolean;
+	respectLayerVisibility?: boolean;
+	applyCutoutTransforms?: boolean;
+	applyDiameter?: boolean;
+}
+
+export interface OptimizerSvgTemplate {
+	rawTemplate: string;
+	layerIds: string[];
+}
+
+const OPTIMIZER_ROTATION_TOKEN_PREFIX = '__DDL_ROT_';
+const OPTIMIZER_ROTATION_TOKEN_REGEX = /__DDL_ROT_([A-Za-z0-9_-]+)__/g;
+
+function normalizeAngle(angle: number): number {
+	return ((angle % 360) + 360) % 360;
+}
+
+function toOptimizerRotationToken(layerId: string): string {
+	return `${OPTIMIZER_ROTATION_TOKEN_PREFIX}${layerId}__`;
+}
+
+export function createOptimizerSvgTemplate(
+	content: SVGContent,
+	config: DialConfig,
+	layerIds: string[]
+): OptimizerSvgTemplate {
+	const doc = SVG(content.raw) as Svg;
+	const cx = doc.viewbox().cx;
+	const cy = doc.viewbox().cy;
+	const offsetXPx = config.offsetX * MM_TO_PX;
+	const offsetYPx = config.offsetY * MM_TO_PX;
+
+	doc.find('.cutout').forEach((cutout) => {
+		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+	});
+
+	doc.find('.path-label').forEach((label) => {
+		label.remove();
+	});
+
+	for (const layerId of layerIds) {
+		const svgLayer = doc.findOne('#' + layerId) as G | null;
+		if (!svgLayer) {
+			continue;
+		}
+
+		svgLayer.attr('visibility', 'visible');
+		svgLayer.attr('highlighted', null);
+		svgLayer.attr('transform', `rotate(${toOptimizerRotationToken(layerId)}, ${cx}, ${cy})`);
+	}
+
+	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
+	doc.width(pixelDiameter);
+	doc.height(pixelDiameter);
+
+	return {
+		rawTemplate: doc.svg(),
+		layerIds
+	};
+}
+
+export function combineOptimizerSvgTemplate(
+	template: OptimizerSvgTemplate,
+	rotationsByLayerId: Record<string, number>
+): string {
+	void template.layerIds;
+	return template.rawTemplate.replace(OPTIMIZER_ROTATION_TOKEN_REGEX, (_match, layerId) => {
+		const angle = rotationsByLayerId[layerId] ?? 0;
+		return String(normalizeAngle(angle));
+	});
+}
+
+export function precomputeOptimizerSvgContent(content: SVGContent, config: DialConfig): SVGContent {
+	const doc = SVG(content.raw) as Svg;
+	const cx = doc.viewbox().cx;
+	const cy = doc.viewbox().cy;
+	const offsetXPx = config.offsetX * MM_TO_PX;
+	const offsetYPx = config.offsetY * MM_TO_PX;
+
+	doc.find('.cutout').forEach((cutout) => {
+		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+	});
+
+	doc.find('.path-label').forEach((label) => {
+		label.remove();
+	});
+
+	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
+	doc.width(pixelDiameter);
+	doc.height(pixelDiameter);
+
+	return {
+		...content,
+		raw: doc.svg()
+	};
+}
+
 export function combineDoodledial(
 	content: SVGContent,
 	config: DialConfig,
 	layers?: Layer[],
 	highlightedLayerId?: string | null,
 	selectedLayerId?: string | null,
-	options?: { includePathLabels?: boolean }
+	options?: CombineDoodledialOptions
 ): string {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
 	const includePathLabels = options?.includePathLabels ?? true;
+	const includeHighlighting = options?.includeHighlighting ?? true;
+	const respectLayerVisibility = options?.respectLayerVisibility ?? true;
+	const applyCutoutTransforms = options?.applyCutoutTransforms ?? true;
+	const applyDiameter = options?.applyDiameter ?? true;
 
 	let highlighted: G;
 	let selected: G;
@@ -159,18 +263,25 @@ export function combineDoodledial(
 
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
-		svgLayer.attr('visibility', layer.visible ? 'visible' : 'hidden');
+		svgLayer.attr('visibility', respectLayerVisibility && !layer.visible ? 'hidden' : 'visible');
 		svgLayer.attr('transform', `rotate(${layer.rotation}, ${cx}, ${cy})`);
-		svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
 
-		if (layer.id === highlightedLayerId) highlighted = svgLayer;
-		if (layer.id === selectedLayerId) selected = svgLayer;
+		if (includeHighlighting) {
+			svgLayer.attr('highlighted', layer.id === highlightedLayerId || layer.id === selectedLayerId);
+		}
 
-		svgLayer.find('.cutout').forEach((c) => {
-			c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
-		});
+		if (includeHighlighting) {
+			if (layer.id === highlightedLayerId) highlighted = svgLayer;
+			if (layer.id === selectedLayerId) selected = svgLayer;
+		}
 
-		if (includePathLabels) {
+		if (applyCutoutTransforms) {
+			svgLayer.find('.cutout').forEach((c) => {
+				c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+			});
+		}
+
+		if (includePathLabels && applyCutoutTransforms) {
 			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
 				const pathLabel = label as Text;
 				const labelOffsetX = (layer.labelOffsetX || 0) * config.scale;
@@ -183,13 +294,18 @@ export function combineDoodledial(
 		}
 	});
 
-	const allLayers = doc.findOne('#all');
-	if (highlighted!) allLayers?.add(highlighted);
-	if (selected!) allLayers?.add(selected);
+	if (includeHighlighting) {
+		const allLayers = doc.findOne('#all');
+		if (highlighted!) allLayers?.add(highlighted);
+		if (selected!) allLayers?.add(selected);
+	}
 
-	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
-	doc.width(pixelDiameter);
-	doc.height(pixelDiameter);
+	if (applyDiameter) {
+		const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
+		doc.width(pixelDiameter);
+		doc.height(pixelDiameter);
+	}
+
 	return doc.svg();
 }
 
