@@ -4,6 +4,8 @@ import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
 import { solveOptimalLayout } from '$lib/utils';
 
+type AutoPlacementRunner = () => void | Promise<void>;
+
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
 	let svgContent = $state<SVGContent | null>(null);
@@ -17,6 +19,10 @@ function createDoodledialStore() {
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
 	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
+	let autoPlacementTimer: ReturnType<typeof setTimeout> | null = null;
+	let autoPlacementRunning = false;
+	let autoPlacementStale = false;
+	let autoPlacementRunner: AutoPlacementRunner | null = null;
 
 	function getLayerArray(): Layer[] {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
@@ -51,6 +57,35 @@ function createDoodledialStore() {
 		} catch (err) {
 			console.error('Cutout gap detection failed:', err);
 		}
+	}
+
+	async function executeAutoPlacementNow(): Promise<void> {
+		if (autoPlacementRunning) {
+			autoPlacementStale = true;
+			return;
+		}
+
+		autoPlacementRunning = true;
+		try {
+			await autoPlacementRunner?.();
+		} finally {
+			autoPlacementRunning = false;
+			if (autoPlacementStale) {
+				autoPlacementStale = false;
+				await executeAutoPlacementNow();
+			}
+		}
+	}
+
+	function scheduleLabelAutoPlacement() {
+		if (autoPlacementTimer) {
+			clearTimeout(autoPlacementTimer);
+		}
+
+		autoPlacementTimer = setTimeout(() => {
+			autoPlacementTimer = null;
+			void executeAutoPlacementNow();
+		}, 100);
 	}
 
 	return {
@@ -98,12 +133,21 @@ function createDoodledialStore() {
 		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
+			scheduleLabelAutoPlacement();
 		},
 		setOffsetY(offsetY: number) {
 			config = { ...config, offsetY };
+			scheduleLabelAutoPlacement();
 		},
 		setScale(scale: number) {
 			config = { ...config, scale };
+			scheduleLabelAutoPlacement();
+		},
+		setAutoPlacementRunner(runner: AutoPlacementRunner | null) {
+			autoPlacementRunner = runner;
+		},
+		runAutoPlacementNow() {
+			return executeAutoPlacementNow();
 		},
 		setSvgContent(content: SVGContent | null) {
 			svgContent = content;
@@ -264,6 +308,13 @@ function createDoodledialStore() {
 			layers.clear();
 		},
 		reset() {
+			if (autoPlacementTimer) {
+				clearTimeout(autoPlacementTimer);
+				autoPlacementTimer = null;
+			}
+			autoPlacementRunning = false;
+			autoPlacementStale = false;
+			autoPlacementRunner = null;
 			config = { ...DEFAULT_DIAL_CONFIG };
 			svgContent = null;
 			combinedSvg = null;
