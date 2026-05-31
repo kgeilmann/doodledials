@@ -5,6 +5,9 @@ import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
 
 type AutoPlacementRunner = () => void | Promise<void>;
 
+const AUTO_PATH_LABEL_PLACEMENT_ENABLED =
+	import.meta.env.VITE_ENABLE_AUTO_PATH_LABEL_PLACEMENT !== 'false';
+
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
 	let svgContent = $state<SVGContent | null>(null);
@@ -59,6 +62,10 @@ function createDoodledialStore() {
 	}
 
 	async function executeAutoPlacementNow(): Promise<void> {
+		if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+			return;
+		}
+
 		if (autoPlacementRunning) {
 			autoPlacementStale = true;
 			return;
@@ -77,6 +84,10 @@ function createDoodledialStore() {
 	}
 
 	function scheduleLabelAutoPlacement() {
+		if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+			return;
+		}
+
 		if (autoPlacementTimer) {
 			clearTimeout(autoPlacementTimer);
 		}
@@ -124,6 +135,9 @@ function createDoodledialStore() {
 		get cutoutGaps() {
 			return cutoutGaps;
 		},
+		get autoPathLabelPlacementEnabled() {
+			return AUTO_PATH_LABEL_PLACEMENT_ENABLED;
+		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
 		},
@@ -143,6 +157,10 @@ function createDoodledialStore() {
 			scheduleLabelAutoPlacement();
 		},
 		setAutoPlacementRunner(runner: AutoPlacementRunner | null) {
+			if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+				autoPlacementRunner = null;
+				return;
+			}
 			autoPlacementRunner = runner;
 		},
 		runAutoPlacementNow() {
@@ -292,6 +310,10 @@ function createDoodledialStore() {
 			}
 		},
 		requestLayerLabelAutoPlacement(id: string) {
+			if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+				return Promise.resolve();
+			}
+
 			if (!layers.has(id)) {
 				return Promise.resolve();
 			}

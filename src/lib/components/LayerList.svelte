@@ -188,7 +188,7 @@
 								{/if}
 							</span>
 							<div class="flex items-center gap-2 shrink-0">
-								{#if doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+								{#if doodledialStore.autoPathLabelPlacementEnabled && doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
 									<button
 										type="button"
 										data-reset-label-auto={layer.id}
