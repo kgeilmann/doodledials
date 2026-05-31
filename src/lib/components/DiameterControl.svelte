@@ -25,8 +25,7 @@
 
 	function handleScaleInput(e: Event) {
 		const value = parseFloat((e.target as HTMLInputElement).value) || 1;
-		const clamped = Math.min(Math.max(value, 0.75), 1.25);
-		doodledialStore.setScale(clamped);
+		doodledialStore.setScale(value);
 	}
 </script>
 
@@ -64,8 +63,6 @@
 		<input
 			id="scale-input"
 			type="number"
-			min="0.75"
-			max="1.25"
 			step="0.05"
 			value={doodledialStore.config.scale}
 			oninput={handleScaleInput}

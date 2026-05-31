@@ -1,9 +1,15 @@
-import { SVG, Svg, G, Path, Text } from '@svgdotjs/svg.js';
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import { SVG, Svg, G, Text } from '@svgdotjs/svg.js';
+import {
+	DEFAULT_DIAL_CONFIG,
+	type DialConfig,
+	type Layer,
+	type SVGContent
+} from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
 const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 6 * MM_TO_PX;
+const NORMALIZED_IMAGE_DIMENSION = DEFAULT_DIAL_CONFIG.maxDiameter;
 
 export function parseSvgPaths(svgContent: string): {
 	layers: { id: string; name: string; index: number }[];
@@ -52,7 +58,16 @@ export function parseSvgPaths(svgContent: string): {
 	});
 	doc.add(all);
 
-	const maxImageDimension = Math.max(doc.viewbox().width, doc.viewbox().height);
+	const sourceViewBox = doc.viewbox();
+	const sourceMaxDimension = Math.max(sourceViewBox.width, sourceViewBox.height) || 1;
+	const sourceScale = NORMALIZED_IMAGE_DIMENSION / sourceMaxDimension;
+	const normalizedWidth = sourceViewBox.width * sourceScale;
+	const normalizedHeight = sourceViewBox.height * sourceScale;
+	const normalizedTranslateX =
+		(NORMALIZED_IMAGE_DIMENSION - normalizedWidth) / 2 - sourceViewBox.x * sourceScale;
+	const normalizedTranslateY =
+		(NORMALIZED_IMAGE_DIMENSION - normalizedHeight) / 2 - sourceViewBox.y * sourceScale;
+	const maxImageDimension = NORMALIZED_IMAGE_DIMENSION;
 	doc
 		.circle(maxImageDimension * Math.SQRT2)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
@@ -62,7 +77,9 @@ export function parseSvgPaths(svgContent: string): {
 
 	const paths = doc.find('path');
 	paths.forEach((path, index) => {
+		const sourcePathBox = path.bbox();
 		path.addClass('cutout');
+		path.scale(sourceScale, 0, 0).translate(normalizedTranslateX, normalizedTranslateY);
 
 		// @ts-expect-error - css() returns unknown type
 		path.css('stroke', null);
@@ -81,7 +98,10 @@ export function parseSvgPaths(svgContent: string): {
 		layer.add(path);
 		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
 		layer.add(mark);
-		const pathLabel = createPathLabel(layerId, index + 1, path as Path);
+		const pathLabel = createPathLabel(layerId, index + 1, {
+			x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
+			cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
+		});
 		layer.add(pathLabel);
 		all.add(layer);
 
@@ -128,13 +148,17 @@ function createMark(
 	return markGroup;
 }
 
-function createPathLabel(layerId: string, layerIndex: number, path: Path): Text {
+function createPathLabel(
+	layerId: string,
+	layerIndex: number,
+	pathBox: { x2: number; cy: number }
+): Text {
 	const pathLabel = SVG().text(String(layerIndex));
 	pathLabel.addClass('path-label');
 	pathLabel.id('path-label-' + layerId);
 	pathLabel.attr('data-layer-id', layerId);
 	pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
-	pathLabel.center(path.bbox().x2 + 4, path.bbox().cy - 5);
+	pathLabel.center(pathBox.x2 + 4, pathBox.cy - 5);
 	return pathLabel;
 }
 

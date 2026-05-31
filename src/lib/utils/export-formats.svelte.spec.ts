@@ -1,3 +1,4 @@
+import { SVG, type Svg } from '@svgdotjs/svg.js';
 import { describe, expect, it } from 'vitest';
 import { parseSvgPaths } from './doodledial';
 import {
@@ -41,7 +42,59 @@ const SAMPLE_CONFIG: DialConfig = {
 	scale: 1
 };
 
+function getParsedGeometry(svg: string): {
+	viewBox: string;
+	discDiameter: number;
+	cutoutBox: { x: number; y: number; width: number; height: number };
+} {
+	const doc = SVG(svg) as Svg;
+	const disc = doc.findOne('#disc');
+	const cutout = doc.findOne('.cutout');
+	if (!disc || !cutout) {
+		throw new Error('Expected parsed SVG to contain disc and cutout');
+	}
+
+	const transform = String(cutout.attr('transform') || '');
+	const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
+	const [a, , , d, e, f] = matrixMatch
+		? matrixMatch[1].split(/[ ,]+/).map((value) => Number(value))
+		: [1, 0, 0, 1, 0, 0];
+	const cutoutBox = (
+		cutout as unknown as { bbox: () => { x: number; y: number; width: number; height: number } }
+	).bbox();
+
+	return {
+		viewBox: doc.attr('viewBox') as string,
+		discDiameter: Number(disc.attr('r')) * 2,
+		cutoutBox: {
+			x: cutoutBox.x * a + e,
+			y: cutoutBox.y * d + f,
+			width: cutoutBox.width * a,
+			height: cutoutBox.height * d
+		}
+	};
+}
+
 describe('export formats', () => {
+	it('normalizes differently sized uploads into the same dial frame', () => {
+		const smallSource = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+			<path d="M 20 20 L 40 20 L 40 40 L 20 40 Z" />
+		</svg>`;
+		const largeSource = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+			<path d="M 40 40 L 80 40 L 80 80 L 40 80 Z" />
+		</svg>`;
+
+		const smallGeometry = getParsedGeometry(parseSvgPaths(smallSource).updatedSvg);
+		const largeGeometry = getParsedGeometry(parseSvgPaths(largeSource).updatedSvg);
+
+		expect(smallGeometry.viewBox).toBe(largeGeometry.viewBox);
+		expect(smallGeometry.discDiameter).toBeCloseTo(largeGeometry.discDiameter, 6);
+		expect(smallGeometry.cutoutBox.x).toBeCloseTo(largeGeometry.cutoutBox.x, 6);
+		expect(smallGeometry.cutoutBox.y).toBeCloseTo(largeGeometry.cutoutBox.y, 6);
+		expect(smallGeometry.cutoutBox.width).toBeCloseTo(largeGeometry.cutoutBox.width, 6);
+		expect(smallGeometry.cutoutBox.height).toBeCloseTo(largeGeometry.cutoutBox.height, 6);
+	});
+
 	it('builds a deterministic label stroke path', () => {
 		const path = labelToSvgStrokePath('12', { width: 20, height: 10 });
 		expect(path).toContain('M ');
