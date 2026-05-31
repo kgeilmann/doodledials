@@ -4,6 +4,8 @@
 		"git add": true,
 		"git commit": true,
 		"git rev-parse": true,
-		"git -C c:\\Users\\kge\\Repositories\\Experimente\\private\\doodledials": true
+		"git -C c:\\Users\\kge\\Repositories\\Experimente\\private\\doodledials": true,
+		"Get-NetTCPConnection": true,
+		"Get-Process": true
 	}
 }

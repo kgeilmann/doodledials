@@ -49,7 +49,7 @@ test.describe('Doodle Dials', () => {
 
 	test('can upload SVG file', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
-		const sampleSvg = path.resolve(process.cwd(), 'samples/squares.svg');
+		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
 
 		await fileInput.setInputFiles(sampleSvg);
 		await expect(page.locator('text=SVG loaded successfully')).toBeVisible();
@@ -57,7 +57,7 @@ test.describe('Doodle Dials', () => {
 
 	test('can rotate layer using knob and transform is applied in SVG', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
-		const sampleSvg = path.resolve(process.cwd(), 'samples/squares.svg');
+		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
 
 		await fileInput.setInputFiles(sampleSvg);
 		await expect(page.locator('text=SVG loaded successfully')).toBeVisible();
