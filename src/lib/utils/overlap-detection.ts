@@ -12,10 +12,21 @@ interface PixelData {
 }
 
 export type PairOverlapCacheMode = 'relative';
+export type PairOverlapComputationMode = 'count' | 'any';
+
+/**
+ * A cache entry for a pair overlap result.
+ * `exact: true`  → `value` is the precise pixel count.
+ * `exact: false` → `value` is a lower bound (1 = at least one overlap pixel exists).
+ */
+export interface OverlapCacheEntry {
+	value: number;
+	exact: boolean;
+}
 
 export interface OverlapDetectionCache {
 	bitmapByLayerAngle: Map<string, PixelData>;
-	overlapByRelativePairAngles: Map<string, number>;
+	overlapByRelativePairAngles: Map<string, OverlapCacheEntry>;
 }
 
 export interface DetectOverlapsOptions {
@@ -29,6 +40,7 @@ export interface DetectPairOverlapOptions extends DetectOverlapsOptions {
 	firstLayer: Layer;
 	secondLayer: Layer;
 	combinedSvg: string;
+	overlapMode?: PairOverlapComputationMode;
 }
 
 export interface DetectCutoutLabelOverlapPixelsInput {
@@ -137,13 +149,19 @@ export async function detectOverlaps(
 
 			let pixelCount: number | undefined;
 			if (options?.cache) {
-				pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
+				const entry = options.cache.overlapByRelativePairAngles.get(relativeKey);
+				if (entry?.exact) {
+					pixelCount = entry.value;
+				}
 			}
 
 			if (pixelCount === undefined) {
 				pixelCount = countOverlapPixels(bitmapA, bitmapB);
 				if (options?.cache) {
-					options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
+					options.cache.overlapByRelativePairAngles.set(relativeKey, {
+						value: pixelCount,
+						exact: true
+					});
 				}
 			}
 
@@ -166,6 +184,7 @@ export async function detectOverlaps(
 export async function detectPairOverlapPixels(options: DetectPairOverlapOptions): Promise<number> {
 	const firstLayer = options.firstLayer;
 	const secondLayer = options.secondLayer;
+	const overlapMode = options.overlapMode ?? 'count';
 
 	const relativeKey = toRelativePairCacheKey(
 		firstLayer.id,
@@ -176,13 +195,18 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 		options.dialDiameterMm
 	);
 
-	let pixelCount: number | undefined;
-	if (options.cache) {
-		pixelCount = options.cache.overlapByRelativePairAngles.get(relativeKey);
-	}
+	const cacheEntry = options.cache?.overlapByRelativePairAngles.get(relativeKey);
 
-	if (pixelCount !== undefined) {
-		return pixelCount;
+	if (cacheEntry !== undefined) {
+		if (cacheEntry.exact) {
+			// Exact count satisfies both modes.
+			return overlapMode === 'any' ? (cacheEntry.value > 0 ? 1 : 0) : cacheEntry.value;
+		}
+		// Lower-bound entry (value = 1, meaning "at least one overlap").
+		if (overlapMode === 'any') {
+			return 1;
+		}
+		// count mode with a lower-bound entry: fall through to lazy exact-count promotion.
 	}
 
 	const layerBitmaps = await renderLayersToBitmaps(
@@ -198,12 +222,26 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 		return 0;
 	}
 
-	pixelCount = countOverlapPixels(firstBitmap, secondBitmap);
-	if (options.cache) {
-		options.cache.overlapByRelativePairAngles.set(relativeKey, pixelCount);
+	if (overlapMode === 'any') {
+		// Cache miss: run fast boolean check.
+		// Store exact 0 when no overlap (saves a future count-mode compute too).
+		// Store lower-bound 1 when overlap exists, leaving exact count for later.
+		const hasOverlap = bitmapsOverlap(firstBitmap, secondBitmap);
+		if (options.cache) {
+			options.cache.overlapByRelativePairAngles.set(relativeKey, {
+				value: hasOverlap ? 1 : 0,
+				exact: !hasOverlap
+			});
+		}
+		return hasOverlap ? 1 : 0;
 	}
 
-	return pixelCount;
+	// count mode: compute exact, overwriting any existing lower-bound entry.
+	const exactCount = countOverlapPixels(firstBitmap, secondBitmap);
+	if (options.cache) {
+		options.cache.overlapByRelativePairAngles.set(relativeKey, { value: exactCount, exact: true });
+	}
+	return exactCount;
 }
 
 export async function detectCutoutLabelOverlapPixels(
