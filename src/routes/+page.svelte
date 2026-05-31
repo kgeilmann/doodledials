@@ -7,7 +7,9 @@
 	import RasterPreviewModal from '$lib/components/RasterPreviewModal.svelte';
 	import {
 		BruteforceOptimizerCancelledError,
-		runBruteforceOptimizer
+		runBruteforceOptimizer,
+		type BruteforceOptimizerStopReason,
+		type BruteforceResumeContext
 	} from '$lib/optimizer/run-bruteforce-optimizer';
 	import type { OptimizerTuning } from '$lib/optimizer/run-optimizer';
 	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
@@ -37,6 +39,19 @@
 	let optimizerElapsedMs = $state(0);
 	let optimizerMaxRuntimeMs = $state<number | null>(null);
 
+	interface BruteforceRunSummary {
+		stopReason: BruteforceOptimizerStopReason;
+		feasibleSolutionsFound: number;
+		combinationsSearched: number;
+		totalCombinations: number;
+		elapsedMs: number;
+		layoutApplied: boolean;
+	}
+	let bruteforceResultDialogOpen = $state(false);
+	let bruteforceRunSummary = $state<BruteforceRunSummary | null>(null);
+	let bruteforceExtendRuntimeSInput = $state('60');
+	let bruteforceResumeContext = $state<BruteforceResumeContext | null>(null);
+
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
 		overlapMagnitudePower: 1.2,
@@ -62,6 +77,16 @@
 		optimizerMaxRuntimeSInput = '120';
 	}
 
+	function handleAcceptBruteforceResult() {
+		bruteforceResultDialogOpen = false;
+	}
+
+	async function handleContinueBruteforce() {
+		bruteforceResultDialogOpen = false;
+		optimizerMaxRuntimeSInput = bruteforceExtendRuntimeSInput;
+		await handleRunOptimizer('bruteforce', bruteforceResumeContext);
+	}
+
 	function handleCancelOptimizer() {
 		optimizerAbortController?.abort();
 	}
@@ -82,6 +107,7 @@
 
 	async function handleConfirmOptimizerDialogRun() {
 		optimizerRunDialogOpen = false;
+		bruteforceResumeContext = null;
 		await handleRunOptimizer(optimizerMode);
 	}
 
@@ -145,7 +171,10 @@
 		return `${(durationMs / 1000).toFixed(1)}s`;
 	}
 
-	async function handleRunOptimizer(mode: OptimizerMode = optimizerMode) {
+	async function handleRunOptimizer(
+		mode: OptimizerMode = optimizerMode,
+		resumeContext: BruteforceResumeContext | null = null
+	) {
 		if (!doodledialStore.svgContent || optimizerPending) {
 			return;
 		}
@@ -169,6 +198,8 @@
 		let optimizerCancelled = false;
 		let optimizerTimeLimited = false;
 		let optimizerNoFeasible = false;
+		let bruteforceRunStopReason: BruteforceOptimizerStopReason | null = null;
+		let bruteforceRunFeasibleCount = 0;
 
 		try {
 			const parsedGapMm = Number(optimizerGapMmInput);
@@ -213,9 +244,13 @@
 				const bruteForceResult = await runBruteforceOptimizer(optimizerInput, progressHandler, {
 					signal: optimizerAbortController.signal,
 					roundOutputAngles: optimizerRoundOutputAngles,
-					maxRuntimeMs
+					maxRuntimeMs,
+					resumeContext: resumeContext ?? undefined
 				});
 
+				bruteforceRunStopReason = bruteForceResult.stopReason;
+				bruteforceRunFeasibleCount = bruteForceResult.feasibleSolutionsFound;
+				bruteforceResumeContext = bruteForceResult.resumeContext;
 				optimizerTimeLimited = bruteForceResult.stopReason === 'time_limit';
 				optimizerNoFeasible = bruteForceResult.stopReason === 'no_feasible_solution';
 				if (bruteForceResult.feasibleSolutionsFound > 0) {
@@ -286,6 +321,18 @@
 			optimizerPending = false;
 			optimizerAbortController = null;
 			scheduleOverlayHide();
+			if (mode === 'bruteforce' && !optimizerCancelled && bruteforceRunStopReason !== null) {
+				bruteforceRunSummary = {
+					stopReason: bruteforceRunStopReason,
+					feasibleSolutionsFound: bruteforceRunFeasibleCount,
+					combinationsSearched: optimizerIteration,
+					totalCombinations: optimizerTotalIterations,
+					elapsedMs: optimizerElapsedMs,
+					layoutApplied: optimizerApplied
+				};
+				bruteforceExtendRuntimeSInput = optimizerMaxRuntimeSInput;
+				bruteforceResultDialogOpen = true;
+			}
 		}
 	}
 </script>
@@ -715,6 +762,97 @@
 							Start Optimization
 						</button>
 					</div>
+				</div>
+			</section>
+		</div>
+	{/if}
+
+	{#if bruteforceResultDialogOpen && bruteforceRunSummary}
+		<div
+			class="fixed inset-0 z-30 flex items-center justify-center p-4"
+			data-testid="bruteforce-result-dialog"
+		>
+			<button
+				type="button"
+				onclick={handleAcceptBruteforceResult}
+				class="absolute inset-0 bg-slate-900/40"
+				aria-label="Close result dialog"
+			></button>
+			<section
+				class="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl p-6"
+			>
+				<h2 class="text-lg font-semibold text-gray-900 mb-4">
+					{#if bruteforceRunSummary.stopReason === 'time_limit'}
+						Time Limit Reached
+					{:else if bruteforceRunSummary.stopReason === 'exact_complete'}
+						Search Complete
+					{:else}
+						No Feasible Layout Found
+					{/if}
+				</h2>
+
+				<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-5">
+					<dt class="text-gray-500">Combinations searched</dt>
+					<dd class="text-gray-900 font-medium text-right">
+						{bruteforceRunSummary.combinationsSearched.toLocaleString()} /
+						{bruteforceRunSummary.totalCombinations >= Number.MAX_SAFE_INTEGER
+							? '∞'
+							: bruteforceRunSummary.totalCombinations.toLocaleString()}
+					</dd>
+					<dt class="text-gray-500">Elapsed</dt>
+					<dd class="text-gray-900 font-medium text-right">
+						{formatDurationMs(bruteforceRunSummary.elapsedMs)}
+					</dd>
+					<dt class="text-gray-500">Feasible layouts found</dt>
+					<dd class="text-gray-900 font-medium text-right">
+						{bruteforceRunSummary.feasibleSolutionsFound}
+					</dd>
+					<dt class="text-gray-500">Result</dt>
+					<dd
+						class="text-right font-medium {bruteforceRunSummary.layoutApplied
+							? 'text-emerald-600'
+							: 'text-gray-400'}"
+					>
+						{bruteforceRunSummary.layoutApplied ? 'Best layout applied' : 'No layout applied'}
+					</dd>
+				</dl>
+
+				{#if bruteforceRunSummary.stopReason === 'time_limit'}
+					<div class="border-t border-gray-100 pt-4 mb-5">
+						<p class="text-sm text-gray-600 mb-3">Continue searching for more time:</p>
+						<label class="flex items-center gap-2 text-sm">
+							<span class="text-gray-600 shrink-0">Continue for</span>
+							<input
+								type="number"
+								min="1"
+								step="1"
+								bind:value={bruteforceExtendRuntimeSInput}
+								class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+							/>
+							<span class="text-gray-400">s</span>
+						</label>
+					</div>
+				{/if}
+
+				<div class="flex items-center justify-end gap-2">
+					<button
+						type="button"
+						onclick={handleAcceptBruteforceResult}
+						class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+						data-testid="bruteforce-result-accept-button"
+					>
+						Accept
+					</button>
+					{#if bruteforceRunSummary.stopReason === 'time_limit'}
+						<button
+							type="button"
+							onclick={handleContinueBruteforce}
+							class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
+							data-testid="bruteforce-result-continue-button"
+						>
+							Continue
+						</button>
+					{/if}
 				</div>
 			</section>
 		</div>

@@ -34,3 +34,5 @@ samples/witch-flight.svg
 
 *Zone.Identifier
 .worktrees/
+
+.idea/
