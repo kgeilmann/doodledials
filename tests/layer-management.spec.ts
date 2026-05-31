@@ -55,10 +55,14 @@ test.describe('Layer Management', () => {
 		const visibilityButtons = page.locator('.max-h-48 ul button svg path[d*="M15 12"]');
 		await visibilityButtons.first().click();
 
-		const exportButton = page.locator('button:has-text("Export SVG")');
+		const exportButton = page.locator('button:has-text("Export")');
 		await expect(exportButton).toBeEnabled();
+		await exportButton.click();
 
-		const [download] = await Promise.all([page.waitForEvent('download'), exportButton.click()]);
+		const laserSvgMenuItem = page.locator('button:has-text("Laser SVG")');
+		await expect(laserSvgMenuItem).toBeVisible();
+
+		const [download] = await Promise.all([page.waitForEvent('download'), laserSvgMenuItem.click()]);
 
 		const filename = download.suggestedFilename();
 		expect(filename).toContain('doodledial');
