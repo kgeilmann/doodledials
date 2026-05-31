@@ -50,8 +50,6 @@ export class BruteforceOptimizerCancelledError extends Error {
 	}
 }
 
-const MIN_OVERLAP_PIXELS = 2;
-
 function normalizeAngle(angle: number): number {
 	return ((angle % 360) + 360) % 360;
 }
@@ -440,7 +438,7 @@ export async function runBruteforceOptimizer(
 			pairCacheMode: 'relative'
 		});
 
-		const feasible = overlapPixels < MIN_OVERLAP_PIXELS;
+		const feasible = overlapPixels == 0;
 		pairFeasibilityMemo.set(memoKey, feasible);
 		return feasible;
 	};
