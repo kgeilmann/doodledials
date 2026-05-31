@@ -29,6 +29,7 @@
 	let optimizerRunDialogOpen = $state(false);
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
+	let optimizerGapMmInput = $state('2');
 	let optimizerRandomSeedInput = $state('42');
 	let optimizerMaxRuntimeSInput = $state('120');
 	let optimizerMode = $state<OptimizerMode>('force-directed');
@@ -56,6 +57,7 @@
 		optimizerTuning = { ...optimizerTuningDefaults };
 		optimizerInitializeRandomly = false;
 		optimizerRoundOutputAngles = true;
+		optimizerGapMmInput = '2';
 		optimizerRandomSeedInput = '42';
 		optimizerMaxRuntimeSInput = '120';
 	}
@@ -70,6 +72,7 @@
 		}
 
 		optimizerMode = mode;
+		optimizerGapMmInput = String(doodledialStore.config.optimizerGapMm ?? 2);
 		optimizerRunDialogOpen = true;
 	}
 
@@ -168,6 +171,14 @@
 		let optimizerNoFeasible = false;
 
 		try {
+			const parsedGapMm = Number(optimizerGapMmInput);
+			const gapMm =
+				Number.isFinite(parsedGapMm) && parsedGapMm > 0
+					? parsedGapMm
+					: (doodledialStore.config.optimizerGapMm ?? 2);
+			doodledialStore.setOptimizerGapMm(gapMm);
+			optimizerGapMmInput = String(gapMm);
+
 			const optimizerInput = {
 				diameter: doodledialStore.config.diameter,
 				config: doodledialStore.config,
@@ -553,6 +564,16 @@
 							<span>Initialize Randomly</span>
 						</label>
 						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Gap (mm)</span>
+							<input
+								type="number"
+								min="0.1"
+								step="0.1"
+								bind:value={optimizerGapMmInput}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
+						<label class="col-span-2">
 							<span class="block text-gray-600 mb-1">Random Seed</span>
 							<input
 								type="text"
@@ -562,6 +583,16 @@
 						</label>
 					{/if}
 					{#if optimizerMode === 'bruteforce'}
+						<label class="col-span-2">
+							<span class="block text-gray-600 mb-1">Gap (mm)</span>
+							<input
+								type="number"
+								min="0.1"
+								step="0.1"
+								bind:value={optimizerGapMmInput}
+								class="w-full rounded-lg border border-gray-300 px-2 py-1"
+							/>
+						</label>
 						<label class="col-span-2">
 							<span class="block text-gray-600 mb-1">Max Runtime (s)</span>
 							<input

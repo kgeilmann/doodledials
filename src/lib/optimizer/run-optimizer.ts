@@ -419,7 +419,9 @@ async function detectLayoutOverlaps(
 
 	return detectOverlaps(layers, combinedSvg, {
 		cache: overlapCache,
-		pairCacheMode: 'relative'
+		pairCacheMode: 'relative',
+		cutoutStrokeWidthMm: input.config.optimizerGapMm ?? 2,
+		dialDiameterMm: input.diameter
 	});
 }
 

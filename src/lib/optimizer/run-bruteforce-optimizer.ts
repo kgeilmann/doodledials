@@ -435,7 +435,9 @@ export async function runBruteforceOptimizer(
 			secondLayer: pairLayers[1],
 			combinedSvg,
 			cache: overlapCache,
-			pairCacheMode: 'relative'
+			pairCacheMode: 'relative',
+			cutoutStrokeWidthMm: input.config.optimizerGapMm ?? 2,
+			dialDiameterMm: input.diameter
 		});
 
 		const feasible = overlapPixels == 0;
