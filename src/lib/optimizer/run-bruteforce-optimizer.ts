@@ -1,6 +1,14 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
-import { combineOptimizerSvgTemplate, createOptimizerSvgTemplate } from '$lib/utils/doodledial';
-import { createOverlapDetectionCache, detectPairOverlapPixels } from '$lib/utils/overlap-detection';
+import {
+	combineOptimizerSvgTemplate,
+	createOptimizerSvgTemplate,
+	type OptimizerSvgTemplate
+} from '$lib/utils/doodledial';
+import {
+	createOverlapDetectionCache,
+	detectPairOverlapPixels,
+	type OverlapDetectionCache
+} from '$lib/utils/overlap-detection';
 
 export interface OptimizerInput {
 	diameter: number;
@@ -19,6 +27,15 @@ export interface OptimizerProgress {
 export interface OptimizerResult {
 	layout: Record<string, number>;
 	stopReason: BruteforceOptimizerStopReason;
+	feasibleSolutionsFound: number;
+	resumeContext: BruteforceResumeContext;
+}
+
+export interface BruteforceResumeContext {
+	overlapCache: OverlapDetectionCache;
+	pairFeasibilityMemo: Map<string, boolean>;
+	optimizerSvgTemplate: OptimizerSvgTemplate;
+	bestLayout: Record<string, number> | null;
 	feasibleSolutionsFound: number;
 }
 
@@ -41,6 +58,7 @@ export interface BruteforceOptimizerOptions {
 	maxRuntimeMs?: number;
 	anchorLayerId?: string;
 	onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
+	resumeContext?: BruteforceResumeContext;
 }
 
 export class BruteforceOptimizerCancelledError extends Error {
@@ -293,7 +311,22 @@ export async function runBruteforceOptimizer(
 	const layerIds = input.layers.map((layer) => layer.id);
 	if (layerIds.length === 0) {
 		emitTerminalProgressAndSnapshot(1, 'exact_complete');
-		return { layout: {}, stopReason: 'exact_complete', feasibleSolutionsFound: 1 };
+		return {
+			layout: {},
+			stopReason: 'exact_complete',
+			feasibleSolutionsFound: 1,
+			resumeContext: {
+				overlapCache: createOverlapDetectionCache(),
+				pairFeasibilityMemo: new Map(),
+				optimizerSvgTemplate: createOptimizerSvgTemplate(
+					input.svgContent,
+					{ ...input.config, diameter: input.diameter },
+					[]
+				),
+				bestLayout: null,
+				feasibleSolutionsFound: 1
+			}
+		};
 	}
 
 	if (layerIds.length > 360) {
@@ -304,7 +337,18 @@ export async function runBruteforceOptimizer(
 		return {
 			layout: fallback,
 			stopReason: 'no_feasible_solution',
-			feasibleSolutionsFound: 0
+			feasibleSolutionsFound: 0,
+			resumeContext: {
+				overlapCache: createOverlapDetectionCache(),
+				pairFeasibilityMemo: new Map(),
+				optimizerSvgTemplate: createOptimizerSvgTemplate(
+					input.svgContent,
+					{ ...input.config, diameter: input.diameter },
+					layerIds
+				),
+				bestLayout: null,
+				feasibleSolutionsFound: 0
+			}
 		};
 	}
 
@@ -318,19 +362,22 @@ export async function runBruteforceOptimizer(
 	const remainingLayerIds = layerIds.filter((layerId) => layerId !== anchorLayerId).sort();
 	const totalIterations = computeTotalIterations(remainingLayerIds.length);
 
-	const overlapCache = createOverlapDetectionCache();
-	const optimizerSvgTemplate = createOptimizerSvgTemplate(
-		input.svgContent,
-		{
-			...input.config,
-			diameter: input.diameter
-		},
-		input.layers.map((layer) => layer.id)
-	);
+	const overlapCache = options?.resumeContext?.overlapCache ?? createOverlapDetectionCache();
+	const optimizerSvgTemplate =
+		options?.resumeContext?.optimizerSvgTemplate ??
+		createOptimizerSvgTemplate(
+			input.svgContent,
+			{
+				...input.config,
+				diameter: input.diameter
+			},
+			input.layers.map((layer) => layer.id)
+		);
 	const optimizerRotationsByLayerId = Object.fromEntries(
 		input.layers.map((layer) => [layer.id, 0])
 	) as Record<string, number>;
-	const pairFeasibilityMemo = new Map<string, boolean>();
+	const pairFeasibilityMemo =
+		options?.resumeContext?.pairFeasibilityMemo ?? new Map<string, boolean>();
 	const layerById = new Map(input.layers.map((layer) => [layer.id, layer]));
 	const assigned = new Map<string, number>();
 	const usedAngles = new Array<boolean>(360).fill(false);
@@ -340,8 +387,8 @@ export async function runBruteforceOptimizer(
 	usedAngles[0] = true;
 
 	let nodesVisited = 0;
-	let feasibleSolutionsFound = 0;
-	let bestLayout: Record<string, number> | null = null;
+	let feasibleSolutionsFound = options?.resumeContext?.feasibleSolutionsFound ?? 0;
+	let bestLayout: Record<string, number> | null = options?.resumeContext?.bestLayout ?? null;
 	let stopReason: BruteforceOptimizerStopReason | undefined;
 
 	const isTimedOut = (): boolean => {
@@ -697,6 +744,13 @@ export async function runBruteforceOptimizer(
 	return {
 		layout,
 		stopReason,
-		feasibleSolutionsFound
+		feasibleSolutionsFound,
+		resumeContext: {
+			overlapCache,
+			pairFeasibilityMemo,
+			optimizerSvgTemplate,
+			bestLayout,
+			feasibleSolutionsFound
+		}
 	};
 }
