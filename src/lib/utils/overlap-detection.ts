@@ -21,6 +21,8 @@ export interface OverlapDetectionCache {
 export interface DetectOverlapsOptions {
 	cache?: OverlapDetectionCache;
 	pairCacheMode?: PairOverlapCacheMode;
+	cutoutStrokeWidthMm?: number;
+	dialDiameterMm?: number;
 }
 
 export interface DetectPairOverlapOptions extends DetectOverlapsOptions {
@@ -50,23 +52,48 @@ function normalizeAngle(angle: number): number {
 	return ((angle % 360) + 360) % 360;
 }
 
-function toLayerBitmapCacheKey(layerId: string, angle: number): string {
-	return `${layerId}:${roundAngleForCache(angle)}`;
+function toLayerBitmapCacheKey(
+	layerId: string,
+	angle: number,
+	cutoutStrokeWidthMm?: number,
+	dialDiameterMm?: number
+): string {
+	const base = `${layerId}:${roundAngleForCache(angle)}`;
+	if (
+		typeof cutoutStrokeWidthMm !== 'number' ||
+		typeof dialDiameterMm !== 'number' ||
+		!Number.isFinite(cutoutStrokeWidthMm) ||
+		!Number.isFinite(dialDiameterMm)
+	) {
+		return base;
+	}
+
+	return `${base}:stroke=${cutoutStrokeWidthMm.toFixed(6)}:diameter=${dialDiameterMm.toFixed(6)}`;
 }
 
 function toRelativePairCacheKey(
 	firstLayerId: string,
 	firstAngle: number,
 	secondLayerId: string,
-	secondAngle: number
+	secondAngle: number,
+	cutoutStrokeWidthMm?: number,
+	dialDiameterMm?: number
 ): string {
+	const strokeSuffix =
+		typeof cutoutStrokeWidthMm === 'number' &&
+		typeof dialDiameterMm === 'number' &&
+		Number.isFinite(cutoutStrokeWidthMm) &&
+		Number.isFinite(dialDiameterMm)
+			? `|stroke=${cutoutStrokeWidthMm.toFixed(6)}|diameter=${dialDiameterMm.toFixed(6)}`
+			: '';
+
 	if (firstLayerId <= secondLayerId) {
 		const delta = roundAngleForCache(firstAngle - secondAngle);
-		return `${firstLayerId}|${secondLayerId}|${delta}`;
+		return `${firstLayerId}|${secondLayerId}|${delta}${strokeSuffix}`;
 	}
 
 	const delta = roundAngleForCache(secondAngle - firstAngle);
-	return `${secondLayerId}|${firstLayerId}|${delta}`;
+	return `${secondLayerId}|${firstLayerId}|${delta}${strokeSuffix}`;
 }
 
 export async function detectOverlaps(
@@ -80,7 +107,13 @@ export async function detectOverlaps(
 		return overlaps;
 	}
 
-	const layerBitmaps = await renderLayersToBitmaps(layers, combinedSvg, options?.cache);
+	const layerBitmaps = await renderLayersToBitmaps(
+		layers,
+		combinedSvg,
+		options?.cache,
+		options?.cutoutStrokeWidthMm,
+		options?.dialDiameterMm
+	);
 
 	for (let i = 0; i < layers.length; i++) {
 		for (let j = i + 1; j < layers.length; j++) {
@@ -97,7 +130,9 @@ export async function detectOverlaps(
 				layerA.id,
 				layerA.rotation,
 				layerB.id,
-				layerB.rotation
+				layerB.rotation,
+				options?.cutoutStrokeWidthMm,
+				options?.dialDiameterMm
 			);
 
 			let pixelCount: number | undefined;
@@ -136,7 +171,9 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 		firstLayer.id,
 		firstLayer.rotation,
 		secondLayer.id,
-		secondLayer.rotation
+		secondLayer.rotation,
+		options.cutoutStrokeWidthMm,
+		options.dialDiameterMm
 	);
 
 	let pixelCount: number | undefined;
@@ -151,7 +188,9 @@ export async function detectPairOverlapPixels(options: DetectPairOverlapOptions)
 	const layerBitmaps = await renderLayersToBitmaps(
 		[firstLayer, secondLayer],
 		options.combinedSvg,
-		options.cache
+		options.cache,
+		options.cutoutStrokeWidthMm,
+		options.dialDiameterMm
 	);
 	const firstBitmap = layerBitmaps.get(firstLayer.id);
 	const secondBitmap = layerBitmaps.get(secondLayer.id);
@@ -199,13 +238,20 @@ export async function detectCutoutLabelOverlapPixels(
 async function renderLayersToBitmaps(
 	layers: Layer[],
 	combinedSvg: string,
-	cache?: OverlapDetectionCache
+	cache?: OverlapDetectionCache,
+	cutoutStrokeWidthMm?: number,
+	dialDiameterMm?: number
 ): Promise<Map<string, PixelData>> {
 	const bitmaps = new Map<string, PixelData>();
 	const missingLayers: Layer[] = [];
 
 	for (const layer of layers) {
-		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
+		const cacheKey = toLayerBitmapCacheKey(
+			layer.id,
+			layer.rotation,
+			cutoutStrokeWidthMm,
+			dialDiameterMm
+		);
 		const cachedBitmap = cache?.bitmapByLayerAngle.get(cacheKey);
 		if (cachedBitmap) {
 			bitmaps.set(layer.id, cachedBitmap);
@@ -222,14 +268,25 @@ async function renderLayersToBitmaps(
 	const serializer = new XMLSerializer();
 
 	for (const layer of missingLayers) {
-		const cacheKey = toLayerBitmapCacheKey(layer.id, layer.rotation);
+		const cacheKey = toLayerBitmapCacheKey(
+			layer.id,
+			layer.rotation,
+			cutoutStrokeWidthMm,
+			dialDiameterMm
+		);
 
 		const cutoutOnlySvg = buildCutoutOnlyLayerSvg(parsedSvgRoot, layer.id, serializer);
 		if (!cutoutOnlySvg) {
 			continue;
 		}
 
-		const bitmap = await renderSvgToBitmap(cutoutOnlySvg, RENDER_SIZE, RENDER_SIZE);
+		const strokedCutoutSvg = applyCutoutStrokeForBitmap(
+			cutoutOnlySvg,
+			cutoutStrokeWidthMm,
+			dialDiameterMm,
+			RENDER_SIZE
+		);
+		const bitmap = await renderSvgToBitmap(strokedCutoutSvg, RENDER_SIZE, RENDER_SIZE);
 		bitmaps.set(layer.id, bitmap);
 		cache?.bitmapByLayerAngle.set(cacheKey, bitmap);
 	}
@@ -374,6 +431,35 @@ function buildLabelPolygonMaskSvg(
 
 	isolatedRoot.appendChild(polygon);
 	return serializer.serializeToString(isolatedRoot);
+}
+
+function applyCutoutStrokeForBitmap(
+	svgString: string,
+	cutoutStrokeWidthMm: number | undefined,
+	dialDiameterMm: number | undefined,
+	renderSize: number
+): string {
+	if (
+		typeof cutoutStrokeWidthMm !== 'number' ||
+		typeof dialDiameterMm !== 'number' ||
+		!Number.isFinite(cutoutStrokeWidthMm) ||
+		!Number.isFinite(dialDiameterMm) ||
+		cutoutStrokeWidthMm <= 0 ||
+		dialDiameterMm <= 0
+	) {
+		return svgString;
+	}
+
+	const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+	const strokeWidthPx = (cutoutStrokeWidthMm / dialDiameterMm) * renderSize;
+
+	doc.querySelectorAll('.cutout').forEach((cutout) => {
+		cutout.setAttribute('fill', 'none');
+		cutout.setAttribute('stroke', 'white');
+		cutout.setAttribute('stroke-width', String(strokeWidthPx));
+	});
+
+	return new XMLSerializer().serializeToString(doc.documentElement);
 }
 
 async function renderSvgToBitmap(

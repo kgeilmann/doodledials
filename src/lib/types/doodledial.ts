@@ -25,6 +25,7 @@ export interface DialConfig {
 	offsetX: number;
 	offsetY: number;
 	scale: number;
+	optimizerGapMm?: number;
 }
 
 export interface SVGContent {
@@ -40,5 +41,6 @@ export const DEFAULT_DIAL_CONFIG: DialConfig = {
 	padding: 0.05,
 	offsetX: 0,
 	offsetY: 0,
-	scale: 1
+	scale: 1,
+	optimizerGapMm: 2
 };

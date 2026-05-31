@@ -55,7 +55,13 @@ function createDoodledialStore() {
 		}
 		try {
 			const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
-			const result = await detectCutoutGaps(layerArray, combinedSvg, 2, config.diameter);
+			const optimizerGapMm = config.optimizerGapMm ?? 2;
+			const result = await detectCutoutGaps(
+				layerArray,
+				combinedSvg,
+				optimizerGapMm,
+				config.diameter
+			);
 			cutoutGaps = result;
 		} catch (err) {
 			console.error('Cutout gap detection failed:', err);
@@ -156,6 +162,10 @@ function createDoodledialStore() {
 		setScale(scale: number) {
 			config = { ...config, scale };
 			scheduleLabelAutoPlacement();
+		},
+		setOptimizerGapMm(optimizerGapMm: number) {
+			config = { ...config, optimizerGapMm };
+			runCutoutGapDetection();
 		},
 		setAutoPlacementRunner(runner: AutoPlacementRunner | null) {
 			if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
