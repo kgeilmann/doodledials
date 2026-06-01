@@ -3,14 +3,13 @@ import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
 import { solveOptimalLayout } from '$lib/utils';
+import { globalConfig } from '$lib/stores/global-config.svelte';
 
 type AutoPlacementRunner = () => void | Promise<void>;
 
-const AUTO_PATH_LABEL_PLACEMENT_ENABLED =
-	import.meta.env.VITE_ENABLE_AUTO_PATH_LABEL_PLACEMENT !== 'false';
-
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
+	config.diameter = globalConfig.diameter;
 	let svgContent = $state<SVGContent | null>(null);
 	let combinedSvg = $state<string | null>(null);
 	let isLoading = $state<boolean>(false);
@@ -69,7 +68,7 @@ function createDoodledialStore() {
 	}
 
 	async function executeAutoPlacementNow(): Promise<void> {
-		if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+		if (!globalConfig.pathLabelOptimizerEnabled) {
 			return;
 		}
 
@@ -91,7 +90,7 @@ function createDoodledialStore() {
 	}
 
 	function scheduleLabelAutoPlacement() {
-		if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+		if (!globalConfig.pathLabelOptimizerEnabled) {
 			return;
 		}
 
@@ -143,13 +142,14 @@ function createDoodledialStore() {
 			return cutoutGaps;
 		},
 		get autoPathLabelPlacementEnabled() {
-			return AUTO_PATH_LABEL_PLACEMENT_ENABLED;
+			return globalConfig.pathLabelOptimizerEnabled;
 		},
 		getLayer(id: string): Layer | undefined {
 			return layers.get(id);
 		},
 		setDiameter(diameter: number) {
 			config = { ...config, diameter };
+			globalConfig.diameter = diameter;
 		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
@@ -168,7 +168,7 @@ function createDoodledialStore() {
 			runCutoutGapDetection();
 		},
 		setAutoPlacementRunner(runner: AutoPlacementRunner | null) {
-			if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+			if (!globalConfig.pathLabelOptimizerEnabled) {
 				autoPlacementRunner = null;
 				return;
 			}
@@ -321,7 +321,7 @@ function createDoodledialStore() {
 			}
 		},
 		requestLayerLabelAutoPlacement(id: string) {
-			if (!AUTO_PATH_LABEL_PLACEMENT_ENABLED) {
+			if (!globalConfig.pathLabelOptimizerEnabled) {
 				return Promise.resolve();
 			}
 
@@ -355,6 +355,7 @@ function createDoodledialStore() {
 			autoPlacementStale = false;
 			autoPlacementRunner = null;
 			config = { ...DEFAULT_DIAL_CONFIG };
+			config.diameter = globalConfig.diameter;
 			svgContent = null;
 			combinedSvg = null;
 			isLoading = false;
