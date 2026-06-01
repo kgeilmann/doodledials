@@ -69,30 +69,30 @@
 							>Disc Diameter</label
 						>
 						<div class="flex items-center gap-2">
+							<input
+								id="global-diameter-input"
+								type="number"
+								min={minDiameter}
+								max={maxDiameter}
+								value={globalConfig.diameter}
+								onchange={handleDiameterInputChange}
+								class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							/>
+							<span class="text-sm text-gray-500">mm</span>
+						</div>
+					</div>
 					<input
-						id="global-diameter-input"
-						type="number"
+						type="range"
 						min={minDiameter}
 						max={maxDiameter}
 						value={globalConfig.diameter}
-						onchange={handleDiameterInputChange}
-						class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+						oninput={handleDiameterSliderChange}
+						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
 					/>
-					<span class="text-sm text-gray-500">mm</span>
-				</div>
-			</div>
-			<input
-				type="range"
-				min={minDiameter}
-				max={maxDiameter}
-				value={globalConfig.diameter}
-				oninput={handleDiameterSliderChange}
-				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-			/>
-			<div class="flex justify-between text-xs text-gray-400 mt-1">
-				<span>{minDiameter}mm</span>
-				<span>{maxDiameter}mm</span>
-			</div>
+					<div class="flex justify-between text-xs text-gray-400 mt-1">
+						<span>{minDiameter}mm</span>
+						<span>{maxDiameter}mm</span>
+					</div>
 				</div>
 
 				<div class="border-t border-gray-100 pt-6">

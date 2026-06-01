@@ -35,6 +35,7 @@ class GlobalConfigStore {
 	reset() {
 		this.diameter = DEFAULTS.diameter;
 		this.pathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
+		this.dialogOpen = false;
 	}
 
 	private _load(): void {
