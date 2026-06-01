@@ -46,6 +46,15 @@ export function exportLaserSvg(
 		cutout.css('stroke-width', String(cutStrokeWidth));
 	});
 
+	if (config.centerHoleDiameter > 0) {
+		doc.find('#center-hole').forEach((hole) => {
+			hole.addClass(cutClassName);
+			hole.css('stroke', cutColor);
+			hole.css('fill', 'none');
+			hole.css('stroke-width', String(cutStrokeWidth));
+		});
+	}
+
 	doc.find('.mark-line').forEach((markLine) => {
 		markLine.addClass(engraveClassName);
 		markLine.css('stroke', engraveColor);
