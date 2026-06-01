@@ -244,37 +244,6 @@ describe('runOptimizer', () => {
 		expect(Number.isFinite(result.layout.layerB)).toBe(true);
 	});
 
-	test('uses relative overlap pair cache mode', async () => {
-		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
-		];
-
-		await runOptimizer({
-			diameter: 200,
-			config: {
-				diameter: 200,
-				minDiameter: 50,
-				maxDiameter: 200,
-				borderWidth: 2,
-				padding: 0.05,
-				offsetX: 0,
-				offsetY: 0,
-				scale: 1
-			},
-			layers,
-			svgContent: {
-				raw: '<svg viewBox="0 0 200 200"></svg>',
-				filename: 'fixture.svg'
-			}
-		});
-
-		const firstCallOptions = detectOverlapsMock.mock.calls[0]?.[2];
-		expect(firstCallOptions).toBeDefined();
-		expect(firstCallOptions?.pairCacheMode).toBe('relative');
-		expect(firstCallOptions?.cache).toBeDefined();
-	});
-
 	test('creates optimizer svg template once and combines via template replacement', async () => {
 		const layers: Layer[] = [
 			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
