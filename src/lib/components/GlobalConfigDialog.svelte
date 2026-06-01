@@ -6,11 +6,13 @@
 
 	const DEFAULTS = {
 		diameter: 200,
+		centerHoleDiameter: 2,
 		pathLabelOptimizerEnabled: false,
 		forceDirectedOptimizerEnabled: false
 	};
 
 	let draftDiameter = $state(globalConfig.diameter);
+	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
 
@@ -19,6 +21,13 @@
 		if (!Number.isFinite(value)) return;
 		const clamped = Math.min(Math.max(value, minDiameter), maxDiameter);
 		draftDiameter = clamped;
+	}
+
+	function handleCenterHoleInputChange(e: Event) {
+		const value = parseFloat((e.target as HTMLInputElement).value);
+		if (!Number.isFinite(value)) return;
+		const clamped = Math.min(Math.max(value, 0), 3);
+		draftCenterHoleDiameter = clamped;
 	}
 
 	function handleTogglePathLabel() {
@@ -31,16 +40,19 @@
 
 	function handleReset() {
 		draftDiameter = DEFAULTS.diameter;
+		draftCenterHoleDiameter = DEFAULTS.centerHoleDiameter;
 		draftPathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
 		draftForceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 	}
 
 	function handleOK() {
 		globalConfig.diameter = draftDiameter;
+		globalConfig.centerHoleDiameter = draftCenterHoleDiameter;
 		globalConfig.pathLabelOptimizerEnabled = draftPathLabelOptimizerEnabled;
 		globalConfig.forceDirectedOptimizerEnabled = draftForceDirectedOptimizerEnabled;
 		globalConfig.save();
 		doodledialStore.setDiameter(draftDiameter);
+		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
 		globalConfig.close();
 	}
 
@@ -88,6 +100,28 @@
 							<span class="text-sm text-gray-500">mm</span>
 						</div>
 					</div>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between mb-2">
+						<label for="center-hole-diameter-input" class="text-sm font-medium text-gray-700"
+							>Center Hole Diameter</label
+						>
+						<div class="flex items-center gap-2">
+							<input
+								id="center-hole-diameter-input"
+								type="number"
+								min="0"
+								max="3"
+								step="0.5"
+								value={draftCenterHoleDiameter}
+								onchange={handleCenterHoleInputChange}
+								class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							/>
+							<span class="text-sm text-gray-500">mm</span>
+						</div>
+					</div>
+					<p class="text-xs text-gray-500">for needle axle. Set to 0 for no hole.</p>
 				</div>
 
 				<div class="border-t border-gray-100 pt-6">
