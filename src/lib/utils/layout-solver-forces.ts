@@ -32,7 +32,7 @@ export async function calculateForces(
 		const layerIndex = layers.findIndex((l) => l.id === layerId);
 		if (layerIndex === -1) return;
 
-		overlappingLayers.forEach((overlappingLayerId) => {
+		overlappingLayers.forEach((_count, overlappingLayerId) => {
 			const overlappingLayerIndex = layers.findIndex((l) => l.id === overlappingLayerId);
 			if (overlappingLayerIndex === -1) return;
 

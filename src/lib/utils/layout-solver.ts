@@ -33,12 +33,10 @@ export async function solveOptimalLayout(
 	}));
 
 	// Main solver loop
-	let lastForces: number[] = [];
 	let lastTotalForce = 0;
 	for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
 		// Calculate forces based on current layer positions/rotations
 		const { forces, totalForce } = await calculateForces(solverLayers, svgContent);
-		lastForces = forces;
 		lastTotalForce = totalForce;
 
 		// Update velocities with damping

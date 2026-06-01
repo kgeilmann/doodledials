@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { doodledialStore } from './doodledial.svelte';
+import { globalConfig } from './global-config.svelte';
 
 describe('doodledial store auto-placement trigger scheduler', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		globalConfig.pathLabelOptimizerEnabled = true;
 		doodledialStore.reset();
 		doodledialStore.addLayer('layer-1', 1, 'Layer 1');
 	});

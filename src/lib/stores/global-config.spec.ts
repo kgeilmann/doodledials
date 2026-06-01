@@ -41,7 +41,7 @@ describe('global config store', () => {
 	it('uses defaults when localStorage is empty', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(200);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(true);
+		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 		expect(globalConfig.dialogOpen).toBe(false);
 	});
 
@@ -59,14 +59,14 @@ describe('global config store', () => {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify({ diameter: 180 }));
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(180);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(true);
+		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 	});
 
 	it('falls back to defaults when localStorage has corrupt data', async () => {
 		localStorage.setItem(STORAGE_KEY, 'not-json');
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(200);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(true);
+		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 	});
 
 	it('persists to localStorage on save', async () => {
@@ -91,10 +91,10 @@ describe('global config store', () => {
 	it('reset restores defaults', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.diameter = 150;
-		globalConfig.pathLabelOptimizerEnabled = false;
+		globalConfig.pathLabelOptimizerEnabled = true;
 		globalConfig.reset();
 		expect(globalConfig.diameter).toBe(200);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(true);
+		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 		expect(globalConfig.dialogOpen).toBe(false);
 	});
 });

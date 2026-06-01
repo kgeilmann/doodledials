@@ -83,7 +83,9 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<span class="text-sm font-medium text-gray-700">Path Label Optimizer</span>
-							<p class="text-xs text-gray-500 mt-0.5">Enable auto-placement of path labels (experimental)</p>
+							<p class="text-xs text-gray-500 mt-0.5">
+								Enable auto-placement of path labels (experimental)
+							</p>
 						</div>
 						<button
 							type="button"

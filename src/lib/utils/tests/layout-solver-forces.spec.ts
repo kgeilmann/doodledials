@@ -51,8 +51,8 @@ describe('calculateForces', () => {
 		// Mock overlap detection to return overlaps
 		vi.mocked(detectOverlaps).mockResolvedValue(
 			new Map([
-				['layer1', new Set(['layer2'])],
-				['layer2', new Set(['layer1'])]
+				['layer1', new Map([['layer2', 1]])],
+				['layer2', new Map([['layer1', 1]])]
 			])
 		);
 
@@ -78,7 +78,7 @@ describe('calculateForces', () => {
 			new Map([
 				['layer1', new Set(['layer2'])],
 				['layer2', new Set(['layer1'])]
-			])
+			]) as Map<string, Set<string>>
 		);
 
 		const result = await calculateForces(mockLayers, mockSvgContent);
