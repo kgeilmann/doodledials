@@ -31,30 +31,30 @@ export function exportLaserSvg(
 	});
 
 	const doc = SVG(combinedSvg) as Svg;
-
+	
 	doc.find('#disc').forEach((disc) => {
 		disc.addClass(cutClassName);
-		disc.attr('stroke', cutColor);
-		disc.attr('fill', 'none');
-		disc.attr('stroke-width', String(cutStrokeWidth));
+		disc.css('stroke', cutColor);
+		disc.css('fill', 'none');
+		disc.css('stroke-width', String(cutStrokeWidth));
 	});
 
 	doc.find('.cutout').forEach((cutout) => {
 		cutout.addClass(cutClassName);
-		cutout.attr('stroke', cutColor);
-		cutout.attr('fill', 'none');
-		cutout.attr('stroke-width', String(cutStrokeWidth));
+		cutout.css('stroke', cutColor);
+		cutout.css('fill', 'none');
+		cutout.css('stroke-width', String(cutStrokeWidth));
 	});
 
 	doc.find('.mark-line').forEach((markLine) => {
 		markLine.addClass(engraveClassName);
-		markLine.attr('stroke', engraveColor);
-		markLine.attr('fill', 'none');
+		markLine.css('stroke', engraveColor);
+		markLine.css('fill', 'none');
 	});
 
 	doc.find('text').forEach((text) => {
 		text.addClass(engraveClassName);
-		text.attr('fill', engraveColor);
+		text.css('fill', engraveColor);
 	});
 
 	return doc.svg();
