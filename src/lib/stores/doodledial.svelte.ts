@@ -150,6 +150,9 @@ function createDoodledialStore() {
 			config = { ...config, diameter };
 			globalConfig.diameter = diameter;
 		},
+		setCenterHoleDiameter(centerHoleDiameter: number) {
+			config = { ...config, centerHoleDiameter };
+		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
 			scheduleLabelAutoPlacement();
