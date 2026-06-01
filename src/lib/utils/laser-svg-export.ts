@@ -31,7 +31,7 @@ export function exportLaserSvg(
 	});
 
 	const doc = SVG(combinedSvg) as Svg;
-	
+
 	doc.find('#disc').forEach((disc) => {
 		disc.addClass(cutClassName);
 		disc.css('stroke', cutColor);

@@ -482,7 +482,6 @@ export async function runBruteforceOptimizer(
 			secondLayer: pairLayers[1],
 			combinedSvg,
 			cache: overlapCache,
-			pairCacheMode: 'relative',
 			overlapMode: 'any',
 			cutoutStrokeWidthMm: input.config.optimizerGapMm ?? 2,
 			dialDiameterMm: input.diameter

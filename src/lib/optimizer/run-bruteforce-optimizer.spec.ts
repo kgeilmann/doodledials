@@ -179,15 +179,6 @@ describe('runBruteforceOptimizer', () => {
 		expect(new Set(layoutAngles).size).toBe(layoutAngles.length);
 	});
 
-	test('uses relative overlap pair cache mode', async () => {
-		await runBruteforceOptimizer(buildInput(twoLayers()));
-
-		const firstCallOptions = detectPairOverlapPixelsMock.mock.calls[0]?.[0];
-		expect(firstCallOptions).toBeDefined();
-		expect(firstCallOptions?.pairCacheMode).toBe('relative');
-		expect(firstCallOptions?.cache).toBeDefined();
-	});
-
 	test('creates optimizer svg template once and combines via template replacement', async () => {
 		await runBruteforceOptimizer(buildInput(twoLayers()));
 

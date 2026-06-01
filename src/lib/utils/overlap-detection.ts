@@ -11,7 +11,6 @@ interface PixelData {
 	height: number;
 }
 
-export type PairOverlapCacheMode = 'relative';
 export type PairOverlapComputationMode = 'count' | 'any';
 
 /**
@@ -31,7 +30,6 @@ export interface OverlapDetectionCache {
 
 export interface DetectOverlapsOptions {
 	cache?: OverlapDetectionCache;
-	pairCacheMode?: PairOverlapCacheMode;
 	cutoutStrokeWidthMm?: number;
 	dialDiameterMm?: number;
 }
