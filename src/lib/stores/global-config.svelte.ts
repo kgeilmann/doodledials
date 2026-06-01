@@ -2,18 +2,21 @@ const STORAGE_KEY = 'doodledial:config';
 
 interface PersistedConfig {
 	diameter: number;
+	centerHoleDiameter: number;
 	pathLabelOptimizerEnabled: boolean;
 	forceDirectedOptimizerEnabled: boolean;
 }
 
 const DEFAULTS: PersistedConfig = {
 	diameter: 200,
+	centerHoleDiameter: 2,
 	pathLabelOptimizerEnabled: false,
 	forceDirectedOptimizerEnabled: false
 };
 
 class GlobalConfigStore {
 	diameter = $state(DEFAULTS.diameter);
+	centerHoleDiameter = $state(DEFAULTS.centerHoleDiameter);
 	pathLabelOptimizerEnabled = $state(DEFAULTS.pathLabelOptimizerEnabled);
 	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
 	dialogOpen = $state(false);
@@ -36,6 +39,7 @@ class GlobalConfigStore {
 
 	reset() {
 		this.diameter = DEFAULTS.diameter;
+		this.centerHoleDiameter = DEFAULTS.centerHoleDiameter;
 		this.pathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
 		this.forceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 		this.dialogOpen = false;
@@ -48,6 +52,8 @@ class GlobalConfigStore {
 			if (raw) {
 				const parsed = JSON.parse(raw) as Partial<PersistedConfig>;
 				this.diameter = parsed.diameter ?? DEFAULTS.diameter;
+				this.centerHoleDiameter =
+					parsed.centerHoleDiameter ?? DEFAULTS.centerHoleDiameter;
 				this.pathLabelOptimizerEnabled =
 					parsed.pathLabelOptimizerEnabled ?? DEFAULTS.pathLabelOptimizerEnabled;
 				this.forceDirectedOptimizerEnabled =
@@ -64,6 +70,7 @@ class GlobalConfigStore {
 			STORAGE_KEY,
 			JSON.stringify({
 				diameter: this.diameter,
+				centerHoleDiameter: this.centerHoleDiameter,
 				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled,
 				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled
 			})
