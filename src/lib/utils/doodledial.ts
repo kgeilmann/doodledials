@@ -73,6 +73,18 @@ export function parseSvgPaths(svgContent: string): {
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('disc');
 
+	doc
+		.circle(2 * MM_TO_PX)
+		.center(maxImageDimension / 2, maxImageDimension / 2)
+		.id('center-hole');
+
+	style.rule('#center-hole', {
+		fill: 'none',
+		stroke: 'black',
+		'stroke-width': '1',
+		'stroke-dasharray': '2 2'
+	});
+
 	const layers: { id: string; name: string; index: number }[] = [];
 
 	const paths = doc.find('path');
@@ -344,6 +356,17 @@ export function combineDoodledial(
 		const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 		doc.width(pixelDiameter);
 		doc.height(pixelDiameter);
+	}
+
+	const centerHole = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
+	if (centerHole) {
+		if (config.centerHoleDiameter > 0) {
+			const holeRadiusPx = (config.centerHoleDiameter * MM_TO_PX) / 2;
+			centerHole.radius(holeRadiusPx);
+			centerHole.show();
+		} else {
+			centerHole.hide();
+		}
 	}
 
 	return doc.svg();
