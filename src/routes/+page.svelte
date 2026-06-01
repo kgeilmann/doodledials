@@ -444,7 +444,10 @@
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
-				onclick={() => handleOpenOptimizerDialog('force-directed')}
+				onclick={() =>
+					handleOpenOptimizerDialog(
+						globalConfig.forceDirectedOptimizerEnabled ? 'force-directed' : 'bruteforce'
+					)}
 				disabled={!doodledialStore.svgContent || optimizerPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>
@@ -459,27 +462,6 @@
 					<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
 				</svg>
 				<span>{optimizerPending ? 'Running Optimizer...' : 'Run Optimizer'}</span>
-			</button>
-			<button
-				onclick={() => handleOpenOptimizerDialog('bruteforce')}
-				disabled={!doodledialStore.svgContent || optimizerPending}
-				class="px-5 py-2.5 bg-emerald-600 text-white border border-emerald-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-emerald-300 disabled:border-emerald-300 disabled:cursor-not-allowed enabled:hover:bg-emerald-700 enabled:hover:border-emerald-700 enabled:active:scale-95"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M9 17v-2a4 4 0 014-4h2m0 0l-3-3m3 3l-3 3m5 5H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"
-					/>
-				</svg>
-				<span>Run Brute Force Optimizer</span>
 			</button>
 
 			<button

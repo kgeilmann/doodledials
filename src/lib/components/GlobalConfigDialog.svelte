@@ -4,10 +4,15 @@
 
 	const { minDiameter, maxDiameter } = doodledialStore.config;
 
-	const DEFAULTS = { diameter: 200, pathLabelOptimizerEnabled: false };
+	const DEFAULTS = {
+		diameter: 200,
+		pathLabelOptimizerEnabled: false,
+		forceDirectedOptimizerEnabled: false
+	};
 
 	let draftDiameter = $state(globalConfig.diameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
+	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
 
 	function handleDiameterInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
@@ -16,18 +21,24 @@
 		draftDiameter = clamped;
 	}
 
-	function handleToggle() {
+	function handleTogglePathLabel() {
 		draftPathLabelOptimizerEnabled = !draftPathLabelOptimizerEnabled;
+	}
+
+	function handleToggleForceDirected() {
+		draftForceDirectedOptimizerEnabled = !draftForceDirectedOptimizerEnabled;
 	}
 
 	function handleReset() {
 		draftDiameter = DEFAULTS.diameter;
 		draftPathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
+		draftForceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 	}
 
 	function handleOK() {
 		globalConfig.diameter = draftDiameter;
 		globalConfig.pathLabelOptimizerEnabled = draftPathLabelOptimizerEnabled;
+		globalConfig.forceDirectedOptimizerEnabled = draftForceDirectedOptimizerEnabled;
 		globalConfig.save();
 		doodledialStore.setDiameter(draftDiameter);
 		globalConfig.close();
@@ -82,9 +93,9 @@
 				<div class="border-t border-gray-100 pt-6">
 					<div class="flex items-center justify-between">
 						<div>
-							<span class="text-sm font-medium text-gray-700">Path Label Optimizer</span>
+							<span class="text-sm font-medium text-gray-700">Path Label Optimizer (Experimental)</span>
 							<p class="text-xs text-gray-500 mt-0.5">
-								Enable auto-placement of path labels (experimental)
+								Enable auto-placement of path labels
 							</p>
 						</div>
 						<button
@@ -92,7 +103,7 @@
 							role="switch"
 							aria-checked={draftPathLabelOptimizerEnabled}
 							aria-label="Toggle path label optimizer"
-							onclick={handleToggle}
+							onclick={handleTogglePathLabel}
 							class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftPathLabelOptimizerEnabled
 								? 'bg-indigo-600'
 								: 'bg-gray-200'}"
@@ -100,6 +111,35 @@
 							<span
 								aria-hidden="true"
 								class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftPathLabelOptimizerEnabled
+									? 'translate-x-5'
+									: 'translate-x-0'}"
+							></span>
+						</button>
+					</div>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between">
+						<div>
+							<span class="text-sm font-medium text-gray-700">Force Directed Optimizer (Experimental)</span>
+							<p class="text-xs text-gray-500 mt-0.5">
+								Use physics-based force directed optimization instead of brute force search
+							</p>
+						</div>
+						<button
+							type="button"
+							role="switch"
+							aria-checked={draftForceDirectedOptimizerEnabled}
+							aria-label="Toggle force directed optimizer"
+							data-testid="toggle-force-directed-optimizer"
+							onclick={handleToggleForceDirected}
+							class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftForceDirectedOptimizerEnabled
+								? 'bg-indigo-600'
+								: 'bg-gray-200'}"
+						>
+							<span
+								aria-hidden="true"
+								class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftForceDirectedOptimizerEnabled
 									? 'translate-x-5'
 									: 'translate-x-0'}"
 							></span>

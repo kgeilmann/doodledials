@@ -3,16 +3,19 @@ const STORAGE_KEY = 'doodledial:config';
 interface PersistedConfig {
 	diameter: number;
 	pathLabelOptimizerEnabled: boolean;
+	forceDirectedOptimizerEnabled: boolean;
 }
 
 const DEFAULTS: PersistedConfig = {
 	diameter: 200,
-	pathLabelOptimizerEnabled: false
+	pathLabelOptimizerEnabled: false,
+	forceDirectedOptimizerEnabled: false
 };
 
 class GlobalConfigStore {
 	diameter = $state(DEFAULTS.diameter);
 	pathLabelOptimizerEnabled = $state(DEFAULTS.pathLabelOptimizerEnabled);
+	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
 	dialogOpen = $state(false);
 
 	constructor() {
@@ -34,6 +37,7 @@ class GlobalConfigStore {
 	reset() {
 		this.diameter = DEFAULTS.diameter;
 		this.pathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
+		this.forceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 		this.dialogOpen = false;
 	}
 
@@ -46,6 +50,8 @@ class GlobalConfigStore {
 				this.diameter = parsed.diameter ?? DEFAULTS.diameter;
 				this.pathLabelOptimizerEnabled =
 					parsed.pathLabelOptimizerEnabled ?? DEFAULTS.pathLabelOptimizerEnabled;
+				this.forceDirectedOptimizerEnabled =
+					parsed.forceDirectedOptimizerEnabled ?? DEFAULTS.forceDirectedOptimizerEnabled;
 			}
 		} catch {
 			// ignore corrupt data, use defaults
@@ -58,7 +64,8 @@ class GlobalConfigStore {
 			STORAGE_KEY,
 			JSON.stringify({
 				diameter: this.diameter,
-				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled
+				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled,
+				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled
 			})
 		);
 	}
