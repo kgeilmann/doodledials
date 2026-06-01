@@ -338,7 +338,7 @@
 </script>
 
 <svelte:head>
-	<title>Doodledial Generator</title>
+	<title>Doodle Dial Generator</title>
 </svelte:head>
 
 <main class="h-screen bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden flex">

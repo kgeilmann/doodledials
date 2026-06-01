@@ -52,8 +52,7 @@ class GlobalConfigStore {
 			if (raw) {
 				const parsed = JSON.parse(raw) as Partial<PersistedConfig>;
 				this.diameter = parsed.diameter ?? DEFAULTS.diameter;
-				this.centerHoleDiameter =
-					parsed.centerHoleDiameter ?? DEFAULTS.centerHoleDiameter;
+				this.centerHoleDiameter = parsed.centerHoleDiameter ?? DEFAULTS.centerHoleDiameter;
 				this.pathLabelOptimizerEnabled =
 					parsed.pathLabelOptimizerEnabled ?? DEFAULTS.pathLabelOptimizerEnabled;
 				this.forceDirectedOptimizerEnabled =

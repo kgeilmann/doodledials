@@ -82,7 +82,7 @@ export function parseSvgPaths(svgContent: string): {
 		fill: 'none',
 		stroke: 'black',
 		'stroke-width': '1',
-		'stroke-dasharray': '2 2'
+		'stroke-dasharray': '1 1'
 	});
 
 	const layers: { id: string; name: string; index: number }[] = [];

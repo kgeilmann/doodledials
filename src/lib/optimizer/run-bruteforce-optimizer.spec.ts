@@ -63,7 +63,7 @@ function buildInput(layers: Layer[]) {
 			offsetX: 0,
 			offsetY: 0,
 			scale: 1,
-			centerHoleDiameter: 2,
+			centerHoleDiameter: 2
 		},
 		layers,
 		svgContent: {

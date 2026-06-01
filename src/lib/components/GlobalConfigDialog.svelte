@@ -127,10 +127,10 @@
 				<div class="border-t border-gray-100 pt-6">
 					<div class="flex items-center justify-between">
 						<div>
-							<span class="text-sm font-medium text-gray-700">Path Label Optimizer (Experimental)</span>
-							<p class="text-xs text-gray-500 mt-0.5">
-								Enable auto-placement of path labels
-							</p>
+							<span class="text-sm font-medium text-gray-700"
+								>Path Label Optimizer (Experimental)</span
+							>
+							<p class="text-xs text-gray-500 mt-0.5">Enable auto-placement of path labels</p>
 						</div>
 						<button
 							type="button"
@@ -155,7 +155,9 @@
 				<div class="border-t border-gray-100 pt-6">
 					<div class="flex items-center justify-between">
 						<div>
-							<span class="text-sm font-medium text-gray-700">Force Directed Optimizer (Experimental)</span>
+							<span class="text-sm font-medium text-gray-700"
+								>Force Directed Optimizer (Experimental)</span
+							>
 							<p class="text-xs text-gray-500 mt-0.5">
 								Use physics-based force directed optimization instead of brute force search
 							</p>

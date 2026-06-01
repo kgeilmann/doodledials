@@ -221,8 +221,24 @@ export function exportStl(
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
 	const discRadiusMm = config.diameter / 2;
+	const centerHoleRadiusMm = config.centerHoleDiameter / 2;
 
 	const holePolygons: THREE.Vector2[][] = [];
+
+	if (centerHoleRadiusMm > 0) {
+		const centerHolePoints: THREE.Vector2[] = [];
+		const segments = 32;
+		for (let i = 0; i <= segments; i++) {
+			const angle = (i / segments) * Math.PI * 2;
+			centerHolePoints.push(
+				new THREE.Vector2(
+					centerHoleRadiusMm * Math.cos(angle),
+					centerHoleRadiusMm * Math.sin(angle)
+				)
+			);
+		}
+		holePolygons.push(centerHolePoints);
+	}
 	const topMeshes: THREE.Mesh[] = [];
 
 	const activeLayers = layers ?? [];
