@@ -25,6 +25,7 @@ export interface DialConfig {
 	offsetX: number;
 	offsetY: number;
 	scale: number;
+	centerHoleDiameter: number;
 	optimizerGapMm?: number;
 }
 
@@ -42,5 +43,6 @@ export const DEFAULT_DIAL_CONFIG: DialConfig = {
 	offsetX: 0,
 	offsetY: 0,
 	scale: 1,
+	centerHoleDiameter: 2,
 	optimizerGapMm: 2
 };

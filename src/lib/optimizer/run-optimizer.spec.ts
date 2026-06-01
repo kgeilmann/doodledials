@@ -223,7 +223,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -260,7 +261,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -298,7 +300,8 @@ describe('runOptimizer', () => {
 					padding: 0.05,
 					offsetX: 0,
 					offsetY: 0,
-					scale: 1
+					scale: 1,
+					centerHoleDiameter: 2,
 				},
 				layers,
 				svgContent: {
@@ -347,7 +350,8 @@ describe('runOptimizer', () => {
 						padding: 0.05,
 						offsetX: 0,
 						offsetY: 0,
-						scale: 1
+						scale: 1,
+						centerHoleDiameter: 2,
 					},
 					layers,
 					svgContent: {
@@ -380,7 +384,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -434,7 +439,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -469,7 +475,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -519,7 +526,8 @@ describe('runOptimizer', () => {
 				padding: 0.05,
 				offsetX: 0,
 				offsetY: 0,
-				scale: 1
+				scale: 1,
+				centerHoleDiameter: 2,
 			},
 			layers,
 			svgContent: {
@@ -567,7 +575,8 @@ describe('runOptimizer', () => {
 					padding: 0.05,
 					offsetX: 0,
 					offsetY: 0,
-					scale: 1
+					scale: 1,
+					centerHoleDiameter: 2,
 				},
 				layers,
 				svgContent: {
@@ -624,7 +633,8 @@ describe('runOptimizer', () => {
 					padding: 0.05,
 					offsetX: 0,
 					offsetY: 0,
-					scale: 1
+					scale: 1,
+					centerHoleDiameter: 2,
 				},
 				layers,
 				svgContent: {
