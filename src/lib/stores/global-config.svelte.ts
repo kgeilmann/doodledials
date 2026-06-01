@@ -7,7 +7,7 @@ interface PersistedConfig {
 
 const DEFAULTS: PersistedConfig = {
 	diameter: 200,
-	pathLabelOptimizerEnabled: true
+	pathLabelOptimizerEnabled: false
 };
 
 class GlobalConfigStore {
@@ -17,11 +17,10 @@ class GlobalConfigStore {
 
 	constructor() {
 		this._load();
-		$effect.root(() => {
-			$effect(() => {
-				this._save();
-			});
-		});
+	}
+
+	save() {
+		this._save();
 	}
 
 	open() {

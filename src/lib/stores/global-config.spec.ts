@@ -21,6 +21,7 @@ function createMockStorage(): Storage {
 			return Object.keys(store).length;
 		},
 		key(_index: number) {
+			void _index;
 			return null;
 		}
 	};
@@ -68,12 +69,11 @@ describe('global config store', () => {
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(true);
 	});
 
-	it('persists to localStorage on changes', async () => {
+	it('persists to localStorage on save', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.diameter = 150;
 		globalConfig.pathLabelOptimizerEnabled = false;
-		// @ts-expect-error - accessing private method to test persistence
-		globalConfig._save();
+		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 		expect(saved.diameter).toBe(150);
 		expect(saved.pathLabelOptimizerEnabled).toBe(false);
