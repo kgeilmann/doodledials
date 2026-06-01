@@ -97,4 +97,24 @@ describe('global config store', () => {
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 		expect(globalConfig.dialogOpen).toBe(false);
 	});
+
+	it('has default centerHoleDiameter of 2', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.centerHoleDiameter).toBe(2);
+	});
+
+	it('persists and restores centerHoleDiameter', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.centerHoleDiameter = 1.5;
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.centerHoleDiameter).toBe(1.5);
+	});
+
+	it('resets centerHoleDiameter to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.centerHoleDiameter = 3;
+		globalConfig.reset();
+		expect(globalConfig.centerHoleDiameter).toBe(2);
+	});
 });
