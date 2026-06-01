@@ -105,17 +105,6 @@
 				>
 					{doodledialStore.labelEditMode ? 'Done' : 'Edit Labels'}
 				</button>
-				<span class="text-gray-300">|</span>
-				<button
-					type="button"
-					onclick={() => doodledialStore.solveLayout()}
-					disabled={doodledialStore.isLoading || doodledialStore.layers.length < 2}
-					class="text-xs {doodledialStore.isLoading
-						? 'text-indigo-400 cursor-not-allowed'
-						: 'text-indigo-600 hover:text-indigo-800 font-medium'}"
-				>
-					{doodledialStore.isLoading ? 'Optimizing...' : 'Optimize Layout'}
-				</button>
 			</div>
 		</div>
 

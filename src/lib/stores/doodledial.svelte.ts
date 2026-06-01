@@ -2,7 +2,6 @@ import type { DialConfig, LabelPlacementStatus, Layer, SVGContent } from '$lib/t
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
-import { solveOptimalLayout } from '$lib/utils';
 import { globalConfig } from '$lib/stores/global-config.svelte';
 
 type AutoPlacementRunner = () => void | Promise<void>;
@@ -362,41 +361,6 @@ function createDoodledialStore() {
 			error = null;
 			layers.clear();
 			labelEditMode = false;
-		},
-		async solveLayout() {
-			if (!svgContent || !combinedSvg || layers.size < 2) {
-				return;
-			}
-
-			console.log(`[Layout Solver UI] Starting layout optimization for ${layers.size} layers`);
-			this.setLoading(true);
-			this.setError(null);
-
-			try {
-				const layerArray = getLayerArray();
-				const solvedLayers = await solveOptimalLayout(layerArray, this.config, svgContent);
-
-				// Update layer rotations with solver results
-				solvedLayers.forEach((solvedLayer) => {
-					const layer = layers.get(solvedLayer.id);
-					if (layer) {
-						layers.set(solvedLayer.id, { ...layer, rotation: solvedLayer.rotation });
-					}
-				});
-
-				// Re-run overlap and cutout gap detection with new rotations
-				runOverlapDetection();
-				runCutoutGapDetection();
-
-				console.log(`[Layout Solver UI] Layout optimization completed successfully`);
-			} catch (err) {
-				console.error('Layout solving failed:', err);
-				this.setError(
-					'Layout solving failed: ' + (err instanceof Error ? err.message : String(err))
-				);
-			} finally {
-				this.setLoading(false);
-			}
 		}
 	};
 }
