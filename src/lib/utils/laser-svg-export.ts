@@ -74,5 +74,10 @@ export function exportLaserSvg(
 		text.css('fill', engraveColor);
 	});
 
+	doc.find('.disc-title').forEach((el) => {
+		el.addClass(engraveClassName);
+		el.css('fill', engraveColor);
+	});
+
 	return doc.svg();
 }

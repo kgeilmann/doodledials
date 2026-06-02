@@ -1,6 +1,6 @@
 import { SVG, type Svg } from '@svgdotjs/svg.js';
 import { describe, expect, it } from 'vitest';
-import { parseSvgPaths } from './doodledial';
+import { combineDoodledial, parseSvgPaths } from './doodledial';
 import {
 	exportLaserSvg,
 	exportStl,
@@ -105,6 +105,18 @@ describe('export formats', () => {
 	it('builds at least one label shape for STL', () => {
 		const shapes = labelToThreeShapes('7', { width: 10, height: 10 });
 		expect(shapes.length).toBeGreaterThan(0);
+	});
+
+	it('laser export includes disc title when set', () => {
+		const { content, layers } = buildExportFixture();
+		const combined = combineDoodledial(content, SAMPLE_CONFIG, layers, null, null, {
+			discTitle: 'Test Disc',
+			discTitleX: 100,
+			discTitleY: 30,
+			discTitleFontSize: 14
+		});
+		expect(combined).toContain('Test Disc');
+		expect(combined).toContain('disc-title');
 	});
 
 	it('laser export keeps text and marks operations', () => {
