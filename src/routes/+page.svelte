@@ -415,6 +415,35 @@
 				<h2 class="text-lg font-semibold text-gray-800">Disc Settings</h2>
 			</div>
 			<DiameterControl />
+			{#if doodledialStore.svgContent}
+				<hr class="my-4 border-gray-100" />
+				<div class="flex flex-col gap-3">
+					<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
+						<span>Title</span>
+						<input
+							type="text"
+							placeholder="Optional disc title..."
+							bind:value={doodledialStore.discTitle}
+							class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+						/>
+					</label>
+					<div class="flex items-center gap-3">
+						<span class="text-xs font-medium text-gray-600 shrink-0">Font size</span>
+						<input
+							type="range"
+							min="8"
+							max="36"
+							step="1"
+							bind:value={doodledialStore.discTitleFontSize}
+							class="flex-1 accent-indigo-600"
+						/>
+						<span class="text-xs text-gray-500 w-8 text-right"
+							>{doodledialStore.discTitleFontSize}</span
+						>
+					</div>
+					<p class="text-xs text-gray-400">Drag title text on the disc to reposition it.</p>
+				</div>
+			{/if}
 		</section>
 
 		{#if doodledialStore.svgContent}
