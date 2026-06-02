@@ -31,9 +31,9 @@
 	let optimizerRunDialogOpen = $state(false);
 	let optimizerInitializeRandomly = $state(false);
 	let optimizerRoundOutputAngles = $state(true);
-	let optimizerGapMmInput = $state('2');
+	let optimizerGapMmInput = $state(String(globalConfig.optimizerGapDefault));
 	let optimizerRandomSeedInput = $state('42');
-	let optimizerMaxRuntimeSInput = $state('120');
+	let optimizerMaxRuntimeSInput = $state(String(globalConfig.bruteforceTimeLimit));
 	let optimizerMode = $state<OptimizerMode>('force-directed');
 	let optimizerActiveMode = $state<OptimizerMode>('force-directed');
 	let optimizerElapsedMs = $state(0);
@@ -72,9 +72,9 @@
 		optimizerTuning = { ...optimizerTuningDefaults };
 		optimizerInitializeRandomly = false;
 		optimizerRoundOutputAngles = true;
-		optimizerGapMmInput = '2';
+		optimizerGapMmInput = String(globalConfig.optimizerGapDefault);
 		optimizerRandomSeedInput = '42';
-		optimizerMaxRuntimeSInput = '120';
+		optimizerMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
 	}
 
 	function handleAcceptBruteforceResult() {
@@ -97,7 +97,8 @@
 		}
 
 		optimizerMode = mode;
-		optimizerGapMmInput = String(doodledialStore.config.optimizerGapMm ?? 2);
+		optimizerGapMmInput = String(globalConfig.optimizerGapDefault);
+		optimizerMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
 		optimizerRunDialogOpen = true;
 	}
 
@@ -206,7 +207,7 @@
 			const gapMm =
 				Number.isFinite(parsedGapMm) && parsedGapMm > 0
 					? parsedGapMm
-					: (doodledialStore.config.optimizerGapMm ?? 2);
+					: (doodledialStore.config.optimizerGapMm ?? globalConfig.optimizerGapDefault);
 			doodledialStore.setOptimizerGapMm(gapMm);
 			optimizerGapMmInput = String(gapMm);
 

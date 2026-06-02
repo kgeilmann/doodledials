@@ -117,4 +117,44 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.centerHoleDiameter).toBe(2);
 	});
+
+	it('has default optimizerGapDefault of 5', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.optimizerGapDefault).toBe(5);
+	});
+
+	it('persists and restores optimizerGapDefault', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.optimizerGapDefault = 8;
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.optimizerGapDefault).toBe(8);
+	});
+
+	it('resets optimizerGapDefault to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.optimizerGapDefault = 10;
+		globalConfig.reset();
+		expect(globalConfig.optimizerGapDefault).toBe(5);
+	});
+
+	it('has default bruteforceTimeLimit of 120', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.bruteforceTimeLimit).toBe(120);
+	});
+
+	it('persists and restores bruteforceTimeLimit', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.bruteforceTimeLimit = 300;
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.bruteforceTimeLimit).toBe(300);
+	});
+
+	it('resets bruteforceTimeLimit to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.bruteforceTimeLimit = 60;
+		globalConfig.reset();
+		expect(globalConfig.bruteforceTimeLimit).toBe(120);
+	});
 });

@@ -8,13 +8,17 @@
 		diameter: 200,
 		centerHoleDiameter: 2,
 		pathLabelOptimizerEnabled: false,
-		forceDirectedOptimizerEnabled: false
+		forceDirectedOptimizerEnabled: false,
+		optimizerGapDefault: 5,
+		bruteforceTimeLimit: 120
 	};
 
 	let draftDiameter = $state(globalConfig.diameter);
 	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
+	let draftOptimizerGapDefault = $state(globalConfig.optimizerGapDefault);
+	let draftBruteforceTimeLimit = $state(globalConfig.bruteforceTimeLimit);
 
 	function handleDiameterInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
@@ -38,11 +42,25 @@
 		draftForceDirectedOptimizerEnabled = !draftForceDirectedOptimizerEnabled;
 	}
 
+	function handleOptimizerGapInputChange(e: Event) {
+		const value = parseFloat((e.target as HTMLInputElement).value);
+		if (!Number.isFinite(value) || value < 0) return;
+		draftOptimizerGapDefault = value;
+	}
+
+	function handleBruteforceTimeLimitInputChange(e: Event) {
+		const value = parseInt((e.target as HTMLInputElement).value);
+		if (!Number.isFinite(value) || value < 1) return;
+		draftBruteforceTimeLimit = value;
+	}
+
 	function handleReset() {
 		draftDiameter = DEFAULTS.diameter;
 		draftCenterHoleDiameter = DEFAULTS.centerHoleDiameter;
 		draftPathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
 		draftForceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
+		draftOptimizerGapDefault = DEFAULTS.optimizerGapDefault;
+		draftBruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 	}
 
 	function handleOK() {
@@ -50,6 +68,8 @@
 		globalConfig.centerHoleDiameter = draftCenterHoleDiameter;
 		globalConfig.pathLabelOptimizerEnabled = draftPathLabelOptimizerEnabled;
 		globalConfig.forceDirectedOptimizerEnabled = draftForceDirectedOptimizerEnabled;
+		globalConfig.optimizerGapDefault = draftOptimizerGapDefault;
+		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
 		globalConfig.save();
 		doodledialStore.setDiameter(draftDiameter);
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
@@ -181,6 +201,49 @@
 							></span>
 						</button>
 					</div>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between mb-2">
+						<label for="global-optimizer-gap-input" class="text-sm font-medium text-gray-700"
+							>Optimizer Gap</label
+						>
+						<div class="flex items-center gap-2">
+							<input
+								id="global-optimizer-gap-input"
+								type="number"
+								min="0"
+								step="0.5"
+								value={draftOptimizerGapDefault}
+								onchange={handleOptimizerGapInputChange}
+								class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							/>
+							<span class="text-sm text-gray-500">mm</span>
+						</div>
+					</div>
+					<p class="text-xs text-gray-500">Default gap between cutouts used in optimization</p>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between mb-2">
+						<label
+							for="global-bruteforce-time-limit-input"
+							class="text-sm font-medium text-gray-700">Brute Force Time Limit</label
+						>
+						<div class="flex items-center gap-2">
+							<input
+								id="global-bruteforce-time-limit-input"
+								type="number"
+								min="1"
+								step="1"
+								value={draftBruteforceTimeLimit}
+								onchange={handleBruteforceTimeLimitInputChange}
+								class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							/>
+							<span class="text-sm text-gray-500">s</span>
+						</div>
+					</div>
+					<p class="text-xs text-gray-500">Maximum runtime for brute force optimizer</p>
 				</div>
 			</div>
 

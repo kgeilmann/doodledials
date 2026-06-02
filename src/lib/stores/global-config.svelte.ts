@@ -5,13 +5,17 @@ interface PersistedConfig {
 	centerHoleDiameter: number;
 	pathLabelOptimizerEnabled: boolean;
 	forceDirectedOptimizerEnabled: boolean;
+	optimizerGapDefault: number;
+	bruteforceTimeLimit: number;
 }
 
 const DEFAULTS: PersistedConfig = {
 	diameter: 200,
 	centerHoleDiameter: 2,
 	pathLabelOptimizerEnabled: false,
-	forceDirectedOptimizerEnabled: false
+	forceDirectedOptimizerEnabled: false,
+	optimizerGapDefault: 5,
+	bruteforceTimeLimit: 120
 };
 
 class GlobalConfigStore {
@@ -19,6 +23,8 @@ class GlobalConfigStore {
 	centerHoleDiameter = $state(DEFAULTS.centerHoleDiameter);
 	pathLabelOptimizerEnabled = $state(DEFAULTS.pathLabelOptimizerEnabled);
 	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
+	optimizerGapDefault = $state(DEFAULTS.optimizerGapDefault);
+	bruteforceTimeLimit = $state(DEFAULTS.bruteforceTimeLimit);
 	dialogOpen = $state(false);
 
 	constructor() {
@@ -42,6 +48,8 @@ class GlobalConfigStore {
 		this.centerHoleDiameter = DEFAULTS.centerHoleDiameter;
 		this.pathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
 		this.forceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
+		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
+		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.dialogOpen = false;
 	}
 
@@ -57,6 +65,8 @@ class GlobalConfigStore {
 					parsed.pathLabelOptimizerEnabled ?? DEFAULTS.pathLabelOptimizerEnabled;
 				this.forceDirectedOptimizerEnabled =
 					parsed.forceDirectedOptimizerEnabled ?? DEFAULTS.forceDirectedOptimizerEnabled;
+				this.optimizerGapDefault = parsed.optimizerGapDefault ?? DEFAULTS.optimizerGapDefault;
+				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 			}
 		} catch {
 			// ignore corrupt data, use defaults
@@ -71,7 +81,9 @@ class GlobalConfigStore {
 				diameter: this.diameter,
 				centerHoleDiameter: this.centerHoleDiameter,
 				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled,
-				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled
+				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled,
+				optimizerGapDefault: this.optimizerGapDefault,
+				bruteforceTimeLimit: this.bruteforceTimeLimit
 			})
 		);
 	}
