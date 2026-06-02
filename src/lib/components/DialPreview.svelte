@@ -164,7 +164,13 @@
 					doodledialStore.config,
 					layers,
 					highlightedLayer,
-					currentSelected
+					currentSelected,
+					{
+						discTitle: doodledialStore.discTitle,
+						discTitleX: doodledialStore.discTitleX,
+						discTitleY: doodledialStore.discTitleY,
+						discTitleFontSize: doodledialStore.discTitleFontSize
+					}
 				);
 				doodledialStore.setCombinedSvg(combined);
 				doodledialStore.setError(null);
@@ -192,6 +198,10 @@
 		void doodledialStore.highlightedLayer;
 		void doodledialStore.selectedLayer;
 		void doodledialStore.labelEditMode;
+		void doodledialStore.discTitle;
+		void doodledialStore.discTitleX;
+		void doodledialStore.discTitleY;
+		void doodledialStore.discTitleFontSize;
 		void doodledialStore.config.offsetX;
 		void doodledialStore.config.offsetY;
 		void doodledialStore.config.scale;

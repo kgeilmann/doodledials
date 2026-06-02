@@ -8,14 +8,15 @@ Add an optional engraved title to the disc that users can enter, position by dra
 
 New state in `doodledialStore` (top-level, same as `svgContent`, `combinedSvg`):
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `discTitle` | `string` | `''` | Title text content. Empty = no title rendered. |
-| `discTitleX` | `number` | SVG center X | X position (SVG coords) of the title text |
-| `discTitleY` | `number` | ~15% from top | Y position (SVG coords) of the title text |
-| `discTitleFontSize` | `number` | `12` | Font size in SVG units (px) |
+| Property            | Type     | Default       | Description                                    |
+| ------------------- | -------- | ------------- | ---------------------------------------------- |
+| `discTitle`         | `string` | `''`          | Title text content. Empty = no title rendered. |
+| `discTitleX`        | `number` | SVG center X  | X position (SVG coords) of the title text      |
+| `discTitleY`        | `number` | ~15% from top | Y position (SVG coords) of the title text      |
+| `discTitleFontSize` | `number` | `12`          | Font size in SVG units (px)                    |
 
 Methods:
+
 - `setDiscTitle(text: string)` — set title text
 - `setDiscTitlePosition(x: number, y: number)` — set position (from drag)
 - `setDiscTitleFontSize(size: number)` — set font size
@@ -34,6 +35,7 @@ When `discTitle` is empty, no title text appears on the disc or in exports. The 
 ## SVG Rendering
 
 In `combineDoodledial()`, when `discTitle` is non-empty, add:
+
 ```svg
 <text class="disc-title" data-disc-title="true"
       x="{discTitleX}" y="{discTitleY}"
@@ -61,10 +63,11 @@ Title dragging works without a special mode toggle — the user can always drag 
 ### Laser SVG (`laser-svg-export.ts`)
 
 The `.disc-title` element is styled with the engrave class (same as existing text/labels):
+
 ```ts
 doc.find('.disc-title').forEach((el) => {
-    el.addClass(engraveClassName);
-    el.css('fill', engraveColor);
+	el.addClass(engraveClassName);
+	el.css('fill', engraveColor);
 });
 ```
 

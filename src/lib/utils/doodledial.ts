@@ -180,6 +180,10 @@ export interface CombineDoodledialOptions {
 	respectLayerVisibility?: boolean;
 	applyCutoutTransforms?: boolean;
 	applyDiameter?: boolean;
+	discTitle?: string;
+	discTitleX?: number;
+	discTitleY?: number;
+	discTitleFontSize?: number;
 }
 
 export interface OptimizerSvgTemplate {
@@ -367,6 +371,21 @@ export function combineDoodledial(
 		} else {
 			centerHole.hide();
 		}
+	}
+
+	const titleText = options?.discTitle;
+	if (titleText) {
+		const titleEl = doc.text(titleText);
+		titleEl.addClass('disc-title');
+		titleEl.attr('data-disc-title', 'true');
+		titleEl.font({
+			family: 'sans-serif',
+			size: options?.discTitleFontSize ?? 12,
+			anchor: 'middle',
+			weight: 'bold'
+		});
+		titleEl.center(options?.discTitleX ?? 100, options?.discTitleY ?? 20);
+		titleEl.fill('black');
 	}
 
 	return doc.svg();
