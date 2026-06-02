@@ -10,6 +10,10 @@ export interface StlExportOptions {
 	discThicknessMm?: number;
 	markThicknessMm?: number;
 	sampleStepPx?: number;
+	discTitle?: string;
+	discTitleX?: number;
+	discTitleY?: number;
+	discTitleFontSize?: number;
 }
 
 interface TransformOptions {
@@ -370,6 +374,35 @@ export function exportStl(
 				topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
 			}
 		});
+	}
+
+	if (options?.discTitle) {
+		const titleShapes = labelToThreeShapes(options.discTitle, {
+			width: options.discTitle.length * (options.discTitleFontSize ?? 12) * 0.6,
+			height: (options.discTitleFontSize ?? 12) * 1.2
+		});
+
+		const titleCenterX = (options.discTitleX ?? 100) - cx;
+		const titleCenterY = (options.discTitleY ?? 20) - cy;
+
+		for (const shape of titleShapes) {
+			const points = shape.getPoints().map((point: THREE.Vector2) => {
+				return new THREE.Vector2(
+					(titleCenterX + point.x) / MM_TO_PX,
+					(titleCenterY + point.y) / MM_TO_PX
+				);
+			});
+			const transformedShape = pathPolygonToShape(points);
+			if (!transformedShape) continue;
+
+			const geometry = new THREE.ExtrudeGeometry(transformedShape, {
+				depth: markThicknessMm,
+				steps: 1,
+				bevelEnabled: false
+			});
+			geometry.translate(0, 0, discThicknessMm);
+			topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
+		}
 	}
 
 	const discShape = createDiscShape(discRadiusMm, holePolygons);
