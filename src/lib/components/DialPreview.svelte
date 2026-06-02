@@ -18,6 +18,12 @@
 	let labelInitialOffsetX = $state(0);
 	let labelInitialOffsetY = $state(0);
 
+	let isDraggingTitle = $state(false);
+	let titleDragStartSvgX = $state(0);
+	let titleDragStartSvgY = $state(0);
+	let titleInitialX = $state(0);
+	let titleInitialY = $state(0);
+
 	const hiddenCount = $derived(doodledialStore.hiddenLayerCount);
 
 	const paddedPixelSize = $derived(
@@ -58,6 +64,25 @@
 
 		doodledialStore.setSelectedLayer(layerId);
 		doodledialStore.setHighlightedLayer(layerId);
+
+		const isDiscTitle = target.closest('[data-disc-title]') !== null;
+		if (isDiscTitle && !doodledialStore.labelEditMode) {
+			isDraggingTitle = true;
+			titleInitialX = doodledialStore.discTitleX;
+			titleInitialY = doodledialStore.discTitleY;
+
+			const startPoint = getSvgPoint(e.clientX, e.clientY);
+			if (!startPoint) {
+				isDraggingTitle = false;
+				return;
+			}
+
+			titleDragStartSvgX = startPoint.x;
+			titleDragStartSvgY = startPoint.y;
+
+			(target as HTMLElement).setPointerCapture(e.pointerId);
+			return;
+		}
 
 		if (doodledialStore.labelEditMode && isPathLabel) {
 			isDraggingLabel = true;
@@ -106,6 +131,15 @@
 			const newOffsetY = labelInitialOffsetY + localDeltaY;
 
 			doodledialStore.setLayerLabelOffsetManual(dragLabelLayerId, newOffsetX, newOffsetY);
+		} else if (isDraggingTitle) {
+			const currentPoint = getSvgPoint(e.clientX, e.clientY);
+			if (!currentPoint) return;
+
+			const deltaX = currentPoint.x - titleDragStartSvgX;
+			const deltaY = currentPoint.y - titleDragStartSvgY;
+
+			doodledialStore.setDiscTitlePosition(titleInitialX + deltaX, titleInitialY + deltaY);
+			return;
 		} else if (isDragging && dragLayerId && !doodledialStore.labelEditMode) {
 			const { cx, cy } = getDiscCenter();
 			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
@@ -114,13 +148,14 @@
 	}
 
 	function handlePointerUp(e: PointerEvent) {
-		if (isDragging || isDraggingLabel) {
+		if (isDragging || isDraggingLabel || isDraggingTitle) {
 			const target = e.target as HTMLElement;
 			target.releasePointerCapture(e.pointerId);
 		}
 		doodledialStore.setHighlightedLayer(null);
 		isDragging = false;
 		isDraggingLabel = false;
+		isDraggingTitle = false;
 		dragLayerId = null;
 		dragLabelLayerId = null;
 	}
