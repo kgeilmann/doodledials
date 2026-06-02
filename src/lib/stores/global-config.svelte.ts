@@ -27,7 +27,7 @@ class GlobalConfigStore {
 	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
 	optimizerGapDefault = $state(DEFAULTS.optimizerGapDefault);
 	bruteforceTimeLimit = $state(DEFAULTS.bruteforceTimeLimit);
-	defaultExportFormat = $state<'laser-svg' | 'stl'>(DEFAULTS.defaultExportFormat);
+	defaultExportFormat = $state(DEFAULTS.defaultExportFormat);
 	dialogOpen = $state(false);
 
 	constructor() {

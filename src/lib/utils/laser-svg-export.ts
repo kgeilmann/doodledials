@@ -52,6 +52,7 @@ export function exportLaserSvg(
 			hole.css('stroke', cutColor);
 			hole.css('fill', 'none');
 			hole.css('stroke-width', String(cutStrokeWidth));
+			hole.css('stroke-dasharray', 'none');
 		});
 	}
 
