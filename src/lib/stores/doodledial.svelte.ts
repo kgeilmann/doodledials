@@ -20,6 +20,10 @@ function createDoodledialStore() {
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
 	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
+	let discTitle = $state<string>('');
+	let discTitleX = $state<number>(100);
+	let discTitleY = $state<number>(20);
+	let discTitleFontSize = $state<number>(12);
 	let autoPlacementTimer: ReturnType<typeof setTimeout> | null = null;
 	let autoPlacementRunning = false;
 	let autoPlacementStale = false;
@@ -120,6 +124,18 @@ function createDoodledialStore() {
 	}
 
 	return {
+		get discTitle() {
+			return discTitle;
+		},
+		get discTitleX() {
+			return discTitleX;
+		},
+		get discTitleY() {
+			return discTitleY;
+		},
+		get discTitleFontSize() {
+			return discTitleFontSize;
+		},
 		get config() {
 			return config;
 		},
@@ -171,6 +187,16 @@ function createDoodledialStore() {
 		},
 		setCenterHoleDiameter(centerHoleDiameter: number) {
 			config = { ...config, centerHoleDiameter };
+		},
+		setDiscTitle(text: string) {
+			discTitle = text;
+		},
+		setDiscTitlePosition(x: number, y: number) {
+			discTitleX = x;
+			discTitleY = y;
+		},
+		setDiscTitleFontSize(size: number) {
+			discTitleFontSize = size;
 		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
@@ -383,6 +409,10 @@ function createDoodledialStore() {
 			error = null;
 			layers.clear();
 			labelEditMode = false;
+			discTitle = '';
+			discTitleX = 100;
+			discTitleY = 20;
+			discTitleFontSize = 12;
 		}
 	};
 }
