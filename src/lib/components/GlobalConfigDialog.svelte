@@ -10,10 +10,12 @@
 		pathLabelOptimizerEnabled: false,
 		forceDirectedOptimizerEnabled: false,
 		optimizerGapDefault: 5,
-		bruteforceTimeLimit: 120
-	};
+		bruteforceTimeLimit: 120,
+		defaultExportFormat: 'laser-svg'
+	} as const;
 
 	let draftDiameter = $state(globalConfig.diameter);
+	let draftDefaultExportFormat = $state<'laser-svg' | 'stl'>(globalConfig.defaultExportFormat);
 	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
@@ -61,6 +63,7 @@
 		draftForceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 		draftOptimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		draftBruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
+		draftDefaultExportFormat = DEFAULTS.defaultExportFormat;
 	}
 
 	function handleOK() {
@@ -70,6 +73,7 @@
 		globalConfig.forceDirectedOptimizerEnabled = draftForceDirectedOptimizerEnabled;
 		globalConfig.optimizerGapDefault = draftOptimizerGapDefault;
 		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
+		globalConfig.defaultExportFormat = draftDefaultExportFormat;
 		globalConfig.save();
 		doodledialStore.setDiameter(draftDiameter);
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
@@ -244,6 +248,49 @@
 						</div>
 					</div>
 					<p class="text-xs text-gray-500">Maximum runtime for brute force optimizer</p>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="mb-3">
+						<span class="text-sm font-medium text-gray-700">Default Export Format</span>
+						<p class="text-xs text-gray-500 mt-0.5">
+							Format used when clicking the main Export button
+						</p>
+					</div>
+					<fieldset class="flex gap-4">
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition {draftDefaultExportFormat ===
+							'laser-svg'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="export-format"
+								value="laser-svg"
+								checked={draftDefaultExportFormat === 'laser-svg'}
+								onchange={() => (draftDefaultExportFormat = 'laser-svg')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>Laser SVG</span>
+						</label>
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition {draftDefaultExportFormat ===
+							'stl'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="export-format"
+								value="stl"
+								checked={draftDefaultExportFormat === 'stl'}
+								onchange={() => (draftDefaultExportFormat = 'stl')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>3D STL</span>
+						</label>
+					</fieldset>
 				</div>
 			</div>
 
