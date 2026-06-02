@@ -7,6 +7,7 @@ interface PersistedConfig {
 	forceDirectedOptimizerEnabled: boolean;
 	optimizerGapDefault: number;
 	bruteforceTimeLimit: number;
+	defaultExportFormat: 'laser-svg' | 'stl';
 }
 
 const DEFAULTS: PersistedConfig = {
@@ -15,7 +16,8 @@ const DEFAULTS: PersistedConfig = {
 	pathLabelOptimizerEnabled: false,
 	forceDirectedOptimizerEnabled: false,
 	optimizerGapDefault: 5,
-	bruteforceTimeLimit: 120
+	bruteforceTimeLimit: 120,
+	defaultExportFormat: 'laser-svg'
 };
 
 class GlobalConfigStore {
@@ -25,6 +27,7 @@ class GlobalConfigStore {
 	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
 	optimizerGapDefault = $state(DEFAULTS.optimizerGapDefault);
 	bruteforceTimeLimit = $state(DEFAULTS.bruteforceTimeLimit);
+	defaultExportFormat = $state<'laser-svg' | 'stl'>(DEFAULTS.defaultExportFormat);
 	dialogOpen = $state(false);
 
 	constructor() {
@@ -50,6 +53,7 @@ class GlobalConfigStore {
 		this.forceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
 		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
+		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
 		this.dialogOpen = false;
 	}
 
@@ -67,6 +71,7 @@ class GlobalConfigStore {
 					parsed.forceDirectedOptimizerEnabled ?? DEFAULTS.forceDirectedOptimizerEnabled;
 				this.optimizerGapDefault = parsed.optimizerGapDefault ?? DEFAULTS.optimizerGapDefault;
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
+				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
 			}
 		} catch {
 			// ignore corrupt data, use defaults
@@ -83,7 +88,8 @@ class GlobalConfigStore {
 				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled,
 				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled,
 				optimizerGapDefault: this.optimizerGapDefault,
-				bruteforceTimeLimit: this.bruteforceTimeLimit
+				bruteforceTimeLimit: this.bruteforceTimeLimit,
+				defaultExportFormat: this.defaultExportFormat
 			})
 		);
 	}

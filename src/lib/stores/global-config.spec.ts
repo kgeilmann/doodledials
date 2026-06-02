@@ -157,4 +157,24 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.bruteforceTimeLimit).toBe(120);
 	});
+
+	it('has default defaultExportFormat of laser-svg', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.defaultExportFormat).toBe('laser-svg');
+	});
+
+	it('persists and restores defaultExportFormat', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultExportFormat = 'stl';
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.defaultExportFormat).toBe('stl');
+	});
+
+	it('resets defaultExportFormat to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultExportFormat = 'stl';
+		globalConfig.reset();
+		expect(globalConfig.defaultExportFormat).toBe('laser-svg');
+	});
 });
