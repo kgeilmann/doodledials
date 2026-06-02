@@ -32,6 +32,13 @@ export function exportLaserSvg(
 
 	const doc = SVG(combinedSvg) as Svg;
 
+	const passedLayerIds = new Set(layers?.map((l) => l.id) ?? []);
+	doc.find('.layer').forEach((layerGroup) => {
+		if (!passedLayerIds.has(layerGroup.id())) {
+			layerGroup.remove();
+		}
+	});
+
 	doc.find('#disc').forEach((disc) => {
 		disc.addClass(cutClassName);
 		disc.css('stroke', cutColor);

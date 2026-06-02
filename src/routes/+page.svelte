@@ -214,7 +214,7 @@
 			const optimizerInput = {
 				diameter: doodledialStore.config.diameter,
 				config: doodledialStore.config,
-				layers: doodledialStore.layers,
+				layers: doodledialStore.layers.filter((l) => l.visible),
 				svgContent: doodledialStore.svgContent
 			};
 			const parsedSeed = Number(optimizerRandomSeedInput);
@@ -230,6 +230,7 @@
 				message: string;
 				iteration: number;
 				totalIterations: number;
+				feasibleSolutionsFound?: number;
 			}) => {
 				optimizerProgressPhase = 'Optimizing';
 				optimizerProgress = Math.max(optimizerProgress, progress.percent);
@@ -505,14 +506,8 @@
 						<section
 							class="pointer-events-auto relative mt-4 w-full max-w-2xl rounded-2xl border border-indigo-200 bg-white/95 shadow-lg px-4 py-3"
 						>
-							<div class="flex items-center justify-between text-xs text-slate-600 mb-2 gap-4">
+							<div class="flex items-center text-xs text-slate-600 mb-2 gap-4">
 								<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
-								<span data-testid="optimizer-iteration-counter"
-									>{formatProgressCountLabel(
-										optimizerActiveMode,
-										optimizerTotalIterations || '?'
-									)}</span
-								>
 							</div>
 							{#if optimizerActiveMode === 'bruteforce'}
 								<div

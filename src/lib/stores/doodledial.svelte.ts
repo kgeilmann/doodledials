@@ -29,6 +29,10 @@ function createDoodledialStore() {
 		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
 	}
 
+	function getHiddenLayerCount(): number {
+		return Array.from(layers.values()).filter((l) => !l.visible).length;
+	}
+
 	async function runOverlapDetection() {
 		if (!combinedSvg || layers.size < 2) {
 			overlaps = new Map();
@@ -36,7 +40,13 @@ function createDoodledialStore() {
 		}
 		checkingOverlaps = true;
 		try {
-			const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
+			const layerArray = Array.from(layers.values())
+				.filter((l) => l.visible)
+				.sort((a, b) => a.index - b.index);
+			if (layerArray.length < 2) {
+				overlaps = new Map();
+				return;
+			}
 			const result = await detectOverlaps(layerArray, combinedSvg);
 			overlaps = result;
 		} catch (err) {
@@ -52,7 +62,13 @@ function createDoodledialStore() {
 			return;
 		}
 		try {
-			const layerArray = Array.from(layers.values()).sort((a, b) => a.index - b.index);
+			const layerArray = Array.from(layers.values())
+				.filter((l) => l.visible)
+				.sort((a, b) => a.index - b.index);
+			if (layerArray.length < 2) {
+				cutoutGaps = new Map();
+				return;
+			}
 			const optimizerGapMm = config.optimizerGapMm ?? 2;
 			const result = await detectCutoutGaps(
 				layerArray,
@@ -121,6 +137,9 @@ function createDoodledialStore() {
 		},
 		get layers() {
 			return getLayerArray();
+		},
+		get hiddenLayerCount() {
+			return getHiddenLayerCount();
 		},
 		get highlightedLayer() {
 			return highlightedLayer;

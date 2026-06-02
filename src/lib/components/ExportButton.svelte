@@ -30,6 +30,10 @@
 		URL.revokeObjectURL(url);
 	}
 
+	function getVisibleLayers() {
+		return doodledialStore.layers.filter((l) => l.visible);
+	}
+
 	function exportSvg() {
 		if (!doodledialStore.svgContent) return;
 
@@ -37,7 +41,7 @@
 			const svg = exportLaserSvg(
 				doodledialStore.svgContent,
 				doodledialStore.config,
-				doodledialStore.layers
+				getVisibleLayers()
 			);
 			createDownload(svg, 'doodledial.svg', 'image/svg+xml');
 			menuOpen = false;
@@ -63,7 +67,7 @@
 			const stl = exportStl(
 				doodledialStore.svgContent,
 				doodledialStore.config,
-				doodledialStore.layers,
+				getVisibleLayers(),
 				{
 					discThicknessMm: parseThickness(discThicknessMm, 3),
 					markThicknessMm: parseThickness(markThicknessMm, 0.5)
