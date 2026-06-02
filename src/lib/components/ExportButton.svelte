@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { exportLaserSvg, exportStl } from '$lib/utils/export-formats';
 
 	let menuOpen = $state(false);
@@ -29,7 +30,7 @@
 		URL.revokeObjectURL(url);
 	}
 
-	function exportSvgNow() {
+	function exportSvg() {
 		if (!doodledialStore.svgContent) return;
 
 		try {
@@ -38,7 +39,7 @@
 				doodledialStore.config,
 				doodledialStore.layers
 			);
-			createDownload(svg, `doodledial.svg`, 'image/svg+xml');
+			createDownload(svg, 'doodledial.svg', 'image/svg+xml');
 			menuOpen = false;
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
@@ -68,43 +69,74 @@
 					markThicknessMm: parseThickness(markThicknessMm, 0.5)
 				}
 			);
-			createDownload(stl, `doodledial.stl`, 'model/stl');
+			createDownload(stl, 'doodledial.stl', 'model/stl');
 			closeStlDialog();
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
 		}
 	}
+
+	function handleMainClick() {
+		menuOpen = false;
+		if (globalConfig.defaultExportFormat === 'stl') {
+			openStlDialog();
+		} else {
+			exportSvg();
+		}
+	}
+
+	function handleFormatSelect(format: 'laser-svg' | 'stl') {
+		if (format === 'stl') {
+			openStlDialog();
+		} else {
+			exportSvg();
+		}
+	}
 </script>
 
 <div class="relative inline-flex">
-	<button
-		onclick={() => (menuOpen = !menuOpen)}
-		disabled={!doodledialStore.svgContent}
-		aria-expanded={menuOpen}
-		aria-haspopup="menu"
-		class="group relative flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white shadow-md shadow-indigo-100 transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:bg-gray-300 enabled:hover:bg-indigo-700 enabled:hover:shadow-lg enabled:hover:shadow-indigo-200 enabled:active:scale-95"
-	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-5 w-5 transition-transform group-hover:-translate-y-0.5"
-			viewBox="0 0 20 20"
-			fill="currentColor"
+	<div class="flex rounded-xl shadow-md shadow-indigo-100">
+		<button
+			onclick={handleMainClick}
+			disabled={!doodledialStore.svgContent}
+			class="group flex items-center gap-2 rounded-l-xl bg-indigo-600 px-5 py-2.5 font-medium text-white transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:bg-gray-300 enabled:hover:bg-indigo-700 enabled:hover:shadow-lg enabled:hover:shadow-indigo-200 enabled:active:scale-95"
 		>
-			<path
-				fill-rule="evenodd"
-				d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-				clip-rule="evenodd"
-			/>
-		</svg>
-		<span>Export</span>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-			<path
-				fill-rule="evenodd"
-				d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-				clip-rule="evenodd"
-			/>
-		</svg>
-	</button>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-5 w-5 transition-transform group-hover:-translate-y-0.5"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+					clip-rule="evenodd"
+				/>
+			</svg>
+			<span>Export</span>
+		</button>
+		<button
+			onclick={() => (menuOpen = !menuOpen)}
+			disabled={!doodledialStore.svgContent}
+			aria-expanded={menuOpen}
+			aria-haspopup="menu"
+			aria-label="Export options"
+			class="rounded-r-xl border-l border-indigo-500 bg-indigo-600 px-3 py-2.5 font-medium text-white transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-300 enabled:hover:bg-indigo-700 enabled:active:scale-95"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+				class="h-4 w-4"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+					clip-rule="evenodd"
+				/>
+			</svg>
+		</button>
+	</div>
 
 	{#if menuOpen}
 		<div
@@ -112,7 +144,7 @@
 		>
 			<button
 				type="button"
-				onclick={exportSvgNow}
+				onclick={() => handleFormatSelect('laser-svg')}
 				class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
 				role="menuitem"
 			>
@@ -120,7 +152,7 @@
 			</button>
 			<button
 				type="button"
-				onclick={openStlDialog}
+				onclick={() => handleFormatSelect('stl')}
 				class="flex w-full items-center justify-between border-t border-gray-100 px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
 				role="menuitem"
 			>
