@@ -10,6 +10,32 @@ import {
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 
+const MAX_TOP_LAYOUTS = 12;
+
+export function addToTopLayouts(
+	candidate: Record<string, number>,
+	topLayouts: Record<string, number>[]
+): boolean {
+	if (topLayouts.length < MAX_TOP_LAYOUTS) {
+		topLayouts.push({ ...candidate });
+		return true;
+	}
+
+	let worstIndex = 0;
+	for (let i = 1; i < topLayouts.length; i++) {
+		if (!isBetterLayout(topLayouts[i], topLayouts[worstIndex])) {
+			worstIndex = i;
+		}
+	}
+
+	if (isBetterLayout(candidate, topLayouts[worstIndex])) {
+		topLayouts[worstIndex] = { ...candidate };
+		return true;
+	}
+
+	return false;
+}
+
 export interface OptimizerInput {
 	diameter: number;
 	config: DialConfig;
@@ -23,10 +49,13 @@ export interface OptimizerProgress {
 	iteration: number;
 	totalIterations: number;
 	feasibleSolutionsFound?: number;
+	topLayouts?: Record<string, number>[];
+	optimizerSvgTemplate?: OptimizerSvgTemplate;
 }
 
 export interface OptimizerResult {
 	layout: Record<string, number>;
+	topLayouts: Record<string, number>[];
 	stopReason: BruteforceOptimizerStopReason;
 	feasibleSolutionsFound: number;
 	resumeContext: BruteforceResumeContext;
@@ -37,6 +66,7 @@ export interface BruteforceResumeContext {
 	pairFeasibilityMemo: Map<string, boolean>;
 	optimizerSvgTemplate: OptimizerSvgTemplate;
 	bestLayout: Record<string, number> | null;
+	topLayouts: Record<string, number>[];
 	feasibleSolutionsFound: number;
 }
 
@@ -95,7 +125,7 @@ function serializeLayout(layout: Record<string, number>): string {
 		.join('|');
 }
 
-function analyzeCircularGaps(layout: Record<string, number>): {
+export function analyzeCircularGaps(layout: Record<string, number>): {
 	minGap: number;
 	variance: number;
 	deviationSum: number;
@@ -295,7 +325,9 @@ export async function runBruteforceOptimizer(
 			percent: 100,
 			message: `Solutions found: ${feasibleSolutionsFound}`,
 			iteration: 0,
-			totalIterations: 0
+			totalIterations: 0,
+			topLayouts,
+			optimizerSvgTemplate
 		});
 		options?.onSearchSnapshot?.({
 			nodesVisited: 0,
@@ -314,6 +346,7 @@ export async function runBruteforceOptimizer(
 		emitTerminalProgressAndSnapshot(1, 'exact_complete');
 		return {
 			layout: {},
+			topLayouts: [],
 			stopReason: 'exact_complete',
 			feasibleSolutionsFound: 1,
 			resumeContext: {
@@ -325,6 +358,7 @@ export async function runBruteforceOptimizer(
 					[]
 				),
 				bestLayout: null,
+				topLayouts: [],
 				feasibleSolutionsFound: 1
 			}
 		};
@@ -337,6 +371,7 @@ export async function runBruteforceOptimizer(
 			(options?.roundOutputAngles ?? true) ? roundLayoutAngles(fallbackLayout) : fallbackLayout;
 		return {
 			layout: fallback,
+			topLayouts: [],
 			stopReason: 'no_feasible_solution',
 			feasibleSolutionsFound: 0,
 			resumeContext: {
@@ -348,6 +383,7 @@ export async function runBruteforceOptimizer(
 					layerIds
 				),
 				bestLayout: null,
+				topLayouts: [],
 				feasibleSolutionsFound: 0
 			}
 		};
@@ -390,6 +426,8 @@ export async function runBruteforceOptimizer(
 	let nodesVisited = 0;
 	let feasibleSolutionsFound = options?.resumeContext?.feasibleSolutionsFound ?? 0;
 	let bestLayout: Record<string, number> | null = options?.resumeContext?.bestLayout ?? null;
+	const topLayouts: Record<string, number>[] = options?.resumeContext?.topLayouts ?? [];
+	let topLayoutsDirty = false;
 	let stopReason: BruteforceOptimizerStopReason | undefined;
 
 	const isTimedOut = (): boolean => {
@@ -427,13 +465,21 @@ export async function runBruteforceOptimizer(
 				? Math.min(99, Math.round(((now - startedAtMs) / maxRuntimeMs) * 100))
 				: Math.min(99, Math.round((nodesVisited / totalIterations) * 100));
 
-		onProgress?.({
+		const progressPayload: OptimizerProgress = {
 			percent,
 			message: `Solutions found: ${feasibleSolutionsFound}`,
 			iteration: nodesVisited,
 			totalIterations,
 			feasibleSolutionsFound
-		});
+		};
+
+		if (topLayoutsDirty) {
+			progressPayload.topLayouts = topLayouts;
+			progressPayload.optimizerSvgTemplate = optimizerSvgTemplate;
+			topLayoutsDirty = false;
+		}
+
+		onProgress?.(progressPayload);
 	};
 
 	reportProgress(true);
@@ -661,6 +707,9 @@ export async function runBruteforceOptimizer(
 			if (isBetterLayout(candidate, bestLayout)) {
 				bestLayout = candidate;
 			}
+			if (addToTopLayouts(candidate, topLayouts)) {
+				topLayoutsDirty = true;
+			}
 			return;
 		}
 
@@ -744,6 +793,7 @@ export async function runBruteforceOptimizer(
 
 	return {
 		layout,
+		topLayouts,
 		stopReason,
 		feasibleSolutionsFound,
 		resumeContext: {
@@ -751,6 +801,7 @@ export async function runBruteforceOptimizer(
 			pairFeasibilityMemo,
 			optimizerSvgTemplate,
 			bestLayout,
+			topLayouts,
 			feasibleSolutionsFound
 		}
 	};

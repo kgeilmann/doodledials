@@ -8,9 +8,11 @@
 		BruteforceOptimizerCancelledError,
 		runBruteforceOptimizer,
 		type BruteforceOptimizerStopReason,
-		type BruteforceResumeContext
+		type BruteforceResumeContext,
+		analyzeCircularGaps
 	} from '$lib/optimizer/run-bruteforce-optimizer';
 	import type { OptimizerTuning } from '$lib/optimizer/run-optimizer';
+	import { combineOptimizerSvgTemplate, type OptimizerSvgTemplate } from '$lib/utils/doodledial';
 	import { OptimizerCancelledError, runOptimizer } from '$lib/optimizer/run-optimizer';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import GlobalConfigDialog from '$lib/components/GlobalConfigDialog.svelte';
@@ -51,6 +53,22 @@
 	let bruteforceRunSummary = $state<BruteforceRunSummary | null>(null);
 	let bruteforceExtendRuntimeSInput = $state('60');
 	let bruteforceResumeContext = $state<BruteforceResumeContext | null>(null);
+	let optimizerTopLayouts = $state<Record<string, number>[]>([]);
+	let optimizerSvgTemplate = $state<OptimizerSvgTemplate | null>(null);
+	let optimizerSelectedThumbnailIndex = $state<number | null>(null);
+	let optimizerResultSelectedIndex = $state(0);
+
+	let optimizerThumbnailSvgs = $derived.by(() => {
+		const template = optimizerSvgTemplate;
+		if (!template || optimizerTopLayouts.length === 0) return [];
+		return optimizerTopLayouts.map((layout) => combineOptimizerSvgTemplate(template, layout));
+	});
+
+	function handleThumbnailClick(index: number) {
+		optimizerSelectedThumbnailIndex = optimizerSelectedThumbnailIndex === index ? null : index;
+	}
+
+	const GRID_SLOTS = Array.from({ length: 12 }, (_, i) => i);
 
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
@@ -231,6 +249,8 @@
 				iteration: number;
 				totalIterations: number;
 				feasibleSolutionsFound?: number;
+				topLayouts?: Record<string, number>[];
+				optimizerSvgTemplate?: OptimizerSvgTemplate;
 			}) => {
 				optimizerProgressPhase = 'Optimizing';
 				optimizerProgress = Math.max(optimizerProgress, progress.percent);
@@ -238,6 +258,12 @@
 				optimizerIteration = progress.iteration;
 				optimizerTotalIterations = progress.totalIterations;
 				optimizerElapsedMs = Date.now() - runStartedAtMs;
+				if (progress.topLayouts) {
+					optimizerTopLayouts = progress.topLayouts;
+				}
+				if (progress.optimizerSvgTemplate) {
+					optimizerSvgTemplate = progress.optimizerSvgTemplate;
+				}
 			};
 
 			if (mode === 'bruteforce') {
@@ -256,8 +282,7 @@
 				optimizerTimeLimited = bruteForceResult.stopReason === 'time_limit';
 				optimizerNoFeasible = bruteForceResult.stopReason === 'no_feasible_solution';
 				if (bruteForceResult.feasibleSolutionsFound > 0) {
-					doodledialStore.applyLayerRotations(bruteForceResult.layout);
-					optimizerApplied = true;
+					optimizerApplied = false; // user picks from the dialog
 				}
 
 				console.log('[optimizer] Frontend optimizer response:', bruteForceResult);
@@ -535,10 +560,11 @@
 					<div class="absolute inset-0 z-20 flex items-start justify-center pointer-events-none">
 						<div class="absolute inset-0 rounded-2xl bg-slate-900/20 backdrop-blur-[1px]"></div>
 						<section
-							class="pointer-events-auto relative mt-4 w-full max-w-2xl rounded-2xl border border-indigo-200 bg-white/95 shadow-lg px-4 py-3"
+							class="pointer-events-auto relative mt-4 w-full max-w-4xl rounded-2xl border border-indigo-200 bg-white/95 shadow-lg px-4 py-3"
 						>
 							<div class="flex items-center text-xs text-slate-600 mb-2 gap-4">
 								<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
+								<span>Solutions: {optimizerTopLayouts.length}/12</span>
 							</div>
 							{#if optimizerActiveMode === 'bruteforce'}
 								<div
@@ -563,6 +589,49 @@
 									style="width: {optimizerProgress}%;"
 								></div>
 							</div>
+
+							<!-- 4×3 Thumbnail Grid -->
+							{#if optimizerActiveMode === 'bruteforce'}
+								<div class="mt-3 grid grid-cols-4 gap-2">
+									{#each GRID_SLOTS as slotIndex (slotIndex)}
+										{@const svg = optimizerThumbnailSvgs[slotIndex]}
+										<button
+											type="button"
+											onclick={() => handleThumbnailClick(slotIndex)}
+											class="aspect-square rounded-lg border-2 overflow-hidden p-0.5 flex items-center justify-center transition-all duration-150 {svg
+												? 'bg-white border-gray-200 hover:border-indigo-400 cursor-pointer'
+												: 'bg-gray-50 border-dashed border-gray-300 cursor-default'}"
+										>
+											{#if svg}
+												<div
+													class="w-full h-full {optimizerSelectedThumbnailIndex === slotIndex
+														? 'opacity-100'
+														: 'opacity-80 hover:opacity-100'}"
+												>
+													{@html svg}
+												</div>
+											{:else}
+												<span class="text-xs text-gray-300">empty</span>
+											{/if}
+										</button>
+									{/each}
+								</div>
+
+								<!-- Selected thumbnail info bar -->
+								{#if optimizerSelectedThumbnailIndex !== null && optimizerTopLayouts[optimizerSelectedThumbnailIndex]}
+									{@const layout = optimizerTopLayouts[optimizerSelectedThumbnailIndex]}
+									{@const scores = analyzeCircularGaps(layout)}
+									<div
+										class="mt-2 text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 flex gap-4"
+									>
+										<span>Selected: <strong>#{optimizerSelectedThumbnailIndex + 1}</strong></span>
+										<span>Min gap: <strong>{scores.minGap}°</strong></span>
+										<span>Variance: <strong>{scores.variance.toFixed(0)}</strong></span>
+										<span>Deviation: <strong>{scores.deviationSum.toFixed(0)}°</strong></span>
+									</div>
+								{/if}
+							{/if}
+
 							<div class="mt-2 flex items-center justify-between gap-4">
 								<p class="text-sm text-slate-700" data-testid="optimizer-progress-message">
 									{optimizerProgressMessage}
@@ -773,9 +842,11 @@
 	{/if}
 
 	{#if bruteforceResultDialogOpen && bruteforceRunSummary}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="fixed inset-0 z-30 flex items-center justify-center p-4"
 			data-testid="bruteforce-result-dialog"
+			onkeydown={(e) => e.key === 'Escape' && handleAcceptBruteforceResult()}
 		>
 			<button
 				type="button"
@@ -784,80 +855,187 @@
 				aria-label="Close result dialog"
 			></button>
 			<section
-				class="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl p-6"
+				class="relative w-full max-w-4xl max-h-[90vh] rounded-2xl border border-gray-200 bg-white shadow-2xl flex flex-col overflow-hidden"
 			>
-				<h2 class="text-lg font-semibold text-gray-900 mb-4">
-					{#if bruteforceRunSummary.stopReason === 'time_limit'}
-						Time Limit Reached
-					{:else if bruteforceRunSummary.stopReason === 'exact_complete'}
-						Search Complete
-					{:else}
-						No Feasible Layout Found
-					{/if}
-				</h2>
+				<!-- Header -->
+				<div class="px-6 py-4 border-b border-gray-100">
+					<h2 class="text-lg font-semibold text-gray-900">
+						{#if bruteforceRunSummary.stopReason === 'time_limit'}
+							Time Limit Reached — Select a Layout
+						{:else if bruteforceRunSummary.stopReason === 'exact_complete'}
+							Search Complete — Select a Layout
+						{:else}
+							No Feasible Layout Found
+						{/if}
+					</h2>
+					<p class="text-sm text-gray-500 mt-0.5">
+						{bruteforceRunSummary.feasibleSolutionsFound} feasible layouts found. Click a thumbnail to
+						preview, then accept.
+					</p>
+				</div>
 
-				<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-5">
-					<dt class="text-gray-500">Combinations searched</dt>
-					<dd class="text-gray-900 font-medium text-right">
-						{bruteforceRunSummary.combinationsSearched.toLocaleString()} /
-						{bruteforceRunSummary.totalCombinations >= Number.MAX_SAFE_INTEGER
-							? '∞'
-							: bruteforceRunSummary.totalCombinations.toLocaleString()}
-					</dd>
-					<dt class="text-gray-500">Elapsed</dt>
-					<dd class="text-gray-900 font-medium text-right">
-						{formatDurationMs(bruteforceRunSummary.elapsedMs)}
-					</dd>
-					<dt class="text-gray-500">Feasible layouts found</dt>
-					<dd class="text-gray-900 font-medium text-right">
-						{bruteforceRunSummary.feasibleSolutionsFound}
-					</dd>
-					<dt class="text-gray-500">Result</dt>
-					<dd
-						class="text-right font-medium {bruteforceRunSummary.layoutApplied
-							? 'text-emerald-600'
-							: 'text-gray-400'}"
-					>
-						{bruteforceRunSummary.layoutApplied ? 'Best layout applied' : 'No layout applied'}
-					</dd>
-				</dl>
+				{#if bruteforceRunSummary.feasibleSolutionsFound > 0}
+					{@const selectedLayout = optimizerTopLayouts[optimizerResultSelectedIndex]}
+					{@const scores = selectedLayout ? analyzeCircularGaps(selectedLayout) : null}
+					<!-- Split body -->
+					<div class="flex flex-1 min-h-0">
+						<!-- Left: thumbnail grid (2×6) -->
+						<div class="w-64 shrink-0 p-4 border-r border-gray-100 overflow-y-auto">
+							<div class="grid grid-cols-2 gap-2">
+								{#each optimizerThumbnailSvgs as thumbSvg, index (index)}
+									{@const isSelected = optimizerResultSelectedIndex === index}
+									<button
+										type="button"
+										onclick={() => {
+											optimizerResultSelectedIndex = index;
+										}}
+										class="relative aspect-square rounded-lg border-2 overflow-hidden p-0.5 flex items-center justify-center transition-all duration-150 {isSelected
+											? 'border-indigo-500 ring-2 ring-indigo-200'
+											: 'border-gray-200 hover:border-indigo-300'}"
+									>
+										{#if thumbSvg}
+											<div class="w-full h-full">
+												{@html thumbSvg}
+											</div>
+										{:else}
+											<span class="text-xs text-gray-300">rendering...</span>
+										{/if}
+										<div
+											class="absolute bottom-1 right-1 text-xs font-semibold {isSelected
+												? 'text-indigo-600'
+												: 'text-gray-500'} bg-white/90 px-1.5 py-0.5 rounded-full shadow-xs"
+										>
+											#{index + 1}
+										</div>
+									</button>
+								{/each}
+							</div>
 
-				{#if bruteforceRunSummary.stopReason === 'time_limit'}
-					<div class="border-t border-gray-100 pt-4 mb-5">
-						<p class="text-sm text-gray-600 mb-3">Continue searching for more time:</p>
-						<label class="flex items-center gap-2 text-sm">
-							<span class="text-gray-600 shrink-0">Continue for</span>
-							<input
-								type="number"
-								min="1"
-								step="1"
-								bind:value={bruteforceExtendRuntimeSInput}
-								class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-sm"
-							/>
-							<span class="text-gray-400">s</span>
-						</label>
+							<!-- Summary stats below grid -->
+							<div class="mt-4 text-xs text-gray-500 space-y-1 border-t border-gray-100 pt-3">
+								<div class="flex justify-between">
+									<span>Combinations searched</span>
+									<span class="text-gray-900 font-medium">
+										{bruteforceRunSummary.combinationsSearched.toLocaleString()} /
+										{bruteforceRunSummary.totalCombinations >= Number.MAX_SAFE_INTEGER
+											? '∞'
+											: bruteforceRunSummary.totalCombinations.toLocaleString()}
+									</span>
+								</div>
+								<div class="flex justify-between">
+									<span>Elapsed</span>
+									<span class="text-gray-900 font-medium"
+										>{formatDurationMs(bruteforceRunSummary.elapsedMs)}</span
+									>
+								</div>
+								<div class="flex justify-between">
+									<span>Stop reason</span>
+									<span class="text-gray-900 font-medium">{bruteforceRunSummary.stopReason}</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Right: large preview -->
+						<div class="flex-1 flex flex-col p-4 min-w-0">
+							<div class="flex items-center justify-between mb-3">
+								<span class="text-sm font-medium text-gray-700">
+									Layout #{optimizerResultSelectedIndex + 1}
+								</span>
+								{#if scores}
+									<div class="flex gap-3 text-xs text-gray-500">
+										<span>Min gap: <strong class="text-gray-900">{scores.minGap}°</strong></span>
+										<span
+											>Variance: <strong class="text-gray-900">{scores.variance.toFixed(0)}</strong
+											></span
+										>
+										<span
+											>Deviation: <strong class="text-gray-900"
+												>{scores.deviationSum.toFixed(0)}°</strong
+											></span
+										>
+									</div>
+								{/if}
+							</div>
+
+							<div
+								class="flex-1 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center min-h-[300px] overflow-hidden p-4"
+							>
+								{#if selectedLayout && optimizerSvgTemplate}
+									{@const previewSvg = combineOptimizerSvgTemplate(
+										optimizerSvgTemplate,
+										selectedLayout
+									)}
+									<div class="max-w-full max-h-full">
+										{@html previewSvg}
+									</div>
+								{:else}
+									<span class="text-sm text-gray-400">No preview available</span>
+								{/if}
+							</div>
+						</div>
+					</div>
+				{:else}
+					<!-- No feasible solutions -->
+					<div class="p-8 text-center text-gray-500">
+						<p class="text-sm">
+							No non-overlapping layout was found. Try increasing the gap or adjusting layer
+							positions.
+						</p>
 					</div>
 				{/if}
 
-				<div class="flex items-center justify-end gap-2">
+				<!-- Footer -->
+				<div class="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
 					{#if bruteforceRunSummary.stopReason === 'time_limit'}
+						<div class="flex items-center gap-3">
+							<button
+								type="button"
+								onclick={handleContinueBruteforce}
+								class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+								data-testid="bruteforce-result-continue-button"
+							>
+								Continue Searching
+							</button>
+							<div class="flex items-center gap-2 text-sm text-gray-500">
+								<span>Continue for</span>
+								<input
+									type="number"
+									min="1"
+									step="1"
+									bind:value={bruteforceExtendRuntimeSInput}
+									class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+								/>
+								<span>s</span>
+							</div>
+						</div>
+					{:else}
+						<div></div>
+					{/if}
+					<div class="flex items-center gap-2">
 						<button
 							type="button"
-							onclick={handleContinueBruteforce}
+							onclick={handleAcceptBruteforceResult}
 							class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
-							data-testid="bruteforce-result-continue-button"
 						>
-							Continue
+							Cancel
 						</button>
-					{/if}
-					<button
-						type="button"
-						onclick={handleAcceptBruteforceResult}
-						class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
-						data-testid="bruteforce-result-accept-button"
-					>
-						Accept
-					</button>
+						{#if bruteforceRunSummary.feasibleSolutionsFound > 0}
+							<button
+								type="button"
+								onclick={() => {
+									const selectedLayout = optimizerTopLayouts[optimizerResultSelectedIndex];
+									if (selectedLayout) {
+										doodledialStore.applyLayerRotations(selectedLayout);
+									}
+									bruteforceResultDialogOpen = false;
+								}}
+								class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
+								data-testid="bruteforce-result-accept-button"
+							>
+								Accept Layout
+							</button>
+						{/if}
+					</div>
 				</div>
 			</section>
 		</div>

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
 const {
@@ -47,6 +47,7 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 
 import {
 	BruteforceOptimizerCancelledError,
+	addToTopLayouts,
 	calculateAssignedMinGapUpperBound,
 	runBruteforceOptimizer
 } from './run-bruteforce-optimizer';
@@ -210,5 +211,63 @@ describe('calculateAssignedMinGapUpperBound', () => {
 		expect(calculateAssignedMinGapUpperBound([0, 120, 240])).toBe(120);
 		expect(calculateAssignedMinGapUpperBound([0, 90, 200])).toBe(90);
 		expect(calculateAssignedMinGapUpperBound([350, 10, 120])).toBe(20);
+	});
+});
+
+describe('addToTopLayouts', () => {
+	it('adds a layout when under the limit', () => {
+		const layouts: Record<string, number>[] = [];
+		const candidate = { a: 0, b: 90, c: 180 };
+		const result = addToTopLayouts(candidate, layouts);
+		expect(result).toBe(true);
+		expect(layouts).toHaveLength(1);
+		expect(layouts[0]).toEqual(candidate);
+	});
+
+	it('adds up to MAX_TOP_LAYOUTS layouts', () => {
+		const layouts: Record<string, number>[] = [];
+		for (let i = 0; i < 12; i++) {
+			const candidate = { a: 0, b: i * 30, c: (i * 30 + 120) % 360 };
+			const result = addToTopLayouts(candidate, layouts);
+			expect(result).toBe(true);
+		}
+		expect(layouts).toHaveLength(12);
+	});
+
+	it('replaces the worst layout when at the limit and candidate is better', () => {
+		const layouts: Record<string, number>[] = [];
+		// Fill with 12 layouts at 30-degree spacing — all have min gap 30
+		for (let i = 0; i < 12; i++) {
+			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
+		}
+		// All have min gap 30. A candidate with min gap 45 should replace the worst
+		const betterCandidate = { a: 0, b: 15, c: 195 };
+		const result = addToTopLayouts(betterCandidate, layouts);
+		expect(result).toBe(true);
+		expect(layouts).toHaveLength(12);
+		expect(layouts).toContainEqual(betterCandidate);
+	});
+
+	it('does nothing when candidate is worse than all in a full list', () => {
+		const layouts: Record<string, number>[] = [];
+		// Fill with 12 layouts — each has all distinct angles so minGap >= 10
+		for (let i = 0; i < 12; i++) {
+			layouts.push({ a: 0, b: i * 30 + 10, c: (i * 30 + 130) % 360 });
+		}
+		const snapshot = layouts.map((l) => ({ ...l }));
+		// Min gap 0 — should be worse than any layout in the list
+		const worseCandidate = { a: 0, b: 0, c: 0 };
+		const result = addToTopLayouts(worseCandidate, layouts);
+		expect(result).toBe(false);
+		expect(layouts).toEqual(snapshot);
+	});
+
+	it('does not mutate the input candidate', () => {
+		const layouts: Record<string, number>[] = [];
+		const candidate = { a: 0, b: 90, c: 180 };
+		addToTopLayouts(candidate, layouts);
+		// Mutating the stored layout should not affect the original
+		layouts[0].b = 999;
+		expect(candidate.b).toBe(90);
 	});
 });
