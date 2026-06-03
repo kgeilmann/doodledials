@@ -50,7 +50,8 @@ import {
 	addToTopLayouts,
 	calculateAssignedMinGapUpperBound,
 	layoutDistance,
-	runBruteforceOptimizer
+	runBruteforceOptimizer,
+	seededShuffle
 } from './run-bruteforce-optimizer';
 
 function buildInput(layers: Layer[]) {
@@ -124,6 +125,31 @@ describe('layoutDistance', () => {
 		const a = { layerA: 0 };
 		const b = { layerA: 360 };
 		expect(layoutDistance(a, b)).toBe(0);
+	});
+});
+
+describe('seededShuffle', () => {
+	it('returns all elements', () => {
+		const input = [1, 2, 3, 4, 5];
+		const result = seededShuffle(input, 42);
+		expect(result.sort()).toEqual(input.sort());
+	});
+
+	it('is deterministic for same seed', () => {
+		const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+		expect(seededShuffle(input, 12345)).toEqual(seededShuffle(input, 12345));
+	});
+
+	it('produces different order for different seeds', () => {
+		const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+		expect(seededShuffle(input, 12345)).not.toEqual(seededShuffle(input, 67890));
+	});
+
+	it('does not mutate the input array', () => {
+		const input = [1, 2, 3, 4, 5];
+		const copy = [...input];
+		seededShuffle(input, 42);
+		expect(input).toEqual(copy);
 	});
 });
 

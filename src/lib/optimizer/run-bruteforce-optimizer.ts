@@ -147,6 +147,17 @@ export function layoutDistance(
 	return 1 - sameBinCount / allLayerIds.size;
 }
 
+export function seededShuffle<T>(array: T[], seed: number): T[] {
+	const result = [...array];
+	let state = seed | 0;
+	for (let i = result.length - 1; i > 0; i--) {
+		state = (Math.imul(state, 1103515245) + 12345) | 0;
+		const j = ((state >>> 16) & 0x7fff) % (i + 1);
+		[result[i], result[j]] = [result[j], result[i]];
+	}
+	return result;
+}
+
 export function analyzeCircularGaps(layout: Record<string, number>): {
 	minGap: number;
 	variance: number;
