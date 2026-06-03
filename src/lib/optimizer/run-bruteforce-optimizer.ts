@@ -125,6 +125,28 @@ function serializeLayout(layout: Record<string, number>): string {
 		.join('|');
 }
 
+const SIMILARITY_BINS = 12;
+
+export function layoutSimilarity(
+	a: Record<string, number>,
+	b: Record<string, number>
+): number {
+	if (Object.keys(a).length === 0 && Object.keys(b).length === 0) return 0;
+	const allLayerIds = new Set([...Object.keys(a), ...Object.keys(b)]);
+
+	const bin = (angle: number) =>
+		Math.floor(normalizeAngle(angle) / (360 / SIMILARITY_BINS));
+
+	let sameBinCount = 0;
+	for (const layerId of allLayerIds) {
+		if (bin(a[layerId] ?? 0) === bin(b[layerId] ?? 0)) {
+			sameBinCount += 1;
+		}
+	}
+
+	return 1 - sameBinCount / allLayerIds.size;
+}
+
 export function analyzeCircularGaps(layout: Record<string, number>): {
 	minGap: number;
 	variance: number;

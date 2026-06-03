@@ -49,6 +49,7 @@ import {
 	BruteforceOptimizerCancelledError,
 	addToTopLayouts,
 	calculateAssignedMinGapUpperBound,
+	layoutSimilarity,
 	runBruteforceOptimizer
 } from './run-bruteforce-optimizer';
 
@@ -88,6 +89,46 @@ function threeLayers(): Layer[] {
 		{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
 	];
 }
+
+describe('layoutSimilarity', () => {
+	it('returns 0 for identical layouts', () => {
+		const a = { layerA: 0, layerB: 90, layerC: 180 };
+		expect(layoutSimilarity(a, a)).toBe(0);
+	});
+
+	it('returns 1 when all layers are in different bins', () => {
+		// 12 bins of 30° each
+		const a = { layerA: 0, layerB: 30 };   // bins 0, 1
+		const b = { layerA: 180, layerB: 210 }; // bins 6, 7
+		expect(layoutSimilarity(a, b)).toBe(1);
+	});
+
+	it('returns 0.5 when half the layers share bins', () => {
+		const a = { layerA: 0, layerB: 90, layerC: 180, layerD: 270 };
+		const b = { layerA: 5, layerB: 180, layerC: 185, layerD: 270 };
+		// layerA: bins 0,0 → same; layerB: 3,6 → diff; layerC: 6,6 → same; layerD: 9,9 → same
+		// 3/4 same bins → similarity = 1 - 0.75 = 0.25
+		expect(layoutSimilarity(a, b)).toBeCloseTo(0.25);
+	});
+
+	it('handles single-layer layouts', () => {
+		const a = { layerA: 0 };
+		const b = { layerA: 15 };
+		expect(layoutSimilarity(a, b)).toBe(0); // same bin 0
+	});
+
+	it('is symmetric', () => {
+		const a = { layerA: 10, layerB: 100 };
+		const b = { layerA: 50, layerB: 200 };
+		expect(layoutSimilarity(a, b)).toBe(layoutSimilarity(b, a));
+	});
+
+	it('normalizes angles before binning', () => {
+		const a = { layerA: 0 };
+		const b = { layerA: 360 };
+		expect(layoutSimilarity(a, b)).toBe(0); // same bin
+	});
+});
 
 describe('runBruteforceOptimizer', () => {
 	beforeEach(() => {
