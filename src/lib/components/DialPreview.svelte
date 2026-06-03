@@ -329,6 +329,14 @@
 </div>
 
 <style>
+	:global(.disc-title) {
+		user-select: none;
+		-webkit-user-select: none;
+		cursor: grab;
+	}
+	:global(.disc-title:active) {
+		cursor: grabbing;
+	}
 	:global(.label-edit-mode .path-label) {
 		cursor: grab;
 	}
