@@ -11,6 +11,7 @@ import {
 } from '$lib/utils/overlap-detection';
 
 const MAX_TOP_LAYOUTS = 12;
+const DIVERSITY_DISTANCE_THRESHOLD = 0.7;
 
 function minDistanceToOthers(
 	layout: Record<string, number>,
@@ -50,11 +51,12 @@ export function addToTopLayouts(
 
 	for (let i = 0; i < topLayouts.length; i++) {
 		const dist = layoutDistance(candidate, topLayouts[i]);
-		if (dist < 0.7) {
+		if (dist < DIVERSITY_DISTANCE_THRESHOLD) {
 			const existingScore = analyzeCircularGaps(topLayouts[i]);
 			if (candidateScore.minGap >= existingScore.minGap) {
-				const candidateNovelty = minDistanceToOthers(candidate, topLayouts);
-				const existingNovelty = minDistanceToOthers(topLayouts[i], topLayouts);
+				const others = topLayouts.filter((_, idx) => idx !== i);
+				const candidateNovelty = minDistanceToOthers(candidate, others);
+				const existingNovelty = minDistanceToOthers(topLayouts[i], others);
 				if (candidateNovelty > existingNovelty) {
 					topLayouts[i] = { ...candidate };
 					return true;
