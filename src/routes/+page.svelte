@@ -58,10 +58,19 @@
 	let optimizerSelectedThumbnailIndex = $state<number | null>(null);
 	let optimizerResultSelectedIndex = $state(0);
 
+	function fitSvg(svg: string): string {
+		return svg
+			.replace(/^(<svg[^>]*?)\s+width="[^"]*"/, '$1')
+			.replace(/^(<svg[^>]*?)\s+height="[^"]*"/, '$1')
+			.replace(/^<svg/, '<svg style="width:100%;height:100%"');
+	}
+
 	let optimizerThumbnailSvgs = $derived.by(() => {
 		const template = optimizerSvgTemplate;
 		if (!template || optimizerTopLayouts.length === 0) return [];
-		return optimizerTopLayouts.map((layout) => combineOptimizerSvgTemplate(template, layout));
+		return optimizerTopLayouts.map((layout) =>
+			fitSvg(combineOptimizerSvgTemplate(template, layout))
+		);
 	});
 
 	function handleThumbnailClick(index: number) {
@@ -961,11 +970,10 @@
 								class="flex-1 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center min-h-[300px] overflow-hidden p-4"
 							>
 								{#if selectedLayout && optimizerSvgTemplate}
-									{@const previewSvg = combineOptimizerSvgTemplate(
-										optimizerSvgTemplate,
-										selectedLayout
+									{@const previewSvg = fitSvg(
+										combineOptimizerSvgTemplate(optimizerSvgTemplate, selectedLayout)
 									)}
-									<div class="max-w-full max-h-full">
+									<div class="w-full h-full flex items-center justify-center">
 										{@html previewSvg}
 									</div>
 								{:else}
