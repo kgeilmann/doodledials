@@ -240,13 +240,15 @@ describe('runBruteforceOptimizer', () => {
 		const input = buildInput(threeLayers());
 		const first = await runBruteforceOptimizer(input, undefined, {
 			roundOutputAngles: false,
-			maxRuntimeMs: 50
+			maxRuntimeMs: 100
 		});
 		const second = await runBruteforceOptimizer(input, undefined, {
 			roundOutputAngles: false,
-			maxRuntimeMs: 50,
+			maxRuntimeMs: 100,
 			searchSeed: 99999
 		});
+		expect(first.feasibleSolutionsFound).toBeGreaterThan(0);
+		expect(second.feasibleSolutionsFound).toBeGreaterThan(0);
 		expect(JSON.stringify(first.layout)).not.toEqual(JSON.stringify(second.layout));
 	});
 

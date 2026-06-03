@@ -151,6 +151,15 @@ function throwIfCancelled(signal?: AbortSignal): void {
 	}
 }
 
+function hashString(str: string): number {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		hash = ((hash << 5) - hash) + str.charCodeAt(i);
+		hash = hash & hash;
+	}
+	return Math.abs(hash);
+}
+
 function serializeLayout(layout: Record<string, number>): string {
 	return Object.entries(layout)
 		.sort(([leftId], [rightId]) => leftId.localeCompare(rightId))
@@ -684,15 +693,6 @@ export async function runBruteforceOptimizer(
 			feasibleAngles
 		};
 	};
-	function hashString(str: string): number {
-		let hash = 0;
-		for (let i = 0; i < str.length; i++) {
-			hash = ((hash << 5) - hash) + str.charCodeAt(i);
-			hash = hash & hash;
-		}
-		return Math.abs(hash);
-	}
-
 	type DomainTrailEntry = { layerId: string; angle: number };
 
 	const applyAssignmentConstraints = async (
