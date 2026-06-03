@@ -236,6 +236,20 @@ describe('runBruteforceOptimizer', () => {
 		expect(result.layout.layerB).toBe(0);
 	});
 
+	test('produces different results with different search seeds', async () => {
+		const input = buildInput(threeLayers());
+		const first = await runBruteforceOptimizer(input, undefined, {
+			roundOutputAngles: false,
+			maxRuntimeMs: 50
+		});
+		const second = await runBruteforceOptimizer(input, undefined, {
+			roundOutputAngles: false,
+			maxRuntimeMs: 50,
+			searchSeed: 99999
+		});
+		expect(JSON.stringify(first.layout)).not.toEqual(JSON.stringify(second.layout));
+	});
+
 	test('returns a feasible layout with unique angles across all layers', async () => {
 		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
 			roundOutputAngles: false

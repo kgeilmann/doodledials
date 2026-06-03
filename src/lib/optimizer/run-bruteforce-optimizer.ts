@@ -120,6 +120,7 @@ export interface BruteforceOptimizerOptions {
 	roundOutputAngles?: boolean;
 	maxRuntimeMs?: number;
 	anchorLayerId?: string;
+	searchSeed?: number;
 	onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
 	resumeContext?: BruteforceResumeContext;
 }
@@ -683,6 +684,14 @@ export async function runBruteforceOptimizer(
 			feasibleAngles
 		};
 	};
+	function hashString(str: string): number {
+		let hash = 0;
+		for (let i = 0; i < str.length; i++) {
+			hash = ((hash << 5) - hash) + str.charCodeAt(i);
+			hash = hash & hash;
+		}
+		return Math.abs(hash);
+	}
 
 	type DomainTrailEntry = { layerId: string; angle: number };
 
@@ -788,7 +797,10 @@ export async function runBruteforceOptimizer(
 			(unassignedLayerId) => unassignedLayerId !== layerId
 		);
 
-		for (const angle of feasibleAngles) {
+		const searchSeed = options?.searchSeed ?? 0;
+		const shuffledAngles = seededShuffle(feasibleAngles, hashString(layerId) + depth + searchSeed);
+
+		for (const angle of shuffledAngles) {
 			throwIfCancelled(options?.signal);
 			nodesVisited += 1;
 			reportProgress();
