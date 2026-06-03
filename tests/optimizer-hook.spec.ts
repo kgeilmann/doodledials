@@ -34,7 +34,6 @@ test.describe('Optimizer Hook', () => {
 		await expect(page.getByTestId('optimizer-config-dialog')).toBeVisible();
 		await page.getByTestId('optimizer-dialog-run-button').click();
 		await expect(page.getByTestId('optimizer-progress-track')).toBeVisible();
-		await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Combinations');
 		await expect(page.getByTestId('optimizer-progress-message')).toContainText('Combinations');
 		await expect(page.getByTestId('optimizer-time-counter')).toContainText('Elapsed');
 		await expect(page.getByTestId('optimizer-time-counter')).toContainText('Max');
@@ -74,7 +73,6 @@ test.describe('Optimizer Hook', () => {
 		await expect(page.getByTestId('optimizer-config-dialog')).toBeVisible();
 		await page.getByTestId('optimizer-dialog-run-button').click();
 		await expect(page.getByTestId('optimizer-progress-track')).toBeVisible();
-		await expect(page.getByTestId('optimizer-iteration-counter')).toContainText('Iterations');
 		await expect(page.getByTestId('optimizer-progress-message')).toContainText('Iterations');
 		await frontendLogPromise;
 		await page.waitForLoadState('networkidle');

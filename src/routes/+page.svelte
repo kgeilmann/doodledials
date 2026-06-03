@@ -598,20 +598,11 @@
 			<section
 				class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl p-6"
 			>
-				<div class="flex items-start justify-between gap-4 mb-4">
-					<div>
-						<h2 class="text-xl font-semibold text-gray-900">
-							{optimizerMode === 'bruteforce' ? 'Run Brute Force Optimizer' : 'Run Optimizer'}
-						</h2>
-						<p class="text-sm text-gray-600 mt-1">Configure options, then start optimization.</p>
-					</div>
-					<button
-						type="button"
-						onclick={handleCloseOptimizerDialog}
-						class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						Close
-					</button>
+				<div>
+					<h2 class="text-xl font-semibold text-gray-900">
+						{optimizerMode === 'bruteforce' ? 'Run Brute Force Optimizer' : 'Run Optimizer'}
+					</h2>
+					<p class="text-sm text-gray-600 mt-1">Configure options, then start optimization.</p>
 				</div>
 
 				<div class="grid grid-cols-2 gap-3 text-sm">
@@ -849,24 +840,24 @@
 				{/if}
 
 				<div class="flex items-center justify-end gap-2">
-					<button
-						type="button"
-						onclick={handleAcceptBruteforceResult}
-						class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
-						data-testid="bruteforce-result-accept-button"
-					>
-						Accept
-					</button>
 					{#if bruteforceRunSummary.stopReason === 'time_limit'}
 						<button
 							type="button"
 							onclick={handleContinueBruteforce}
-							class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
+							class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
 							data-testid="bruteforce-result-continue-button"
 						>
 							Continue
 						</button>
 					{/if}
+					<button
+						type="button"
+						onclick={handleAcceptBruteforceResult}
+						class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
+						data-testid="bruteforce-result-accept-button"
+					>
+						Accept
+					</button>
 				</div>
 			</section>
 		</div>

@@ -22,6 +22,7 @@ export interface OptimizerProgress {
 	message: string;
 	iteration: number;
 	totalIterations: number;
+	feasibleSolutionsFound?: number;
 }
 
 export interface OptimizerResult {

@@ -22,6 +22,7 @@ export interface OptimizerProgress {
 	message: string;
 	iteration: number;
 	totalIterations: number;
+	feasibleSolutionsFound?: number;
 }
 
 export interface OptimizerResult {
@@ -292,7 +293,7 @@ export async function runBruteforceOptimizer(
 	): void => {
 		onProgress?.({
 			percent: 100,
-			message: 'Combinations 0/0',
+			message: `Solutions found: ${feasibleSolutionsFound}`,
 			iteration: 0,
 			totalIterations: 0
 		});
@@ -428,9 +429,10 @@ export async function runBruteforceOptimizer(
 
 		onProgress?.({
 			percent,
-			message: `Combinations ${nodesVisited}/${totalIterations}`,
+			message: `Solutions found: ${feasibleSolutionsFound}`,
 			iteration: nodesVisited,
-			totalIterations
+			totalIterations,
+			feasibleSolutionsFound
 		});
 	};
 
