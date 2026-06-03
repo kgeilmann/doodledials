@@ -103,7 +103,7 @@ describe('layoutSimilarity', () => {
 		expect(layoutSimilarity(a, b)).toBe(1);
 	});
 
-	it('returns 0.5 when half the layers share bins', () => {
+	it('returns 0.25 when 3/4 layers share bins', () => {
 		const a = { layerA: 0, layerB: 90, layerC: 180, layerD: 270 };
 		const b = { layerA: 5, layerB: 180, layerC: 185, layerD: 270 };
 		// layerA: bins 0,0 → same; layerB: 3,6 → diff; layerC: 6,6 → same; layerD: 9,9 → same
