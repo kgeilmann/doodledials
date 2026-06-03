@@ -127,7 +127,7 @@ function serializeLayout(layout: Record<string, number>): string {
 
 const SIMILARITY_BINS = 12;
 
-export function layoutSimilarity(
+export function layoutDistance(
 	a: Record<string, number>,
 	b: Record<string, number>
 ): number {
