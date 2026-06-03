@@ -34,7 +34,6 @@ export function addToTopLayouts(
 		return true;
 	}
 
-	// Phase 1: Quality-based replacement (existing behavior)
 	let worstIndex = 0;
 	for (let i = 1; i < topLayouts.length; i++) {
 		if (!isBetterLayout(topLayouts[i], topLayouts[worstIndex])) {
@@ -47,9 +46,6 @@ export function addToTopLayouts(
 		return true;
 	}
 
-	// Phase 2: Diversity-based replacement.
-	// Find a layout that is structurally similar to the candidate
-	// and replace it if the candidate has >= min gap and is more novel.
 	const candidateScore = analyzeCircularGaps(candidate);
 
 	for (let i = 0; i < topLayouts.length; i++) {

@@ -321,6 +321,30 @@ describe('addToTopLayouts', () => {
 		expect(layouts).toContainEqual(novelCandidate);
 	});
 
+	it('uses Phase 2 diversity path when quality is tied and candidate is more novel', () => {
+		const layouts: Record<string, number>[] = [];
+		for (let i = 0; i < 12; i++) {
+			layouts.push({ a: 0, b: 0, c: 120 });
+		}
+		const candidate = { a: 0, b: 0, c: 110 };
+		const result = addToTopLayouts(candidate, layouts);
+		expect(result).toBe(true);
+		expect(layouts).toHaveLength(12);
+		expect(layouts).toContainEqual(candidate);
+	});
+
+	it('does nothing when candidate is worse than all in a full list', () => {
+		const layouts: Record<string, number>[] = [];
+		for (let i = 0; i < 12; i++) {
+			layouts.push({ a: 0, b: i * 30 + 10, c: (i * 30 + 130) % 360 });
+		}
+		const snapshot = layouts.map((l) => ({ ...l }));
+		const worseCandidate = { a: 0, b: 0, c: 0 };
+		const result = addToTopLayouts(worseCandidate, layouts);
+		expect(result).toBe(false);
+		expect(layouts).toEqual(snapshot);
+	});
+
 	it('never exceeds MAX_TOP_LAYOUTS', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
