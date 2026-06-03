@@ -423,7 +423,8 @@
 						<input
 							type="text"
 							placeholder="Optional disc title..."
-							bind:value={doodledialStore.discTitle}
+							value={doodledialStore.discTitle}
+							oninput={(e) => doodledialStore.setDiscTitle(e.currentTarget.value)}
 							class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 						/>
 					</label>
@@ -434,7 +435,8 @@
 							min="8"
 							max="36"
 							step="1"
-							bind:value={doodledialStore.discTitleFontSize}
+							value={doodledialStore.discTitleFontSize}
+							oninput={(e) => doodledialStore.setDiscTitleFontSize(Number(e.currentTarget.value))}
 							class="flex-1 accent-indigo-600"
 						/>
 						<span class="text-xs text-gray-500 w-8 text-right"
