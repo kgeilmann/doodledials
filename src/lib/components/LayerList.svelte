@@ -95,16 +95,6 @@
 				>
 					Hide All
 				</button>
-				<span class="text-gray-300">|</span>
-				<button
-					type="button"
-					onclick={() => doodledialStore.toggleLabelEditMode()}
-					class="text-xs {doodledialStore.labelEditMode
-						? 'text-indigo-600 font-bold bg-indigo-100 px-2 py-0.5 rounded'
-						: 'text-indigo-600 hover:text-indigo-800 font-medium'}"
-				>
-					{doodledialStore.labelEditMode ? 'Done' : 'Edit Labels'}
-				</button>
 			</div>
 		</div>
 
@@ -207,7 +197,7 @@
 									value={layer.rotation}
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
-									disabled={!layer.visible || doodledialStore.labelEditMode}
+									disabled={!layer.visible}
 								/>
 							</div>
 						</div>

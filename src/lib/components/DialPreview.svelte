@@ -61,7 +61,7 @@
 		const target = e.target as HTMLElement;
 
 		const isDiscTitle = target.closest('[data-disc-title]') !== null;
-		if (isDiscTitle && !doodledialStore.labelEditMode) {
+		if (isDiscTitle) {
 			isDraggingTitle = true;
 			titleInitialX = doodledialStore.discTitleX;
 			titleInitialY = doodledialStore.discTitleY;
@@ -85,7 +85,7 @@
 		doodledialStore.setSelectedLayer(layerId);
 		doodledialStore.setHighlightedLayer(layerId);
 
-		if (doodledialStore.labelEditMode && isPathLabel) {
+		if (isPathLabel) {
 			isDraggingLabel = true;
 			dragLabelLayerId = layerId;
 
@@ -105,7 +105,7 @@
 			labelDragStartSvgY = startPoint.y;
 
 			(target as HTMLElement).setPointerCapture(e.pointerId);
-		} else if (!doodledialStore.labelEditMode && !isPathLabel) {
+		} else if (!isPathLabel) {
 			isDragging = true;
 			dragLayerId = layerId;
 			(target as HTMLElement).setPointerCapture(e.pointerId);
@@ -141,7 +141,7 @@
 
 			doodledialStore.setDiscTitlePosition(titleInitialX + deltaX, titleInitialY + deltaY);
 			return;
-		} else if (isDragging && dragLayerId && !doodledialStore.labelEditMode) {
+		} else if (isDragging && dragLayerId) {
 			const { cx, cy } = getDiscCenter();
 			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
 			doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
@@ -233,7 +233,6 @@
 		});
 		void doodledialStore.highlightedLayer;
 		void doodledialStore.selectedLayer;
-		void doodledialStore.labelEditMode;
 		void doodledialStore.discTitle;
 		void doodledialStore.discTitleX;
 		void doodledialStore.discTitleY;
@@ -257,9 +256,7 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	{#if doodledialStore.svgContent}
 		<div
-			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {doodledialStore.labelEditMode
-				? 'ring-2 ring-indigo-400 ring-offset-2'
-				: ''} {doodledialStore.labelEditMode ? 'label-edit-mode' : ''}"
+			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10"
 			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px;"
 			bind:this={svgContainer}
 			onpointerdown={handlePointerDown}
@@ -267,13 +264,6 @@
 			onpointerup={handlePointerUp}
 			onclick={handleClick}
 		>
-			{#if doodledialStore.labelEditMode}
-				<div
-					class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded shadow z-30"
-				>
-					Drag labels to reposition
-				</div>
-			{/if}
 			{#if hiddenCount > 0}
 				<div
 					class="absolute top-0 left-0 right-0 bg-amber-400 text-amber-900 text-xs px-3 py-2 rounded-t-xl flex items-center gap-2 z-20 shadow-sm"
@@ -338,14 +328,14 @@
 	:global(.disc-title:active) {
 		cursor: grabbing;
 	}
-	:global(.label-edit-mode .path-label) {
+	:global(.path-label) {
 		cursor: grab;
 	}
-	:global(.label-edit-mode .path-label:hover) {
+	:global(.path-label:hover) {
 		fill: #6366f1;
 		font-weight: 700;
 	}
-	:global(.label-edit-mode .path-label:active) {
+	:global(.path-label:active) {
 		cursor: grabbing;
 	}
 </style>

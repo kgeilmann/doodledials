@@ -16,7 +16,7 @@ function createDoodledialStore() {
 	const layers: SvelteMap<string, Layer> = new SvelteMap();
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
-	let labelEditMode = $state<boolean>(false);
+
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
 	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
@@ -163,9 +163,7 @@ function createDoodledialStore() {
 		get selectedLayer() {
 			return selectedLayer;
 		},
-		get labelEditMode() {
-			return labelEditMode;
-		},
+
 		get checkingOverlaps() {
 			return checkingOverlaps;
 		},
@@ -226,7 +224,6 @@ function createDoodledialStore() {
 		},
 		setSvgContent(content: SVGContent | null) {
 			svgContent = content;
-			labelEditMode = false;
 		},
 		setCombinedSvg(svg: string | null) {
 			combinedSvg = svg;
@@ -246,9 +243,6 @@ function createDoodledialStore() {
 		},
 		setSelectedLayer(layerId: string | null) {
 			selectedLayer = layerId;
-		},
-		toggleLabelEditMode() {
-			labelEditMode = !labelEditMode;
 		},
 		setCheckingOverlaps(checking: boolean) {
 			checkingOverlaps = checking;
@@ -408,7 +402,6 @@ function createDoodledialStore() {
 			isLoading = false;
 			error = null;
 			layers.clear();
-			labelEditMode = false;
 			discTitle = '';
 			discTitleX = 100;
 			discTitleY = 20;
