@@ -59,11 +59,6 @@
 
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target as HTMLElement;
-		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
-		if (!layerId) return;
-
-		doodledialStore.setSelectedLayer(layerId);
-		doodledialStore.setHighlightedLayer(layerId);
 
 		const isDiscTitle = target.closest('[data-disc-title]') !== null;
 		if (isDiscTitle && !doodledialStore.labelEditMode) {
@@ -83,6 +78,12 @@
 			(target as HTMLElement).setPointerCapture(e.pointerId);
 			return;
 		}
+
+		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
+		if (!layerId) return;
+
+		doodledialStore.setSelectedLayer(layerId);
+		doodledialStore.setHighlightedLayer(layerId);
 
 		if (doodledialStore.labelEditMode && isPathLabel) {
 			isDraggingLabel = true;
