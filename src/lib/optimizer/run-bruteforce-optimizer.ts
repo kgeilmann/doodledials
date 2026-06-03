@@ -12,6 +12,19 @@ import {
 
 const MAX_TOP_LAYOUTS = 12;
 
+function minDistanceToOthers(
+	layout: Record<string, number>,
+	layouts: Record<string, number>[]
+): number {
+	let minDist = 1;
+	for (const other of layouts) {
+		if (other === layout) continue;
+		const dist = layoutDistance(layout, other);
+		if (dist < minDist) minDist = dist;
+	}
+	return minDist;
+}
+
 export function addToTopLayouts(
 	candidate: Record<string, number>,
 	topLayouts: Record<string, number>[]
@@ -21,6 +34,7 @@ export function addToTopLayouts(
 		return true;
 	}
 
+	// Phase 1: Quality-based replacement (existing behavior)
 	let worstIndex = 0;
 	for (let i = 1; i < topLayouts.length; i++) {
 		if (!isBetterLayout(topLayouts[i], topLayouts[worstIndex])) {
@@ -31,6 +45,26 @@ export function addToTopLayouts(
 	if (isBetterLayout(candidate, topLayouts[worstIndex])) {
 		topLayouts[worstIndex] = { ...candidate };
 		return true;
+	}
+
+	// Phase 2: Diversity-based replacement.
+	// Find a layout that is structurally similar to the candidate
+	// and replace it if the candidate has >= min gap and is more novel.
+	const candidateScore = analyzeCircularGaps(candidate);
+
+	for (let i = 0; i < topLayouts.length; i++) {
+		const dist = layoutDistance(candidate, topLayouts[i]);
+		if (dist < 0.7) {
+			const existingScore = analyzeCircularGaps(topLayouts[i]);
+			if (candidateScore.minGap >= existingScore.minGap) {
+				const candidateNovelty = minDistanceToOthers(candidate, topLayouts);
+				const existingNovelty = minDistanceToOthers(topLayouts[i], topLayouts);
+				if (candidateNovelty > existingNovelty) {
+					topLayouts[i] = { ...candidate };
+					return true;
+				}
+			}
+		}
 	}
 
 	return false;

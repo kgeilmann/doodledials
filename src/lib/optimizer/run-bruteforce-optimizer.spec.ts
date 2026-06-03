@@ -292,45 +292,49 @@ describe('addToTopLayouts', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
 			const candidate = { a: 0, b: i * 30, c: (i * 30 + 120) % 360 };
-			const result = addToTopLayouts(candidate, layouts);
-			expect(result).toBe(true);
+			expect(addToTopLayouts(candidate, layouts)).toBe(true);
 		}
 		expect(layouts).toHaveLength(12);
 	});
 
-	it('replaces the worst layout when at the limit and candidate is better', () => {
+	it('replaces the worst layout by quality when candidate is better', () => {
 		const layouts: Record<string, number>[] = [];
-		// Fill with 12 layouts at 30-degree spacing — all have min gap 30
 		for (let i = 0; i < 12; i++) {
 			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
 		}
-		// All have min gap 30. A candidate with min gap 45 should replace the worst
-		const betterCandidate = { a: 0, b: 15, c: 195 };
+		const betterCandidate = { a: 0, b: 15, c: 195 }; // min gap 45
 		const result = addToTopLayouts(betterCandidate, layouts);
 		expect(result).toBe(true);
 		expect(layouts).toHaveLength(12);
 		expect(layouts).toContainEqual(betterCandidate);
 	});
 
-	it('does nothing when candidate is worse than all in a full list', () => {
+	it('replaces a redundant layout when candidate is novel and quality is close', () => {
 		const layouts: Record<string, number>[] = [];
-		// Fill with 12 layouts — each has all distinct angles so minGap >= 10
 		for (let i = 0; i < 12; i++) {
-			layouts.push({ a: 0, b: i * 30 + 10, c: (i * 30 + 130) % 360 });
+			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
 		}
-		const snapshot = layouts.map((l) => ({ ...l }));
-		// Min gap 0 — should be worse than any layout in the list
-		const worseCandidate = { a: 0, b: 0, c: 0 };
-		const result = addToTopLayouts(worseCandidate, layouts);
-		expect(result).toBe(false);
-		expect(layouts).toEqual(snapshot);
+		const novelCandidate = { a: 0, b: 179, c: 299 };
+		const result = addToTopLayouts(novelCandidate, layouts);
+		expect(result).toBe(true);
+		expect(layouts).toHaveLength(12);
+		expect(layouts).toContainEqual(novelCandidate);
+	});
+
+	it('never exceeds MAX_TOP_LAYOUTS', () => {
+		const layouts: Record<string, number>[] = [];
+		for (let i = 0; i < 12; i++) {
+			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
+		}
+		addToTopLayouts({ a: 0, b: 45, c: 165 }, layouts);
+		addToTopLayouts({ a: 0, b: 90, c: 210 }, layouts);
+		expect(layouts.length).toBe(12);
 	});
 
 	it('does not mutate the input candidate', () => {
 		const layouts: Record<string, number>[] = [];
 		const candidate = { a: 0, b: 90, c: 180 };
 		addToTopLayouts(candidate, layouts);
-		// Mutating the stored layout should not affect the original
 		layouts[0].b = 999;
 		expect(candidate.b).toBe(90);
 	});
