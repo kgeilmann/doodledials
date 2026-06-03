@@ -337,7 +337,7 @@ describe('addToTopLayouts', () => {
 		expect(layouts).toContainEqual(novelCandidate);
 	});
 
-	it('uses Phase 2 diversity path when quality is tied and candidate is more novel', () => {
+	it('prefers more novel layout when min gap is tied and diversity differs', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
 			layouts.push({ a: 0, b: 0, c: 120 });

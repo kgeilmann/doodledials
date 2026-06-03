@@ -11,7 +11,6 @@ import {
 } from '$lib/utils/overlap-detection';
 
 const MAX_TOP_LAYOUTS = 12;
-const DIVERSITY_DISTANCE_THRESHOLD = 0.7;
 
 function minDistanceToOthers(
 	layout: Record<string, number>,
@@ -26,6 +25,36 @@ function minDistanceToOthers(
 	return minDist;
 }
 
+function isBetterLayoutWithDiversity(
+	candidate: Record<string, number>,
+	incumbent: Record<string, number>,
+	topLayouts: Record<string, number>[]
+): boolean {
+	const candidateScore = analyzeCircularGaps(candidate);
+	const incumbentScore = analyzeCircularGaps(incumbent);
+
+	if (candidateScore.minGap !== incumbentScore.minGap) {
+		return candidateScore.minGap > incumbentScore.minGap;
+	}
+
+	const others = topLayouts.filter((layout) => layout !== incumbent);
+	const candidateDiversity = minDistanceToOthers(candidate, others);
+	const incumbentDiversity = minDistanceToOthers(incumbent, topLayouts);
+	if (candidateDiversity !== incumbentDiversity) {
+		return candidateDiversity > incumbentDiversity;
+	}
+
+	if (candidateScore.variance !== incumbentScore.variance) {
+		return candidateScore.variance < incumbentScore.variance;
+	}
+
+	if (candidateScore.deviationSum !== incumbentScore.deviationSum) {
+		return candidateScore.deviationSum < incumbentScore.deviationSum;
+	}
+
+	return serializeLayout(candidate) < serializeLayout(incumbent);
+}
+
 export function addToTopLayouts(
 	candidate: Record<string, number>,
 	topLayouts: Record<string, number>[]
@@ -37,32 +66,14 @@ export function addToTopLayouts(
 
 	let worstIndex = 0;
 	for (let i = 1; i < topLayouts.length; i++) {
-		if (!isBetterLayout(topLayouts[i], topLayouts[worstIndex])) {
+		if (!isBetterLayoutWithDiversity(topLayouts[i], topLayouts[worstIndex], topLayouts)) {
 			worstIndex = i;
 		}
 	}
 
-	if (isBetterLayout(candidate, topLayouts[worstIndex])) {
+	if (isBetterLayoutWithDiversity(candidate, topLayouts[worstIndex], topLayouts)) {
 		topLayouts[worstIndex] = { ...candidate };
 		return true;
-	}
-
-	const candidateScore = analyzeCircularGaps(candidate);
-
-	for (let i = 0; i < topLayouts.length; i++) {
-		const dist = layoutDistance(candidate, topLayouts[i]);
-		if (dist < DIVERSITY_DISTANCE_THRESHOLD) {
-			const existingScore = analyzeCircularGaps(topLayouts[i]);
-			if (candidateScore.minGap >= existingScore.minGap) {
-				const others = topLayouts.filter((_, idx) => idx !== i);
-				const candidateNovelty = minDistanceToOthers(candidate, others);
-				const existingNovelty = minDistanceToOthers(topLayouts[i], others);
-				if (candidateNovelty > existingNovelty) {
-					topLayouts[i] = { ...candidate };
-					return true;
-				}
-			}
-		}
 	}
 
 	return false;
@@ -154,7 +165,7 @@ function throwIfCancelled(signal?: AbortSignal): void {
 function hashString(str: string): number {
 	let hash = 0;
 	for (let i = 0; i < str.length; i++) {
-		hash = ((hash << 5) - hash) + str.charCodeAt(i);
+		hash = (hash << 5) - hash + str.charCodeAt(i);
 		hash = hash & hash;
 	}
 	return Math.abs(hash);
@@ -169,15 +180,11 @@ function serializeLayout(layout: Record<string, number>): string {
 
 const SIMILARITY_BINS = 12;
 
-export function layoutDistance(
-	a: Record<string, number>,
-	b: Record<string, number>
-): number {
+export function layoutDistance(a: Record<string, number>, b: Record<string, number>): number {
 	if (Object.keys(a).length === 0 && Object.keys(b).length === 0) return 0;
 	const allLayerIds = new Set([...Object.keys(a), ...Object.keys(b)]);
 
-	const bin = (angle: number) =>
-		Math.floor(normalizeAngle(angle) / (360 / SIMILARITY_BINS));
+	const bin = (angle: number) => Math.floor(normalizeAngle(angle) / (360 / SIMILARITY_BINS));
 
 	let sameBinCount = 0;
 	for (const layerId of allLayerIds) {
