@@ -55,8 +55,8 @@
 	let bruteforceResumeContext = $state<BruteforceResumeContext | null>(null);
 	let optimizerTopLayouts = $state<Record<string, number>[]>([]);
 	let optimizerSvgTemplate = $state<OptimizerSvgTemplate | null>(null);
-	let optimizerSelectedThumbnailIndex = $state<number | null>(null);
 	let optimizerResultSelectedIndex = $state(0);
+	let bruteforceUserStopped = $state(false);
 
 	function fitSvg(svg: string): string {
 		return svg
@@ -72,12 +72,6 @@
 			fitSvg(combineOptimizerSvgTemplate(template, layout))
 		);
 	});
-
-	function handleThumbnailClick(index: number) {
-		optimizerSelectedThumbnailIndex = optimizerSelectedThumbnailIndex === index ? null : index;
-	}
-
-	const GRID_SLOTS = Array.from({ length: 12 }, (_, i) => i);
 
 	const optimizerTuningDefaults: Required<OptimizerTuning> = {
 		overlapMagnitudeWeight: 0.1,
@@ -114,7 +108,10 @@
 		await handleRunOptimizer('bruteforce', bruteforceResumeContext);
 	}
 
-	function handleCancelOptimizer() {
+	function handleStopOptimizer() {
+		if (optimizerActiveMode === 'bruteforce') {
+			bruteforceUserStopped = true;
+		}
 		optimizerAbortController?.abort();
 	}
 
@@ -219,7 +216,7 @@
 		optimizerOverlayVisible = true;
 		optimizerTopLayouts = [];
 		optimizerSvgTemplate = null;
-		optimizerSelectedThumbnailIndex = null;
+		bruteforceUserStopped = false;
 		clearOverlayHideTimer();
 		clearOptimizerLiveTimer();
 		optimizerAbortController = new AbortController();
@@ -285,7 +282,12 @@
 					signal: optimizerAbortController.signal,
 					roundOutputAngles: optimizerRoundOutputAngles,
 					maxRuntimeMs,
-					resumeContext: resumeContext ?? undefined
+					resumeContext: resumeContext ?? undefined,
+					onSearchSnapshot: (snapshot) => {
+						if (snapshot.resumeContext) {
+							bruteforceResumeContext = snapshot.resumeContext;
+						}
+					}
 				});
 
 				bruteforceRunStopReason = bruteForceResult.stopReason;
@@ -327,9 +329,15 @@
 				error instanceof OptimizerCancelledError ||
 				error instanceof BruteforceOptimizerCancelledError
 			) {
-				optimizerCancelled = true;
-				optimizerProgressPhase = 'Cancelled';
-				optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || '?')} - optimization cancelled.`;
+				if (optimizerActiveMode === 'bruteforce') {
+					bruteforceRunStopReason = 'stopped';
+					optimizerProgressPhase = 'Stopped';
+					optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || '?')} - optimisation stopped.`;
+				} else {
+					optimizerCancelled = true;
+					optimizerProgressPhase = 'Cancelled';
+					optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || '?')} - optimisation cancelled.`;
+				}
 			} else {
 				optimizerProgressPhase = 'Error';
 				optimizerProgressMessage = 'Optimization failed. Please try again.';
@@ -360,7 +368,7 @@
 			optimizerPending = false;
 			optimizerAbortController = null;
 			scheduleOverlayHide();
-			if (mode === 'bruteforce' && !optimizerCancelled && bruteforceRunStopReason !== null) {
+			if (mode === 'bruteforce' && bruteforceRunStopReason !== null) {
 				bruteforceRunSummary = {
 					stopReason: bruteforceRunStopReason,
 					feasibleSolutionsFound: bruteforceRunFeasibleCount,
@@ -369,7 +377,12 @@
 					elapsedMs: optimizerElapsedMs,
 					layoutApplied: optimizerApplied
 				};
-				bruteforceExtendRuntimeSInput = optimizerMaxRuntimeSInput;
+				if (bruteforceUserStopped) {
+					const remainingMs = Math.max(0, (optimizerMaxRuntimeMs ?? 0) - optimizerElapsedMs);
+					bruteforceExtendRuntimeSInput = String(Math.round(remainingMs / 1000));
+				} else {
+					bruteforceExtendRuntimeSInput = optimizerMaxRuntimeSInput;
+				}
 				bruteforceResultDialogOpen = true;
 			}
 		}
@@ -574,9 +587,8 @@
 						<section
 							class="pointer-events-auto relative mt-4 w-full max-w-4xl rounded-2xl border border-indigo-200 bg-white/95 shadow-lg px-4 py-3"
 						>
-							<div class="flex items-center text-xs text-slate-600 mb-2 gap-4">
+							<div class="flex items-center text-xs text-slate-600 mb-2">
 								<span class="font-medium uppercase tracking-wide">{optimizerProgressPhase}</span>
-								<span>Solutions: {optimizerTopLayouts.length}/12</span>
 							</div>
 							{#if optimizerActiveMode === 'bruteforce'}
 								<div
@@ -602,59 +614,17 @@
 								></div>
 							</div>
 
-							<!-- 4×3 Thumbnail Grid -->
-							{#if optimizerActiveMode === 'bruteforce'}
-								<div class="mt-3 grid grid-cols-4 gap-2">
-									{#each GRID_SLOTS as slotIndex (slotIndex)}
-										{@const svg = optimizerThumbnailSvgs[slotIndex]}
-										<button
-											type="button"
-											onclick={() => handleThumbnailClick(slotIndex)}
-											class="aspect-square rounded-lg border-2 overflow-hidden p-0.5 flex items-center justify-center transition-all duration-150 {svg
-												? 'bg-white border-gray-200 hover:border-indigo-400 cursor-pointer'
-												: 'bg-gray-50 border-dashed border-gray-300 cursor-default'}"
-										>
-											{#if svg}
-												<div
-													class="w-full h-full {optimizerSelectedThumbnailIndex === slotIndex
-														? 'opacity-100'
-														: 'opacity-80 hover:opacity-100'}"
-												>
-													{@html svg}
-												</div>
-											{:else}
-												<span class="text-xs text-gray-300">empty</span>
-											{/if}
-										</button>
-									{/each}
-								</div>
-
-								<!-- Selected thumbnail info bar -->
-								{#if optimizerSelectedThumbnailIndex !== null && optimizerTopLayouts[optimizerSelectedThumbnailIndex]}
-									{@const layout = optimizerTopLayouts[optimizerSelectedThumbnailIndex]}
-									{@const scores = analyzeCircularGaps(layout)}
-									<div
-										class="mt-2 text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 flex gap-4"
-									>
-										<span>Selected: <strong>#{optimizerSelectedThumbnailIndex + 1}</strong></span>
-										<span>Min gap: <strong>{scores.minGap}°</strong></span>
-										<span>Variance: <strong>{scores.variance.toFixed(0)}</strong></span>
-										<span>Deviation: <strong>{scores.deviationSum.toFixed(0)}°</strong></span>
-									</div>
-								{/if}
-							{/if}
-
 							<div class="mt-2 flex items-center justify-between gap-4">
 								<p class="text-sm text-slate-700" data-testid="optimizer-progress-message">
 									{optimizerProgressMessage}
 								</p>
 								{#if optimizerPending}
 									<button
-										onclick={handleCancelOptimizer}
+										onclick={handleStopOptimizer}
 										class="shrink-0 px-3 py-1.5 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 text-sm font-medium transition-colors hover:bg-rose-100"
 										data-testid="optimizer-cancel-button"
 									>
-										Cancel
+										Stop
 									</button>
 								{/if}
 							</div>
@@ -869,10 +839,11 @@
 			<section
 				class="relative w-full max-w-4xl max-h-[90vh] rounded-2xl border border-gray-200 bg-white shadow-2xl flex flex-col overflow-hidden"
 			>
-				<!-- Header -->
 				<div class="px-6 py-4 border-b border-gray-100">
 					<h2 class="text-lg font-semibold text-gray-900">
-						{#if bruteforceRunSummary.stopReason === 'time_limit'}
+						{#if bruteforceRunSummary.stopReason === 'stopped'}
+							Search Stopped — Select a Layout
+						{:else if bruteforceRunSummary.stopReason === 'time_limit'}
 							Time Limit Reached — Select a Layout
 						{:else if bruteforceRunSummary.stopReason === 'exact_complete'}
 							Search Complete — Select a Layout
@@ -997,7 +968,7 @@
 
 				<!-- Footer -->
 				<div class="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
-					{#if bruteforceRunSummary.stopReason === 'time_limit'}
+					{#if bruteforceRunSummary.stopReason === 'time_limit' || bruteforceRunSummary.stopReason === 'stopped'}
 						<div class="flex items-center gap-3">
 							<button
 								type="button"

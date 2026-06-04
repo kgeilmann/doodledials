@@ -127,6 +127,7 @@ export type BruteforceOptimizerStopReason =
 	| 'exact_complete'
 	| 'cancelled'
 	| 'time_limit'
+	| 'stopped'
 	| 'no_feasible_solution';
 
 export interface BruteforceOptimizerSearchSnapshot {
@@ -134,6 +135,7 @@ export interface BruteforceOptimizerSearchSnapshot {
 	depth: number;
 	feasibleSolutionsFound: number;
 	stopReason?: BruteforceOptimizerStopReason;
+	resumeContext?: BruteforceResumeContext;
 }
 
 export interface BruteforceOptimizerOptions {
@@ -856,11 +858,21 @@ export async function runBruteforceOptimizer(
 	} catch (error) {
 		if (error instanceof BruteforceOptimizerCancelledError) {
 			stopReason = 'cancelled';
+			const selectedResumeLayout =
+				bestLayout ?? buildDefaultLayout(input.layers, anchorLayerId, layerIds);
 			options?.onSearchSnapshot?.({
 				nodesVisited,
 				depth: 0,
 				feasibleSolutionsFound,
-				stopReason
+				stopReason,
+				resumeContext: {
+					overlapCache,
+					pairFeasibilityMemo,
+					optimizerSvgTemplate,
+					bestLayout: selectedResumeLayout,
+					topLayouts,
+					feasibleSolutionsFound
+				}
 			});
 			throw error;
 		}
