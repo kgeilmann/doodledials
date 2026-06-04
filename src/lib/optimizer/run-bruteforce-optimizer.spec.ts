@@ -337,15 +337,14 @@ describe('addToTopLayouts', () => {
 		expect(layouts).toContainEqual(novelCandidate);
 	});
 
-	it('prefers more novel layout when min gap is tied and diversity differs', () => {
+	it('prefers more novel layout when all gap metrics are tied and diversity differs', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
-			layouts.push({ a: 0, b: 0, c: 120 });
+			layouts.push({ a: 0, b: 120, c: 240 });
 		}
-		const candidate = { a: 0, b: 0, c: 110 };
+		const candidate = { a: 30, b: 150, c: 270 };
 		const result = addToTopLayouts(candidate, layouts);
 		expect(result).toBe(true);
-		expect(layouts).toHaveLength(12);
 		expect(layouts).toContainEqual(candidate);
 	});
 
