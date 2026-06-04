@@ -27,7 +27,8 @@ export function exportLaserSvg(
 		includeHighlighting: false,
 		respectLayerVisibility: true,
 		applyCutoutTransforms: true,
-		applyDiameter: true
+		applyDiameter: true,
+		useCrosshair: false
 	});
 
 	const doc = SVG(combinedSvg) as Svg;

@@ -180,6 +180,7 @@ export interface CombineDoodledialOptions {
 	respectLayerVisibility?: boolean;
 	applyCutoutTransforms?: boolean;
 	applyDiameter?: boolean;
+	useCrosshair?: boolean;
 	discTitle?: string;
 	discTitleX?: number;
 	discTitleY?: number;
@@ -313,6 +314,7 @@ export function combineDoodledial(
 	const respectLayerVisibility = options?.respectLayerVisibility ?? true;
 	const applyCutoutTransforms = options?.applyCutoutTransforms ?? true;
 	const applyDiameter = options?.applyDiameter ?? true;
+	const useCrosshair = options?.useCrosshair ?? true;
 
 	let highlighted: G;
 	let selected: G;
@@ -362,14 +364,29 @@ export function combineDoodledial(
 		doc.height(pixelDiameter);
 	}
 
-	const centerHole = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
-	if (centerHole) {
-		if (config.centerHoleDiameter > 0) {
-			const holeRadiusPx = (config.centerHoleDiameter * MM_TO_PX) / 2;
-			centerHole.radius(holeRadiusPx);
-			centerHole.show();
+	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
+	if (centerHoleCircle) {
+		if (useCrosshair) {
+			centerHoleCircle.hide();
+			if (config.centerHoleDiameter > 0) {
+				const halfLen = 4;
+				doc
+					.line(cx - halfLen, cy, cx + halfLen, cy)
+					.stroke({ width: 1, color: 'black' })
+					.addClass('center-crosshair');
+				doc
+					.line(cx, cy - halfLen, cx, cy + halfLen)
+					.stroke({ width: 1, color: 'black' })
+					.addClass('center-crosshair');
+			}
 		} else {
-			centerHole.hide();
+			if (config.centerHoleDiameter > 0) {
+				const holeRadiusPx = (config.centerHoleDiameter * MM_TO_PX) / 2;
+				centerHoleCircle.radius(holeRadiusPx);
+				centerHoleCircle.show();
+			} else {
+				centerHoleCircle.hide();
+			}
 		}
 	}
 
