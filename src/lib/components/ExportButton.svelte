@@ -18,6 +18,12 @@
 		return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 	}
 
+	function makeFilename(base: string, ext: string): string {
+		const title = doodledialStore.discTitle.trim();
+		const suffix = title ? `-${title.replace(/[^a-zA-Z0-9_-]/g, '_')}` : '';
+		return `doodledial${suffix}.${ext}`;
+	}
+
 	function createDownload(svgOrStl: string, filename: string, mimeType: string) {
 		const blob = new Blob([svgOrStl], { type: mimeType });
 		const url = URL.createObjectURL(blob);
@@ -39,7 +45,7 @@
 
 		try {
 			const svg = exportPreviewSvg(doodledialStore.combinedSvg);
-			createDownload(svg, 'doodledial-preview.svg', 'image/svg+xml');
+			createDownload(svg, makeFilename('doodledial-preview', 'svg'), 'image/svg+xml');
 			menuOpen = false;
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
@@ -55,7 +61,7 @@
 				doodledialStore.config,
 				getVisibleLayers()
 			);
-			createDownload(svg, 'doodledial.svg', 'image/svg+xml');
+			createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
 			menuOpen = false;
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
@@ -85,7 +91,7 @@
 					markThicknessMm: parseThickness(markThicknessMm, 0.5)
 				}
 			);
-			createDownload(stl, 'doodledial.stl', 'model/stl');
+			createDownload(stl, makeFilename('doodledial', 'stl'), 'model/stl');
 			closeStlDialog();
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
@@ -133,7 +139,14 @@
 					clip-rule="evenodd"
 				/>
 			</svg>
-			<span>Export</span>
+			<span>
+				Export
+				{globalConfig.defaultExportFormat === 'preview-svg'
+					? '(Preview SVG)'
+					: globalConfig.defaultExportFormat === 'stl'
+						? '(3D STL)'
+						: '(Laser SVG)'}
+			</span>
 		</button>
 		<button
 			onclick={() => (menuOpen = !menuOpen)}
