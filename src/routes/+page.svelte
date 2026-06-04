@@ -273,6 +273,9 @@
 				if (progress.optimizerSvgTemplate) {
 					optimizerSvgTemplate = progress.optimizerSvgTemplate;
 				}
+				if (typeof progress.feasibleSolutionsFound === 'number') {
+					bruteforceRunFeasibleCount = progress.feasibleSolutionsFound;
+				}
 			};
 
 			if (mode === 'bruteforce') {
@@ -331,6 +334,10 @@
 			) {
 				if (optimizerActiveMode === 'bruteforce') {
 					bruteforceRunStopReason = 'stopped';
+					bruteforceRunFeasibleCount = Math.max(
+						bruteforceRunFeasibleCount,
+						optimizerTopLayouts.length
+					);
 					optimizerProgressPhase = 'Stopped';
 					optimizerProgressMessage = `${formatProgressCountLabel(optimizerActiveMode, optimizerTotalIterations || '?')} - optimisation stopped.`;
 				} else {
