@@ -4,6 +4,7 @@ import { combineDoodledial, parseSvgPaths } from './doodledial';
 import {
 	exportLaserSvg,
 	exportStl,
+	exportPreviewSvg,
 	labelToSvgStrokePath,
 	labelToThreeShapes
 } from './export-formats';
@@ -126,6 +127,18 @@ describe('export formats', () => {
 		expect(laserSvg).toContain('<text');
 		expect(laserSvg).toContain('operation-cut');
 		expect(laserSvg).toContain('operation-engrave');
+	});
+
+	it('preview SVG export returns the combined SVG as-is', () => {
+		const combined = combineDoodledial(
+			{
+				raw: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>',
+				filename: 'test.svg'
+			},
+			SAMPLE_CONFIG
+		);
+		const result = exportPreviewSvg(combined);
+		expect(result).toBe(combined);
 	});
 
 	it('STL export returns ASCII facets and changes with thickness', () => {

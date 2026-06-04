@@ -57,4 +57,19 @@ test.describe('Export', () => {
 		const [download] = await Promise.all([page.waitForEvent('download'), svgMenuItem.click()]);
 		expect(download.suggestedFilename()).toContain('.svg');
 	});
+
+	test('can select Preview SVG from chevron dropdown', async ({ page }) => {
+		const fileInput = page.locator('input[type="file"]');
+		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
+
+		await fileInput.setInputFiles(sampleSvg);
+		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
+
+		await page.locator('[aria-haspopup="menu"]').click();
+		const previewMenuItem = page.locator('button:has-text("Preview SVG")');
+		await expect(previewMenuItem).toBeVisible();
+
+		const [download] = await Promise.all([page.waitForEvent('download'), previewMenuItem.click()]);
+		expect(download.suggestedFilename()).toContain('.svg');
+	});
 });

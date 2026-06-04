@@ -15,7 +15,9 @@
 	} as const;
 
 	let draftDiameter = $state(globalConfig.diameter);
-	let draftDefaultExportFormat = $state<'laser-svg' | 'stl'>(globalConfig.defaultExportFormat);
+	let draftDefaultExportFormat = $state<'preview-svg' | 'laser-svg' | 'stl'>(
+		globalConfig.defaultExportFormat
+	);
 	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
@@ -258,6 +260,22 @@
 						</p>
 					</div>
 					<fieldset class="flex gap-4">
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition {draftDefaultExportFormat ===
+							'preview-svg'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="export-format"
+								value="preview-svg"
+								checked={draftDefaultExportFormat === 'preview-svg'}
+								onchange={() => (draftDefaultExportFormat = 'preview-svg')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>Preview SVG</span>
+						</label>
 						<label
 							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition {draftDefaultExportFormat ===
 							'laser-svg'

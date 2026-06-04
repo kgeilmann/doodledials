@@ -7,7 +7,7 @@ interface PersistedConfig {
 	forceDirectedOptimizerEnabled: boolean;
 	optimizerGapDefault: number;
 	bruteforceTimeLimit: number;
-	defaultExportFormat: 'laser-svg' | 'stl';
+	defaultExportFormat: 'preview-svg' | 'laser-svg' | 'stl';
 }
 
 const DEFAULTS: PersistedConfig = {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
-	import { exportLaserSvg, exportStl } from '$lib/utils/export-formats';
+	import { exportLaserSvg, exportStl, exportPreviewSvg } from '$lib/utils/export-formats';
 
 	let menuOpen = $state(false);
 	let discThicknessMm = $state('3');
@@ -32,6 +32,18 @@
 
 	function getVisibleLayers() {
 		return doodledialStore.layers.filter((l) => l.visible);
+	}
+
+	function exportPreview() {
+		if (!doodledialStore.combinedSvg) return;
+
+		try {
+			const svg = exportPreviewSvg(doodledialStore.combinedSvg);
+			createDownload(svg, 'doodledial-preview.svg', 'image/svg+xml');
+			menuOpen = false;
+		} catch (err) {
+			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
+		}
 	}
 
 	function exportSvg() {
@@ -82,15 +94,19 @@
 
 	function handleMainClick() {
 		menuOpen = false;
-		if (globalConfig.defaultExportFormat === 'stl') {
+		if (globalConfig.defaultExportFormat === 'preview-svg') {
+			exportPreview();
+		} else if (globalConfig.defaultExportFormat === 'stl') {
 			openStlDialog();
 		} else {
 			exportSvg();
 		}
 	}
 
-	function handleFormatSelect(format: 'laser-svg' | 'stl') {
-		if (format === 'stl') {
+	function handleFormatSelect(format: 'preview-svg' | 'laser-svg' | 'stl') {
+		if (format === 'preview-svg') {
+			exportPreview();
+		} else if (format === 'stl') {
 			openStlDialog();
 		} else {
 			exportSvg();
@@ -148,8 +164,16 @@
 		>
 			<button
 				type="button"
-				onclick={() => handleFormatSelect('laser-svg')}
+				onclick={() => handleFormatSelect('preview-svg')}
 				class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
+				role="menuitem"
+			>
+				<span>Preview SVG</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => handleFormatSelect('laser-svg')}
+				class="flex w-full items-center justify-between border-t border-gray-100 px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
 				role="menuitem"
 			>
 				<span>Laser SVG</span>
