@@ -217,6 +217,9 @@
 		optimizerMaxRuntimeMs = null;
 		optimizerActiveMode = mode;
 		optimizerOverlayVisible = true;
+		optimizerTopLayouts = [];
+		optimizerSvgTemplate = null;
+		optimizerSelectedThumbnailIndex = null;
 		clearOverlayHideTimer();
 		clearOptimizerLiveTimer();
 		optimizerAbortController = new AbortController();
