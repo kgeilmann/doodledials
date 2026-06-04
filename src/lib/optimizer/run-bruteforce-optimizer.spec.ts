@@ -313,24 +313,24 @@ describe('addToTopLayouts', () => {
 		expect(layouts).toHaveLength(12);
 	});
 
-	it('replaces the worst layout by quality when candidate is better', () => {
+	it('replaces the worst layout when candidate ties on diversity and wins on minGap', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
 			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
 		}
-		const betterCandidate = { a: 0, b: 15, c: 195 }; // min gap 45
+		const betterCandidate = { a: 185, b: 275, c: 0 }; // min gap 85, same diversity as existing
 		const result = addToTopLayouts(betterCandidate, layouts);
 		expect(result).toBe(true);
 		expect(layouts).toHaveLength(12);
 		expect(layouts).toContainEqual(betterCandidate);
 	});
 
-	it('replaces a redundant layout when candidate is novel and quality is close', () => {
+	it('replaces a redundant layout when candidate is more diverse and quality is similar', () => {
 		const layouts: Record<string, number>[] = [];
 		for (let i = 0; i < 12; i++) {
 			layouts.push({ a: 0, b: i * 30, c: (i * 30 + 120) % 360 });
 		}
-		const novelCandidate = { a: 0, b: 179, c: 299 };
+		const novelCandidate = { a: 175, b: 290, c: 0 }; // bins (5,9,0) - higher diversity, min gap 70
 		const result = addToTopLayouts(novelCandidate, layouts);
 		expect(result).toBe(true);
 		expect(layouts).toHaveLength(12);

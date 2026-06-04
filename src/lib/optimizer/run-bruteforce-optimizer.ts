@@ -40,18 +40,18 @@ function isBetterLayoutWithDiversity(
 	incumbent: Record<string, number>,
 	topLayouts: Record<string, number>[]
 ): boolean {
-	const candidateScore = analyzeCircularGaps(candidate);
-	const incumbentScore = analyzeCircularGaps(incumbent);
-
-	if (candidateScore.minGap !== incumbentScore.minGap) {
-		return candidateScore.minGap > incumbentScore.minGap;
-	}
-
 	const others = topLayouts.filter((layout) => layout !== incumbent);
 	const candidateDiversity = minDistanceToOthers(candidate, others);
 	const incumbentDiversity = minDistanceToOthers(incumbent, topLayouts);
 	if (candidateDiversity !== incumbentDiversity) {
 		return candidateDiversity > incumbentDiversity;
+	}
+
+	const candidateScore = analyzeCircularGaps(candidate);
+	const incumbentScore = analyzeCircularGaps(incumbent);
+
+	if (candidateScore.minGap !== incumbentScore.minGap) {
+		return candidateScore.minGap > incumbentScore.minGap;
 	}
 
 	if (candidateScore.variance !== incumbentScore.variance) {
