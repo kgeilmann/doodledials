@@ -8,7 +8,7 @@ import {
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 
 const DISC_PADDING_PX = 10;
-const MARK_LENGTH_PX = 6 * MM_TO_PX;
+const MARK_LENGTH_PX = 3 * MM_TO_PX;
 const NORMALIZED_IMAGE_DIMENSION = DEFAULT_DIAL_CONFIG.maxDiameter;
 
 export function parseSvgPaths(svgContent: string): {

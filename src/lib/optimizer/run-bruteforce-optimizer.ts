@@ -11,6 +11,16 @@ import {
 } from '$lib/utils/overlap-detection';
 
 const MAX_TOP_LAYOUTS = 12;
+const MIN_ANGLE_SEPARATION = 2;
+
+function hasAngleConflict(angle: number, usedAngles: boolean[]): boolean {
+	for (let d = -(MIN_ANGLE_SEPARATION - 1); d <= MIN_ANGLE_SEPARATION - 1; d++) {
+		if (usedAngles[(((angle + d) % 360) + 360) % 360]) {
+			return true;
+		}
+	}
+	return false;
+}
 
 function minDistanceToOthers(
 	layout: Record<string, number>,
@@ -636,7 +646,7 @@ export async function runBruteforceOptimizer(
 				reportProgress();
 				await yieldToEventLoopIfNeeded();
 
-				if (usedAngles[angle]) {
+				if (hasAngleConflict(angle, usedAngles)) {
 					continue;
 				}
 
@@ -715,10 +725,13 @@ export async function runBruteforceOptimizer(
 				continue;
 			}
 
-			if (domain[assignedAngle]) {
-				domain[assignedAngle] = 0;
-				domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
-				trail.push({ layerId, angle: assignedAngle });
+			for (let d = -(MIN_ANGLE_SEPARATION - 1); d <= MIN_ANGLE_SEPARATION - 1; d++) {
+				const neighborAngle = (((assignedAngle + d) % 360) + 360) % 360;
+				if (domain[neighborAngle]) {
+					domain[neighborAngle] = 0;
+					domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
+					trail.push({ layerId, angle: neighborAngle });
+				}
 			}
 
 			for (let angle = 0; angle < 360; angle++) {
