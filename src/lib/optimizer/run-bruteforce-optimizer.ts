@@ -22,6 +22,32 @@ function hasAngleConflict(angle: number, usedAngles: boolean[]): boolean {
 	return false;
 }
 
+function circularMinDistance(angle: number, assignedAngles: number[]): number {
+	let min = 360;
+	for (const aa of assignedAngles) {
+		const diff = Math.abs(angle - aa);
+		const dist = Math.min(diff, 360 - diff);
+		if (dist < min) min = dist;
+	}
+	return min;
+}
+
+function sortAnglesByGapMaximization(angles: number[], assignedAngles: number[]): number[] {
+	if (assignedAngles.length === 0) return angles;
+	return [...angles].sort(
+		(a, b) => circularMinDistance(b, assignedAngles) - circularMinDistance(a, assignedAngles)
+	);
+}
+
+function computeFragmentation(domain: Uint8Array): number {
+	let count = 0;
+	for (let i = 0; i < 360; i++) {
+		const prev = (i - 1 + 360) % 360;
+		if (domain[prev] === 0 && domain[i] === 1) count++;
+	}
+	return count;
+}
+
 function minDistanceToOthers(
 	layout: Record<string, number>,
 	layouts: Record<string, number>[]
@@ -172,15 +198,6 @@ function throwIfCancelled(signal?: AbortSignal): void {
 	if (signal?.aborted) {
 		throw new BruteforceOptimizerCancelledError();
 	}
-}
-
-function hashString(str: string): number {
-	let hash = 0;
-	for (let i = 0; i < str.length; i++) {
-		hash = (hash << 5) - hash + str.charCodeAt(i);
-		hash = hash & hash;
-	}
-	return Math.abs(hash);
 }
 
 function serializeLayout(layout: Record<string, number>): string {
@@ -675,6 +692,7 @@ export async function runBruteforceOptimizer(
 	): { layerId: string; feasibleAngles: number[] } | null => {
 		let bestLayerId: string | null = null;
 		let bestCount = Number.POSITIVE_INFINITY;
+		let bestFragmentation = -1;
 
 		for (const layerId of unassignedLayerIds) {
 			const domainCount = domainCountByLayer.get(layerId) ?? 0;
@@ -682,12 +700,24 @@ export async function runBruteforceOptimizer(
 				return null;
 			}
 
-			if (
-				domainCount < bestCount ||
-				(domainCount === bestCount && (!bestLayerId || layerId < bestLayerId))
-			) {
+			if (domainCount < bestCount) {
 				bestLayerId = layerId;
 				bestCount = domainCount;
+				bestFragmentation = -1;
+			} else if (domainCount === bestCount) {
+				const domain = domainByLayer.get(layerId);
+				if (!domain) continue;
+
+				if (bestFragmentation === -1 && bestLayerId) {
+					const bestDomain = domainByLayer.get(bestLayerId);
+					if (bestDomain) bestFragmentation = computeFragmentation(bestDomain);
+				}
+
+				const frag = computeFragmentation(domain);
+				if (frag > bestFragmentation) {
+					bestLayerId = layerId;
+					bestFragmentation = frag;
+				}
 			}
 		}
 
@@ -819,10 +849,9 @@ export async function runBruteforceOptimizer(
 			(unassignedLayerId) => unassignedLayerId !== layerId
 		);
 
-		const searchSeed = options?.searchSeed ?? 0;
-		const shuffledAngles = seededShuffle(feasibleAngles, hashString(layerId) + depth + searchSeed);
+		const sortedAngles = sortAnglesByGapMaximization(feasibleAngles, [...assigned.values()]);
 
-		for (const angle of shuffledAngles) {
+		for (const angle of sortedAngles) {
 			throwIfCancelled(options?.signal);
 			nodesVisited += 1;
 			reportProgress();
