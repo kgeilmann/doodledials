@@ -14,12 +14,15 @@ ordinal: 5000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Add visual feedback in DialPreview (e.g., different cursor, highlighted labels) when in edit mode so users know they can drag labels
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate DialPreview.svelte
 
 - File: `src/lib/components/DialPreview.svelte`

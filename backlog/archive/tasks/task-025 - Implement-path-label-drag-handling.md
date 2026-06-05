@@ -14,12 +14,15 @@ ordinal: 6000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Add pointer event handlers in DialPreview.svelte to detect path label clicks and drag them when in edit mode. In edit mode, layer rotation dragging should be disabled.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate DialPreview.svelte
 
 - File: `src/lib/components/DialPreview.svelte`

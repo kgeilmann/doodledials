@@ -14,12 +14,15 @@ ordinal: 8000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Change cursor to "grab" when hovering path labels in edit mode, "grabbing" when dragging to provide better UX feedback
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate Where to Add CSS
 
 - File: `src/lib/components/DialPreview.svelte`

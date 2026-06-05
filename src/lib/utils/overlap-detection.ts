@@ -507,8 +507,8 @@ async function renderSvgToBitmap(
 	let context: CanvasRenderingContext2D;
 	try {
 		context = acquireRenderContext(width, height);
-	} catch (e) {
-		throw new Error('Failed to acquire canvas context for overlap detection rendering');
+	} catch (cause) {
+		throw new Error('Failed to acquire canvas context for overlap detection rendering', { cause });
 	}
 	context.clearRect(0, 0, width, height);
 

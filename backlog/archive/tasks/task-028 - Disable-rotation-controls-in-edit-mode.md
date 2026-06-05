@@ -14,12 +14,15 @@ ordinal: 9000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Disable the rotation knob in edit mode since layer rotation is disabled while repositioning labels
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate LayerList.svelte
 
 - File: `src/lib/components/LayerList.svelte`

@@ -14,12 +14,15 @@ ordinal: 7000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Modify combineDoodledial in src/lib/utils/doodledial.ts to apply labelOffsetX and labelOffsetY when positioning path labels
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate combineDoodledial Function
 
 - File: `src/lib/utils/doodledial.ts`

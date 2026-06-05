@@ -14,12 +14,15 @@ ordinal: 2000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Add `setLayerLabelOffset(id: string, x: number, y: number)` method to `src/lib/stores/doodledial.svelte.ts` to update path label offsets
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate Store File
 
 - File: `src/lib/stores/doodledial.svelte.ts`

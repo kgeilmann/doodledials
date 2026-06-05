@@ -14,12 +14,15 @@ ordinal: 4000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Add an "Edit Labels" toggle button in LayerList.svelte that switches between normal and edit mode. Only visible when layers exist.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
+
 ### 1. Locate and Examine LayerList.svelte
 
 - File: `src/lib/components/LayerList.svelte`
