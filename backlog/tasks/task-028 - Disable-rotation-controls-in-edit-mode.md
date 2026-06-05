@@ -4,18 +4,23 @@ title: Disable rotation controls in edit mode
 status: To Do
 assignee: []
 created_date: '2026-04-12 01:13'
+updated_date: '2026-06-05 18:44'
 labels: []
-dependencies: [TASK-022, TASK-023]
+dependencies:
+  - TASK-023
 priority: medium
 ordinal: 9000
 ---
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 Disable the rotation knob in edit mode since layer rotation is disabled while repositioning labels
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
+<!-- SECTION:PLAN:BEGIN -->
 ### 1. Locate LayerList.svelte
 
 - File: `src/lib/components/LayerList.svelte`
@@ -81,3 +86,4 @@ When edit mode is active, users might be confused why rotation is disabled. Cons
 - Run `pnpm check` to verify TypeScript compiles
 - Run `pnpm lint` to check for any linting issues
 - Test that rotation knobs are disabled when Edit Labels mode is active
+<!-- SECTION:PLAN:END -->

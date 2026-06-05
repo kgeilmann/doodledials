@@ -4,18 +4,23 @@ title: Add visual indicator for edit mode
 status: To Do
 assignee: []
 created_date: '2026-04-12 01:12'
+updated_date: '2026-06-05 18:44'
 labels: []
-dependencies: [TASK-022, TASK-023]
+dependencies:
+  - TASK-023
 priority: medium
 ordinal: 5000
 ---
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 Add visual feedback in DialPreview (e.g., different cursor, highlighted labels) when in edit mode so users know they can drag labels
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
+<!-- SECTION:PLAN:BEGIN -->
 ### 1. Locate DialPreview.svelte
 
 - File: `src/lib/components/DialPreview.svelte`
@@ -92,3 +97,4 @@ Add a small tooltip or overlay in edit mode:
 - Run `pnpm check` to verify TypeScript compiles
 - Run `pnpm lint` to check for any linting issues
 - Test visually that edit mode indicators appear when button is clicked
+<!-- SECTION:PLAN:END -->
