@@ -9,6 +9,7 @@
 	let isDragging = $state(false);
 	let dragLayerId = $state<string | null>(null);
 	let svgContainer: HTMLDivElement | null = $state(null);
+	let didDrag = false;
 
 	let isDraggingLabel = $state(false);
 	let dragLabelLayerId = $state<string | null>(null);
@@ -58,6 +59,7 @@
 	}
 
 	function handlePointerDown(e: PointerEvent) {
+		didDrag = false;
 		const target = e.target as HTMLElement;
 
 		const isDiscTitle = target.closest('[data-disc-title]') !== null;
@@ -82,7 +84,6 @@
 		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
 		if (!layerId) return;
 
-		doodledialStore.setSelectedLayer(layerId);
 		doodledialStore.setHighlightedLayer(layerId);
 
 		if (isPathLabel) {
@@ -142,6 +143,7 @@
 			doodledialStore.setDiscTitlePosition(titleInitialX + deltaX, titleInitialY + deltaY);
 			return;
 		} else if (isDragging && dragLayerId) {
+			didDrag = true;
 			const { cx, cy } = getDiscCenter();
 			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
 			doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
@@ -178,6 +180,7 @@
 	}
 
 	function handleClick(e: MouseEvent) {
+		if (didDrag) return;
 		const target = e.target as HTMLElement;
 		const { layerId } = getLayerIdFromEvent(target);
 		if (layerId) {

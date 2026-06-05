@@ -12,7 +12,17 @@
 
 	let editing = $state(false);
 	let inputValue = $state('');
-	let localValue = $derived(value);
+
+	function getInitialValue() {
+		return value;
+	}
+	let localValue = $state(getInitialValue());
+
+	$effect(() => {
+		if (!editing) {
+			localValue = value;
+		}
+	});
 
 	function handleClick() {
 		if (disabled) return;
