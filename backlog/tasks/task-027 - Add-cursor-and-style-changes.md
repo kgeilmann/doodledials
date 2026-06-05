@@ -4,18 +4,23 @@ title: Add cursor and style changes
 status: To Do
 assignee: []
 created_date: '2026-04-12 01:12'
+updated_date: '2026-06-05 18:44'
 labels: []
-dependencies: [TASK-024, TASK-025]
+dependencies:
+  - TASK-025
 priority: medium
 ordinal: 8000
 ---
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 Change cursor to "grab" when hovering path labels in edit mode, "grabbing" when dragging to provide better UX feedback
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
+<!-- SECTION:PLAN:BEGIN -->
 ### 1. Locate Where to Add CSS
 
 - File: `src/lib/components/DialPreview.svelte`
@@ -85,3 +90,4 @@ Add hover effect for labels in edit mode to make them more visible:
 - Run `pnpm check` to verify TypeScript compiles
 - Run `pnpm lint` to check for any linting issues
 - Test that cursor changes from default to "grab" when hovering over labels in edit mode
+<!-- SECTION:PLAN:END -->
