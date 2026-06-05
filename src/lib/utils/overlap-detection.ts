@@ -1,5 +1,6 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
 import type { Layer } from '$lib/types/doodledial';
+import { normalizeAngle } from './rotation';
 
 const RENDER_SIZE = 200;
 
@@ -56,10 +57,6 @@ export function createOverlapDetectionCache(): OverlapDetectionCache {
 
 function roundAngleForCache(angle: number): number {
 	return Number(normalizeAngle(angle).toFixed(ANGLE_CACHE_PRECISION));
-}
-
-function normalizeAngle(angle: number): number {
-	return ((angle % 360) + 360) % 360;
 }
 
 function toLayerBitmapCacheKey(
@@ -354,6 +351,23 @@ function escapeAttributeValue(value: string): string {
 	return value.replace(/"/g, '\\"');
 }
 
+function createIsolatedSvgDocument(
+	sourceRoot: SVGSVGElement,
+	includeSharedChildren: boolean
+): { isolatedDoc: Document; isolatedRoot: SVGSVGElement } {
+	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
+	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
+	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
+
+	copySvgRootAttributes(sourceRoot, isolatedRoot);
+
+	if (includeSharedChildren) {
+		cloneSharedSvgChildren(sourceRoot, isolatedRoot);
+	}
+
+	return { isolatedDoc, isolatedRoot };
+}
+
 function pruneToCutoutSubtree(element: Element): boolean {
 	let keepElement = element.classList.contains('cutout');
 
@@ -381,12 +395,7 @@ function buildCutoutOnlyLayerSvg(
 		return null;
 	}
 
-	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
-	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
-	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
-
-	copySvgRootAttributes(sourceRoot, isolatedRoot);
-	cloneSharedSvgChildren(sourceRoot, isolatedRoot);
+	const { isolatedRoot } = createIsolatedSvgDocument(sourceRoot, true);
 
 	const layerClone = sourceLayer.cloneNode(true) as Element;
 	if (!pruneToCutoutSubtree(layerClone)) {
@@ -406,12 +415,7 @@ function buildCutoutOnlyVisibleLayersSvg(
 		return null;
 	}
 
-	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
-	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
-	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
-
-	copySvgRootAttributes(sourceRoot, isolatedRoot);
-	cloneSharedSvgChildren(sourceRoot, isolatedRoot);
+	const { isolatedRoot } = createIsolatedSvgDocument(sourceRoot, true);
 
 	let hasCutoutLayer = false;
 	const uniqueVisibleLayerIds = new Set(visibleLayerIds);
@@ -454,11 +458,8 @@ function buildLabelPolygonMaskSvg(
 		}
 	}
 
+	const { isolatedDoc, isolatedRoot } = createIsolatedSvgDocument(sourceRoot, false);
 	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
-	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
-	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
-
-	copySvgRootAttributes(sourceRoot, isolatedRoot);
 
 	const polygon = isolatedDoc.createElementNS(svgNamespace, 'polygon');
 	polygon.setAttribute('points', labelCorners.map((corner) => `${corner.x},${corner.y}`).join(' '));

@@ -1,4 +1,4 @@
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { Layer } from '$lib/types/doodledial';
 import {
 	combineOptimizerSvgTemplate,
 	createOptimizerSvgTemplate,
@@ -9,6 +9,8 @@ import {
 	detectPairOverlapPixels,
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
+import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
+import type { OptimizerInput } from './shared';
 
 const MAX_TOP_LAYOUTS = 12;
 const MIN_ANGLE_SEPARATION = 2;
@@ -115,13 +117,6 @@ export function addToTopLayouts(
 	return false;
 }
 
-export interface OptimizerInput {
-	diameter: number;
-	config: DialConfig;
-	layers: Layer[];
-	svgContent: SVGContent;
-}
-
 export interface OptimizerProgress {
 	percent: number;
 	message: string;
@@ -179,19 +174,6 @@ export class BruteforceOptimizerCancelledError extends Error {
 		super(message);
 		this.name = 'BruteforceOptimizerCancelledError';
 	}
-}
-
-function normalizeAngle(angle: number): number {
-	return ((angle % 360) + 360) % 360;
-}
-
-function roundLayoutAngles(layout: Record<string, number>): Record<string, number> {
-	return Object.fromEntries(
-		Object.entries(layout).map(([layerId, angle]) => [
-			layerId,
-			Math.round(normalizeAngle(angle)) % 360
-		])
-	);
 }
 
 function throwIfCancelled(signal?: AbortSignal): void {

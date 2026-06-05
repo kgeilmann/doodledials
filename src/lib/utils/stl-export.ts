@@ -208,6 +208,22 @@ function extrudeShape(shape: THREE.Shape, depthMm: number, zOffsetMm: number): T
 	return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial());
 }
 
+function labelShapesToExtrudedMeshes(
+	shapes: THREE.Shape[],
+	mapPoint: (point: THREE.Vector2) => THREE.Vector2,
+	depthMm: number,
+	zOffsetMm: number
+): THREE.Mesh[] {
+	const meshes: THREE.Mesh[] = [];
+	for (const shape of shapes) {
+		const points = shape.getPoints().map(mapPoint);
+		const transformedShape = pathPolygonToShape(points);
+		if (!transformedShape) continue;
+		meshes.push(extrudeShape(transformedShape, depthMm, zOffsetMm));
+	}
+	return meshes;
+}
+
 export function exportStl(
 	content: SVGContent,
 	config: DialConfig,
@@ -297,13 +313,7 @@ export function exportStl(
 			);
 			const shape = pathPolygonToShape(polygon);
 			if (shape) {
-				const geometry = new THREE.ExtrudeGeometry(shape, {
-					depth: markThicknessMm,
-					steps: 1,
-					bevelEnabled: false
-				});
-				geometry.translate(0, 0, discThicknessMm);
-				topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
+				topMeshes.push(extrudeShape(shape, markThicknessMm, discThicknessMm));
 			}
 		});
 
@@ -316,29 +326,23 @@ export function exportStl(
 				height: Math.max(bbox.height, 1)
 			});
 
-			for (const shape of shapes) {
-				const points = shape.getPoints().map((point: THREE.Vector2) => {
-					const transformed = transformPoint(
-						{ x: bbox.x + point.x, y: bbox.y + point.y },
-						rotationOnlyTransform
-					);
-					return new THREE.Vector2(
-						(transformed.x - cx) / MM_TO_PX,
-						(transformed.y - cy) / MM_TO_PX
-					);
-				});
-				const transformedShape = pathPolygonToShape(points);
-				if (!transformedShape) {
-					continue;
-				}
-				const geometry = new THREE.ExtrudeGeometry(transformedShape, {
-					depth: markThicknessMm,
-					steps: 1,
-					bevelEnabled: false
-				});
-				geometry.translate(0, 0, discThicknessMm);
-				topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
-			}
+			topMeshes.push(
+				...labelShapesToExtrudedMeshes(
+					shapes,
+					(point: THREE.Vector2) => {
+						const transformed = transformPoint(
+							{ x: bbox.x + point.x, y: bbox.y + point.y },
+							rotationOnlyTransform
+						);
+						return new THREE.Vector2(
+							(transformed.x - cx) / MM_TO_PX,
+							(transformed.y - cy) / MM_TO_PX
+						);
+					},
+					markThicknessMm,
+					discThicknessMm
+				)
+			);
 		});
 
 		layerGroup.find('.path-label').forEach((labelElement) => {
@@ -350,29 +354,23 @@ export function exportStl(
 				height: Math.max(bbox.height, 1)
 			});
 
-			for (const shape of shapes) {
-				const points = shape.getPoints().map((point: THREE.Vector2) => {
-					const transformed = transformPoint(
-						{ x: bbox.x + point.x, y: bbox.y + point.y },
-						cutoutTransform
-					);
-					return new THREE.Vector2(
-						(transformed.x - cx) / MM_TO_PX,
-						(transformed.y - cy) / MM_TO_PX
-					);
-				});
-				const transformedShape = pathPolygonToShape(points);
-				if (!transformedShape) {
-					continue;
-				}
-				const geometry = new THREE.ExtrudeGeometry(transformedShape, {
-					depth: markThicknessMm,
-					steps: 1,
-					bevelEnabled: false
-				});
-				geometry.translate(0, 0, discThicknessMm);
-				topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
-			}
+			topMeshes.push(
+				...labelShapesToExtrudedMeshes(
+					shapes,
+					(point: THREE.Vector2) => {
+						const transformed = transformPoint(
+							{ x: bbox.x + point.x, y: bbox.y + point.y },
+							cutoutTransform
+						);
+						return new THREE.Vector2(
+							(transformed.x - cx) / MM_TO_PX,
+							(transformed.y - cy) / MM_TO_PX
+						);
+					},
+					markThicknessMm,
+					discThicknessMm
+				)
+			);
 		});
 	}
 
@@ -385,24 +383,18 @@ export function exportStl(
 		const titleCenterX = (options.discTitleX ?? 100) - cx;
 		const titleCenterY = (options.discTitleY ?? 20) - cy;
 
-		for (const shape of titleShapes) {
-			const points = shape.getPoints().map((point: THREE.Vector2) => {
-				return new THREE.Vector2(
-					(titleCenterX + point.x) / MM_TO_PX,
-					(titleCenterY + point.y) / MM_TO_PX
-				);
-			});
-			const transformedShape = pathPolygonToShape(points);
-			if (!transformedShape) continue;
-
-			const geometry = new THREE.ExtrudeGeometry(transformedShape, {
-				depth: markThicknessMm,
-				steps: 1,
-				bevelEnabled: false
-			});
-			geometry.translate(0, 0, discThicknessMm);
-			topMeshes.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial()));
-		}
+		topMeshes.push(
+			...labelShapesToExtrudedMeshes(
+				titleShapes,
+				(point: THREE.Vector2) =>
+					new THREE.Vector2(
+						(titleCenterX + point.x) / MM_TO_PX,
+						(titleCenterY + point.y) / MM_TO_PX
+					),
+				markThicknessMm,
+				discThicknessMm
+			)
+		);
 	}
 
 	const discShape = createDiscShape(discRadiusMm, holePolygons);

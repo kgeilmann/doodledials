@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { normalizeAngle } from '$lib/utils/rotation';
+
 	interface Props {
 		value: number;
 		onchange: (value: number) => void;
@@ -47,11 +49,10 @@
 	}
 
 	function formatRotation(deg: number): string {
-		const normalized = ((deg % 360) + 360) % 360;
-		return `${Math.round(normalized)}°`;
+		return `${Math.round(normalizeAngle(deg))}°`;
 	}
 
-	const normalizedValue = $derived(((localValue % 360) + 360) % 360);
+	const normalizedValue = $derived(normalizeAngle(localValue));
 	const circumference = 2 * Math.PI * 16;
 	const dashOffset = $derived(circumference - (circumference * normalizedValue) / 360);
 </script>

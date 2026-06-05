@@ -1,4 +1,4 @@
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { Layer } from '$lib/types/doodledial';
 import {
 	combineOptimizerSvgTemplate,
 	createOptimizerSvgTemplate,
@@ -9,13 +9,10 @@ import {
 	detectOverlaps,
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
+import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
+import type { OptimizerInput } from './shared';
 
-export interface OptimizerInput {
-	diameter: number;
-	config: DialConfig;
-	layers: Layer[];
-	svgContent: SVGContent;
-}
+export type { OptimizerInput } from './shared';
 
 export interface OptimizerProgress {
 	percent: number;
@@ -112,29 +109,7 @@ const DEFAULT_OPTIMIZER_TUNING: ResolvedOptimizerTuning = {
 };
 
 function resolveOptimizerTuning(tuning?: OptimizerTuning): ResolvedOptimizerTuning {
-	if (!tuning) {
-		return { ...DEFAULT_OPTIMIZER_TUNING };
-	}
-
-	return {
-		overlapMagnitudeWeight:
-			tuning.overlapMagnitudeWeight ?? DEFAULT_OPTIMIZER_TUNING.overlapMagnitudeWeight,
-		overlapMagnitudePower:
-			tuning.overlapMagnitudePower ?? DEFAULT_OPTIMIZER_TUNING.overlapMagnitudePower,
-		maxOverlapForceMagnitude:
-			tuning.maxOverlapForceMagnitude ?? DEFAULT_OPTIMIZER_TUNING.maxOverlapForceMagnitude,
-		overlapTestStep: tuning.overlapTestStep ?? DEFAULT_OPTIMIZER_TUNING.overlapTestStep,
-		overlapDirectionSearchSteps:
-			tuning.overlapDirectionSearchSteps ?? DEFAULT_OPTIMIZER_TUNING.overlapDirectionSearchSteps,
-		timeStepDt: tuning.timeStepDt ?? DEFAULT_OPTIMIZER_TUNING.timeStepDt,
-		restoringForceWeight:
-			tuning.restoringForceWeight ?? DEFAULT_OPTIMIZER_TUNING.restoringForceWeight,
-		maxRestoringForce: tuning.maxRestoringForce ?? DEFAULT_OPTIMIZER_TUNING.maxRestoringForce,
-		uniqueForceWeight: tuning.uniqueForceWeight ?? DEFAULT_OPTIMIZER_TUNING.uniqueForceWeight,
-		minUniqueAngleSeparation:
-			tuning.minUniqueAngleSeparation ?? DEFAULT_OPTIMIZER_TUNING.minUniqueAngleSeparation,
-		maxUniqueForce: tuning.maxUniqueForce ?? DEFAULT_OPTIMIZER_TUNING.maxUniqueForce
-	};
+	return { ...DEFAULT_OPTIMIZER_TUNING, ...tuning };
 }
 
 export interface CircularGap {
@@ -165,10 +140,6 @@ function shortestSignedAngleDifference(fromAngle: number, toAngle: number): numb
 		difference -= 360;
 	}
 	return difference;
-}
-
-function normalizeAngle(angle: number): number {
-	return ((angle % 360) + 360) % 360;
 }
 
 function getIterationCount(layerCount: number): number {
@@ -286,8 +257,19 @@ export function calculateRestoringContributions(
 	return contributions;
 }
 
-function clampRestoringForce(force: number, tuning: ResolvedOptimizerTuning): number {
-	return Math.max(-tuning.maxRestoringForce, Math.min(tuning.maxRestoringForce, force));
+function clampForce(force: number, maxMagnitude: number): number {
+	return Math.max(-maxMagnitude, Math.min(maxMagnitude, force));
+}
+
+function zeroMeanForceMap(forceMap: LayerForceMap, layerIds: string[]): LayerForceMap {
+	if (layerIds.length === 0) {
+		return {};
+	}
+
+	const total = layerIds.reduce((sum, layerId) => sum + forceMap[layerId], 0);
+	const mean = total / layerIds.length;
+
+	return Object.fromEntries(layerIds.map((layerId) => [layerId, forceMap[layerId] - mean]));
 }
 
 export function calculateRestoringForceMap(
@@ -295,21 +277,14 @@ export function calculateRestoringForceMap(
 	layerIds: string[],
 	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
 ): LayerForceMap {
-	if (layerIds.length === 0) {
-		return {};
-	}
-
 	const clamped: LayerForceMap = Object.fromEntries(
 		layerIds.map((layerId) => [
 			layerId,
-			clampRestoringForce(restoringContributions[layerId] ?? 0, tuning)
+			clampForce(restoringContributions[layerId] ?? 0, tuning.maxRestoringForce)
 		])
 	);
 
-	const total = layerIds.reduce((sum, layerId) => sum + clamped[layerId], 0);
-	const mean = total / layerIds.length;
-
-	return Object.fromEntries(layerIds.map((layerId) => [layerId, clamped[layerId] - mean]));
+	return zeroMeanForceMap(clamped, layerIds);
 }
 
 export function calculateUniqueContributions(
@@ -348,43 +323,23 @@ export function calculateUniqueContributions(
 	return contributions;
 }
 
-function clampUniqueForce(force: number, tuning: ResolvedOptimizerTuning): number {
-	return Math.max(-tuning.maxUniqueForce, Math.min(tuning.maxUniqueForce, force));
-}
-
 export function calculateUniqueForceMap(
 	uniqueContributions: LayerForceMap,
 	layerIds: string[],
 	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
 ): LayerForceMap {
-	if (layerIds.length === 0) {
-		return {};
-	}
-
 	const clamped: LayerForceMap = Object.fromEntries(
 		layerIds.map((layerId) => [
 			layerId,
-			clampUniqueForce(uniqueContributions[layerId] ?? 0, tuning)
+			clampForce(uniqueContributions[layerId] ?? 0, tuning.maxUniqueForce)
 		])
 	);
 
-	const total = layerIds.reduce((sum, layerId) => sum + clamped[layerId], 0);
-	const mean = total / layerIds.length;
-
-	return Object.fromEntries(layerIds.map((layerId) => [layerId, clamped[layerId] - mean]));
+	return zeroMeanForceMap(clamped, layerIds);
 }
 
 function initializeLayout(layers: Layer[]): Record<string, number> {
 	return Object.fromEntries(layers.map((layer) => [layer.id, normalizeAngle(layer.rotation)]));
-}
-
-function roundLayoutAngles(layout: Record<string, number>): Record<string, number> {
-	return Object.fromEntries(
-		Object.entries(layout).map(([layerId, angle]) => [
-			layerId,
-			Math.round(normalizeAngle(angle)) % 360
-		])
-	);
 }
 
 function calculateOverlapAggregate(

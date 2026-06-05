@@ -7,6 +7,7 @@ import {
 	type Segment
 } from './label-geometry';
 import { detectCutoutLabelOverlapPixels } from './overlap-detection';
+import { normalizeAngle } from './rotation';
 
 export interface PathLabelLayerInput {
 	id: string;
@@ -57,10 +58,6 @@ const DEFAULT_RING_STEP_PX = 2;
 const DEFAULT_ANGLE_STEP_DEG = 30;
 const DEFAULT_LABEL_PADDING_PX = 0.5;
 const DEFAULT_MARK_LINE_CLEARANCE_PX = 1;
-
-function normalizeAngle(angle: number): number {
-	return ((angle % 360) + 360) % 360;
-}
 
 function getAngleOffsets(stepDeg: number): number[] {
 	const safeStep = Math.max(1, Math.floor(stepDeg));

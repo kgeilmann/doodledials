@@ -6,6 +6,7 @@ import {
 	type SVGContent
 } from '$lib/types/doodledial';
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
+import { normalizeAngle } from './rotation';
 
 const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 3 * MM_TO_PX;
@@ -195,10 +196,6 @@ export interface OptimizerSvgTemplate {
 
 const OPTIMIZER_ROTATION_PLACEHOLDER_BASE = 1_000_000;
 
-function normalizeAngle(angle: number): number {
-	return ((angle % 360) + 360) % 360;
-}
-
 function toOptimizerRotationPlaceholder(index: number, cx: number, cy: number): string {
 	return `rotate(${OPTIMIZER_ROTATION_PLACEHOLDER_BASE + index}, ${cx}, ${cy})`;
 }
@@ -211,17 +208,10 @@ export function createOptimizerSvgTemplate(
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
-	const offsetXPx = config.offsetX * MM_TO_PX;
-	const offsetYPx = config.offsetY * MM_TO_PX;
 	const rotationPlaceholderByLayerId: Record<string, string> = {};
 
-	doc.find('.cutout').forEach((cutout) => {
-		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
-	});
-
-	doc.find('.path-label').forEach((label) => {
-		label.remove();
-	});
+	applyCutoutTransforms(doc, config, cx, cy);
+	removePathLabels(doc);
 
 	for (const [index, layerId] of layerIds.entries()) {
 		const svgLayer = doc.findOne('#' + layerId) as G | null;
@@ -277,16 +267,9 @@ export function precomputeOptimizerSvgContent(content: SVGContent, config: DialC
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
-	const offsetXPx = config.offsetX * MM_TO_PX;
-	const offsetYPx = config.offsetY * MM_TO_PX;
 
-	doc.find('.cutout').forEach((cutout) => {
-		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
-	});
-
-	doc.find('.path-label').forEach((label) => {
-		label.remove();
-	});
+	applyCutoutTransforms(doc, config, cx, cy);
+	removePathLabels(doc);
 
 	const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
 	doc.width(pixelDiameter);
@@ -337,9 +320,7 @@ export function combineDoodledial(
 		}
 
 		if (applyCutoutTransforms) {
-			svgLayer.find('.cutout').forEach((c) => {
-				c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
-			});
+			applyCutoutTransformsForGroup(svgLayer, config, cx, cy);
 		}
 
 		if (includePathLabels && applyCutoutTransforms) {
@@ -414,4 +395,26 @@ export function exportDoodledial(
 	layers?: Layer[]
 ): string {
 	return combineDoodledial(content, config, layers, null, null);
+}
+
+function applyCutoutTransforms(doc: Svg, config: DialConfig, cx: number, cy: number): void {
+	const offsetXPx = config.offsetX * MM_TO_PX;
+	const offsetYPx = config.offsetY * MM_TO_PX;
+	doc.find('.cutout').forEach((cutout) => {
+		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+	});
+}
+
+function applyCutoutTransformsForGroup(group: G, config: DialConfig, cx: number, cy: number): void {
+	const offsetXPx = config.offsetX * MM_TO_PX;
+	const offsetYPx = config.offsetY * MM_TO_PX;
+	group.find('.cutout').forEach((c) => {
+		c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+	});
+}
+
+function removePathLabels(doc: Svg): void {
+	doc.find('.path-label').forEach((label) => {
+		label.remove();
+	});
 }
