@@ -2,7 +2,7 @@
 goal: Split doodledial.svelte.ts monolith into focused stores with proper detection scheduling
 version: 1.0
 date_created: 2026-06-05
-status: Planned
+status: In progress
 tags: refactor, architecture, store
 ---
 
@@ -30,13 +30,15 @@ Split the `doodledial.svelte.ts` monolith (418 lines, 6+ responsibilities) into 
 
 - GOAL-001: Create `lib/stores/layers.svelte.ts` handling all layer CRUD, selection, and highlighting
 
-| Task     | Description                                                                                                                                                                                                                                                                                                | Completed | Date |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---- |
-| TASK-001 | Create `lib/stores/layers.svelte.ts` with `createLayerStore()` factory: manage layers Map, selectedLayerId, highlightedLayerId, layer ordering, and all layer mutation methods (addLayer, removeLayer, toggleLayer, setLayerRotation, applyLayerRotations, setSelectedLayer, setHighlightedLayer, reorder) |           |      |
-| TASK-002 | Extract `getLayerArray()` as a `$derived` from the layers Map                                                                                                                                                                                                                                              |           |      |
-| TASK-003 | Extract `DEFAULT_DIAL_CONFIG` usage: move dial config-specific properties (offsetX, offsetY, scale) out of layers and into the ConfigStore section                                                                                                                                                         |           |      |
-| TASK-004 | Add `onLayersChanged` callback support so detection can subscribe to layer changes                                                                                                                                                                                                                         |           |      |
-| TASK-005 | Unit-test the extracted layer store in isolation                                                                                                                                                                                                                                                           |           |      |
+| Task     | Description                                                                                                                                                                                                                                                                                                | Completed   | Date       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------- |
+| Task     | Description                                                                                                                                                                                                                                                                                                | Completed   | Date       |
+| ------   | -------------                                                                                                                                                                                                                                                                                              | ----------- | ------     |
+| TASK-001 | Create `lib/stores/layers.svelte.ts` with `createLayerStore()` factory: manage layers Map, selectedLayerId, highlightedLayerId, layer ordering, and all layer mutation methods (addLayer, removeLayer, toggleLayer, setLayerRotation, applyLayerRotations, setSelectedLayer, setHighlightedLayer, reorder) | ✅          | 2026-06-05 |
+| TASK-002 | Extract `getLayerArray()` as a `$derived` from the layers Map                                                                                                                                                                                                                                              | ✅          | 2026-06-05 |
+| TASK-003 | Extract `DEFAULT_DIAL_CONFIG` usage: move dial config-specific properties (offsetX, offsetY, scale) out of layers and into the ConfigStore section                                                                                                                                                         | ✅          | 2026-06-05 |
+| TASK-004 | Add `onLayersChanged` callback support so detection can subscribe to layer changes                                                                                                                                                                                                                         | ✅          | 2026-06-05 |
+| TASK-005 | Unit-test the extracted layer store in isolation                                                                                                                                                                                                                                                           | ✅          | 2026-06-05 |
 
 **Validation:** `lib/stores/layers.svelte.ts` exports `createLayerStore()`, all layer mutation tests pass without importing any detection or SVG code
 
