@@ -101,11 +101,15 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			return layerStore.getLayer(id);
 		},
 		setDiameter(diameter: number) {
-			config = { ...config, diameter };
-			globalConfig.diameter = diameter;
+			if (!Number.isFinite(diameter)) return;
+			const clamped = Math.min(Math.max(diameter, config.minDiameter), config.maxDiameter);
+			config = { ...config, diameter: clamped };
+			globalConfig.diameter = clamped;
 		},
 		setCenterHoleDiameter(centerHoleDiameter: number) {
-			config = { ...config, centerHoleDiameter };
+			if (!Number.isFinite(centerHoleDiameter)) return;
+			const clamped = Math.min(Math.max(centerHoleDiameter, 0), 3);
+			config = { ...config, centerHoleDiameter: clamped };
 		},
 		setDiscTitle(text: string) {
 			discTitle = text;

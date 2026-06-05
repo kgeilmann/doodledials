@@ -42,7 +42,6 @@ describe('global config store', () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(200);
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
-		expect(globalConfig.dialogOpen).toBe(false);
 	});
 
 	it('loads persisted values from localStorage on init', async () => {
@@ -79,15 +78,6 @@ describe('global config store', () => {
 		expect(saved.pathLabelOptimizerEnabled).toBe(false);
 	});
 
-	it('open and close toggle dialogOpen', async () => {
-		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.dialogOpen).toBe(false);
-		globalConfig.open();
-		expect(globalConfig.dialogOpen).toBe(true);
-		globalConfig.close();
-		expect(globalConfig.dialogOpen).toBe(false);
-	});
-
 	it('reset restores defaults', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.diameter = 150;
@@ -95,7 +85,6 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.diameter).toBe(200);
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
-		expect(globalConfig.dialogOpen).toBe(false);
 	});
 
 	it('has default centerHoleDiameter of 2', async () => {

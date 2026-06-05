@@ -1,23 +1,14 @@
 <script lang="ts">
-	import { globalConfig } from '$lib/stores/global-config.svelte';
+	import { DEFAULTS, globalConfig } from '$lib/stores/global-config.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import type { ExportFormat } from '$lib/utils/export-formats';
+
+	let { open = $bindable(false) }: { open?: boolean } = $props();
 
 	const { minDiameter, maxDiameter } = doodledialStore.config;
 
-	const DEFAULTS = {
-		diameter: 200,
-		centerHoleDiameter: 2,
-		pathLabelOptimizerEnabled: false,
-		forceDirectedOptimizerEnabled: false,
-		optimizerGapDefault: 5,
-		bruteforceTimeLimit: 120,
-		defaultExportFormat: 'laser-svg'
-	} as const;
-
 	let draftDiameter = $state(globalConfig.diameter);
-	let draftDefaultExportFormat = $state<'preview-svg' | 'laser-svg' | 'stl'>(
-		globalConfig.defaultExportFormat
-	);
+	let draftDefaultExportFormat = $state<ExportFormat>(globalConfig.defaultExportFormat);
 	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
 	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
@@ -79,15 +70,15 @@
 		globalConfig.save();
 		doodledialStore.setDiameter(draftDiameter);
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
-		globalConfig.close();
+		open = false;
 	}
 
 	function handleCancel() {
-		globalConfig.close();
+		open = false;
 	}
 </script>
 
-{#if globalConfig.dialogOpen}
+{#if open}
 	<div
 		class="fixed inset-0 z-30 flex items-center justify-center p-4"
 		data-testid="global-config-dialog"

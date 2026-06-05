@@ -221,12 +221,6 @@
 	}
 
 	$effect(() => {
-		if (doodledialStore.svgContent && doodledialStore.config.diameter) {
-			updatePreview();
-		}
-	});
-
-	$effect(() => {
 		void doodledialStore.layers.length;
 		doodledialStore.layers.forEach((l) => {
 			void l.visible;
@@ -243,6 +237,7 @@
 		void doodledialStore.config.offsetX;
 		void doodledialStore.config.offsetY;
 		void doodledialStore.config.scale;
+		void doodledialStore.config.diameter;
 		if (doodledialStore.svgContent) {
 			updatePreview();
 		}

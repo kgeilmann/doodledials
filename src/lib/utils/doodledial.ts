@@ -132,6 +132,12 @@ export function parseSvgPaths(svgContent: string): {
 		maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX
 	);
 
+	if (layers.length === 0) {
+		throw new Error(
+			'No SVG paths found in the uploaded file. The file must contain path elements.'
+		);
+	}
+
 	const updatedSvg = doc.svg();
 
 	return { layers, updatedSvg };

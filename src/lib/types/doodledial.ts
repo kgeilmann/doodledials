@@ -34,7 +34,7 @@ export interface SVGContent {
 	filename: string;
 }
 
-export const DEFAULT_DIAL_CONFIG: DialConfig = {
+export const DEFAULT_DIAL_CONFIG = {
 	diameter: 200,
 	minDiameter: 50,
 	maxDiameter: 200,
@@ -45,4 +45,4 @@ export const DEFAULT_DIAL_CONFIG: DialConfig = {
 	scale: 1,
 	centerHoleDiameter: 2,
 	optimizerGapMm: 2
-};
+} as const satisfies DialConfig;

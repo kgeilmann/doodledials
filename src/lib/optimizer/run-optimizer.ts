@@ -10,17 +10,9 @@ import {
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
-import type { OptimizerInput } from './shared';
+import type { OptimizerInput, OptimizerProgress } from './shared';
 
-export type { OptimizerInput } from './shared';
-
-export interface OptimizerProgress {
-	percent: number;
-	message: string;
-	iteration: number;
-	totalIterations: number;
-	feasibleSolutionsFound?: number;
-}
+export type { OptimizerInput, OptimizerProgress } from './shared';
 
 export interface OptimizerResult {
 	layout: Record<string, number>;

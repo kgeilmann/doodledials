@@ -504,7 +504,12 @@ async function renderSvgToBitmap(
 	width: number,
 	height: number
 ): Promise<PixelData> {
-	const context = acquireRenderContext(width, height);
+	let context: CanvasRenderingContext2D;
+	try {
+		context = acquireRenderContext(width, height);
+	} catch (e) {
+		throw new Error('Failed to acquire canvas context for overlap detection rendering');
+	}
 	context.clearRect(0, 0, width, height);
 
 	return new Promise((resolve, reject) => {

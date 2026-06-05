@@ -10,14 +10,15 @@ import {
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
-import type { OptimizerInput } from './shared';
+import type { OptimizerInput, OptimizerProgress } from './shared';
 
+const FULL_CIRCLE = 360;
 const MAX_TOP_LAYOUTS = 12;
 const MIN_ANGLE_SEPARATION = 2;
 
 function hasAngleConflict(angle: number, usedAngles: boolean[]): boolean {
 	for (let d = -(MIN_ANGLE_SEPARATION - 1); d <= MIN_ANGLE_SEPARATION - 1; d++) {
-		if (usedAngles[(((angle + d) % 360) + 360) % 360]) {
+		if (usedAngles[(((angle + d) % FULL_CIRCLE) + FULL_CIRCLE) % FULL_CIRCLE]) {
 			return true;
 		}
 	}
@@ -25,10 +26,10 @@ function hasAngleConflict(angle: number, usedAngles: boolean[]): boolean {
 }
 
 function circularMinDistance(angle: number, assignedAngles: number[]): number {
-	let min = 360;
+	let min = FULL_CIRCLE;
 	for (const aa of assignedAngles) {
 		const diff = Math.abs(angle - aa);
-		const dist = Math.min(diff, 360 - diff);
+		const dist = Math.min(diff, FULL_CIRCLE - diff);
 		if (dist < min) min = dist;
 	}
 	return min;
@@ -43,8 +44,8 @@ function sortAnglesByGapMaximization(angles: number[], assignedAngles: number[])
 
 function computeFragmentation(domain: Uint8Array): number {
 	let count = 0;
-	for (let i = 0; i < 360; i++) {
-		const prev = (i - 1 + 360) % 360;
+	for (let i = 0; i < FULL_CIRCLE; i++) {
+		const prev = (i - 1 + FULL_CIRCLE) % FULL_CIRCLE;
 		if (domain[prev] === 0 && domain[i] === 1) count++;
 	}
 	return count;
@@ -68,8 +69,8 @@ function isBetterLayoutWithDiversity(
 	incumbent: Record<string, number>,
 	topLayouts: Record<string, number>[]
 ): boolean {
-	const candidateScore = analyzeCircularGaps(candidate);
-	const incumbentScore = analyzeCircularGaps(incumbent);
+	const candidateScore = scoreCircularGaps(candidate);
+	const incumbentScore = scoreCircularGaps(incumbent);
 
 	if (candidateScore.minGap !== incumbentScore.minGap) {
 		return candidateScore.minGap > incumbentScore.minGap;
@@ -115,16 +116,6 @@ export function addToTopLayouts(
 	}
 
 	return false;
-}
-
-export interface OptimizerProgress {
-	percent: number;
-	message: string;
-	iteration: number;
-	totalIterations: number;
-	feasibleSolutionsFound?: number;
-	topLayouts?: Record<string, number>[];
-	optimizerSvgTemplate?: OptimizerSvgTemplate;
 }
 
 export interface OptimizerResult {
@@ -195,7 +186,8 @@ export function layoutDistance(a: Record<string, number>, b: Record<string, numb
 	if (Object.keys(a).length === 0 && Object.keys(b).length === 0) return 0;
 	const allLayerIds = new Set([...Object.keys(a), ...Object.keys(b)]);
 
-	const bin = (angle: number) => Math.floor(normalizeAngle(angle) / (360 / SIMILARITY_BINS));
+	const bin = (angle: number) =>
+		Math.floor(normalizeAngle(angle) / (FULL_CIRCLE / SIMILARITY_BINS));
 
 	let sameBinCount = 0;
 	for (const layerId of allLayerIds) {
@@ -218,7 +210,7 @@ export function seededShuffle<T>(array: T[], seed: number): T[] {
 	return result;
 }
 
-export function analyzeCircularGaps(layout: Record<string, number>): {
+export function scoreCircularGaps(layout: Record<string, number>): {
 	minGap: number;
 	variance: number;
 	deviationSum: number;
@@ -236,7 +228,7 @@ export function analyzeCircularGaps(layout: Record<string, number>): {
 		});
 
 	if (entries.length <= 1) {
-		return { minGap: 360, variance: 0, deviationSum: 0 };
+		return { minGap: FULL_CIRCLE, variance: 0, deviationSum: 0 };
 	}
 
 	const gaps: number[] = [];
@@ -246,7 +238,7 @@ export function analyzeCircularGaps(layout: Record<string, number>): {
 		gaps.push(normalizeAngle(next.angle - current.angle));
 	}
 
-	const idealGap = 360 / entries.length;
+	const idealGap = FULL_CIRCLE / entries.length;
 	const minGap = Math.min(...gaps);
 	const mean = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
 	const variance = gaps.reduce((sum, gap) => sum + (gap - mean) ** 2, 0) / gaps.length;
@@ -284,7 +276,7 @@ export function calculateTighterMinGapUpperBound(
 	}
 
 	if (assignedAngles.length <= 1) {
-		return Math.floor(360 / (remainingLayerCount + assignedAngles.length));
+		return Math.floor(FULL_CIRCLE / (remainingLayerCount + assignedAngles.length));
 	}
 
 	const normalizedAngles = assignedAngles
@@ -314,7 +306,7 @@ export function calculateTighterMinGapUpperBound(
 	};
 
 	let lower = 1;
-	let upper = 360;
+	let upper = FULL_CIRCLE;
 	let best = 0;
 	while (lower <= upper) {
 		const middle = Math.floor((lower + upper) / 2);
@@ -337,8 +329,8 @@ function isBetterLayout(
 		return true;
 	}
 
-	const candidateScore = analyzeCircularGaps(candidate);
-	const incumbentScore = analyzeCircularGaps(incumbent);
+	const candidateScore = scoreCircularGaps(candidate);
+	const incumbentScore = scoreCircularGaps(incumbent);
 
 	if (candidateScore.minGap !== incumbentScore.minGap) {
 		return candidateScore.minGap > incumbentScore.minGap;
@@ -363,7 +355,7 @@ function computeTotalIterations(remainingLayerCount: number): number {
 	let permutationsAtDepth = 1;
 	let total = 0;
 	for (let depth = 1; depth <= remainingLayerCount; depth++) {
-		permutationsAtDepth *= 360 - depth;
+		permutationsAtDepth *= FULL_CIRCLE - depth;
 		total += permutationsAtDepth;
 		if (!Number.isFinite(total) || total >= Number.MAX_SAFE_INTEGER) {
 			return Number.MAX_SAFE_INTEGER;
@@ -457,7 +449,7 @@ export async function runBruteforceOptimizer(
 		};
 	}
 
-	if (layerIds.length > 360) {
+	if (layerIds.length > FULL_CIRCLE) {
 		emitTerminalProgressAndSnapshot(0, 'no_feasible_solution');
 		const fallbackLayout = buildDefaultLayout(input.layers, layerIds[0], layerIds);
 		const fallback =
@@ -510,7 +502,7 @@ export async function runBruteforceOptimizer(
 		options?.resumeContext?.pairFeasibilityMemo ?? new Map<string, boolean>();
 	const layerById = new Map(input.layers.map((layer) => [layer.id, layer]));
 	const assigned = new Map<string, number>();
-	const usedAngles = new Array<boolean>(360).fill(false);
+	const usedAngles = new Array<boolean>(FULL_CIRCLE).fill(false);
 	const domainByLayer = new Map<string, Uint8Array>();
 	const domainCountByLayer = new Map<string, number>();
 	assigned.set(anchorLayerId, 0);
@@ -635,9 +627,9 @@ export async function runBruteforceOptimizer(
 
 	const initializeDomains = async (): Promise<boolean> => {
 		for (const layerId of remainingLayerIds) {
-			const domain = new Uint8Array(360);
+			const domain = new Uint8Array(FULL_CIRCLE);
 			let count = 0;
-			for (let angle = 0; angle < 360; angle++) {
+			for (let angle = 0; angle < FULL_CIRCLE; angle++) {
 				throwIfCancelled(options?.signal);
 				if (isTimedOut()) {
 					stopReason = 'time_limit';
@@ -713,7 +705,7 @@ export async function runBruteforceOptimizer(
 		}
 
 		const feasibleAngles: number[] = [];
-		for (let angle = 0; angle < 360; angle++) {
+		for (let angle = 0; angle < FULL_CIRCLE; angle++) {
 			if (domain[angle]) {
 				feasibleAngles.push(angle);
 			}
@@ -740,7 +732,7 @@ export async function runBruteforceOptimizer(
 			}
 
 			for (let d = -(MIN_ANGLE_SEPARATION - 1); d <= MIN_ANGLE_SEPARATION - 1; d++) {
-				const neighborAngle = (((assignedAngle + d) % 360) + 360) % 360;
+				const neighborAngle = (((assignedAngle + d) % FULL_CIRCLE) + FULL_CIRCLE) % FULL_CIRCLE;
 				if (domain[neighborAngle]) {
 					domain[neighborAngle] = 0;
 					domainCountByLayer.set(layerId, (domainCountByLayer.get(layerId) ?? 0) - 1);
@@ -748,7 +740,7 @@ export async function runBruteforceOptimizer(
 				}
 			}
 
-			for (let angle = 0; angle < 360; angle++) {
+			for (let angle = 0; angle < FULL_CIRCLE; angle++) {
 				if (!domain[angle]) {
 					continue;
 				}
@@ -801,7 +793,7 @@ export async function runBruteforceOptimizer(
 				[...assigned.values()],
 				unassignedLayerIds.length
 			);
-			const incumbentMinGap = analyzeCircularGaps(bestLayout).minGap;
+			const incumbentMinGap = scoreCircularGaps(bestLayout).minGap;
 			if (assignedMinGapUpperBound < incumbentMinGap) {
 				return;
 			}

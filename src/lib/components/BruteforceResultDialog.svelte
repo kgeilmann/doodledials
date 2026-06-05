@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
-	import { analyzeCircularGaps } from '$lib/optimizer/run-bruteforce-optimizer';
+	import { scoreCircularGaps } from '$lib/optimizer/run-bruteforce-optimizer';
 	import { combineOptimizerSvgTemplate } from '$lib/utils/doodledial';
 
 	function handleBackdropClick(e: MouseEvent) {
@@ -22,7 +22,7 @@
 	{@const selectedLayout = hasLayouts
 		? optimizerStore.optimizerTopLayouts[optimizerStore.optimizerResultSelectedIndex]
 		: null}
-	{@const scores = selectedLayout ? analyzeCircularGaps(selectedLayout) : null}
+	{@const scores = selectedLayout ? scoreCircularGaps(selectedLayout) : null}
 
 	<div
 		class="fixed inset-0 z-30 flex items-center justify-center p-4"

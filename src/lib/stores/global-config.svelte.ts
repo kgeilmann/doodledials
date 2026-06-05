@@ -1,3 +1,5 @@
+import type { ExportFormat } from '$lib/utils/export-formats';
+
 const STORAGE_KEY = 'doodledial:config';
 
 interface PersistedConfig {
@@ -7,10 +9,10 @@ interface PersistedConfig {
 	forceDirectedOptimizerEnabled: boolean;
 	optimizerGapDefault: number;
 	bruteforceTimeLimit: number;
-	defaultExportFormat: 'preview-svg' | 'laser-svg' | 'stl';
+	defaultExportFormat: ExportFormat;
 }
 
-const DEFAULTS: PersistedConfig = {
+export const DEFAULTS = {
 	diameter: 200,
 	centerHoleDiameter: 2,
 	pathLabelOptimizerEnabled: false,
@@ -18,32 +20,32 @@ const DEFAULTS: PersistedConfig = {
 	optimizerGapDefault: 5,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg'
-};
+} as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
-	diameter = $state(DEFAULTS.diameter);
-	centerHoleDiameter = $state(DEFAULTS.centerHoleDiameter);
-	pathLabelOptimizerEnabled = $state(DEFAULTS.pathLabelOptimizerEnabled);
-	forceDirectedOptimizerEnabled = $state(DEFAULTS.forceDirectedOptimizerEnabled);
-	optimizerGapDefault = $state(DEFAULTS.optimizerGapDefault);
-	bruteforceTimeLimit = $state(DEFAULTS.bruteforceTimeLimit);
-	defaultExportFormat = $state(DEFAULTS.defaultExportFormat);
-	dialogOpen = $state(false);
-
+	diameter: number = $state(DEFAULTS.diameter);
+	centerHoleDiameter: number = $state(DEFAULTS.centerHoleDiameter);
+	pathLabelOptimizerEnabled: boolean = $state(DEFAULTS.pathLabelOptimizerEnabled);
+	forceDirectedOptimizerEnabled: boolean = $state(DEFAULTS.forceDirectedOptimizerEnabled);
+	optimizerGapDefault: number = $state(DEFAULTS.optimizerGapDefault);
+	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
+	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
 	constructor() {
 		this._load();
+		$effect(() => {
+			void this.diameter;
+			void this.centerHoleDiameter;
+			void this.pathLabelOptimizerEnabled;
+			void this.forceDirectedOptimizerEnabled;
+			void this.optimizerGapDefault;
+			void this.bruteforceTimeLimit;
+			void this.defaultExportFormat;
+			this._save();
+		});
 	}
 
 	save() {
 		this._save();
-	}
-
-	open() {
-		this.dialogOpen = true;
-	}
-
-	close() {
-		this.dialogOpen = false;
 	}
 
 	reset() {
@@ -54,7 +56,6 @@ class GlobalConfigStore {
 		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
-		this.dialogOpen = false;
 	}
 
 	private _load(): void {
@@ -73,8 +74,8 @@ class GlobalConfigStore {
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
 			}
-		} catch {
-			// ignore corrupt data, use defaults
+		} catch (e) {
+			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
 		}
 	}
 

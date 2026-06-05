@@ -1,6 +1,6 @@
 <script lang="ts">
 	import FileUpload from '$lib/components/FileUpload.svelte';
-	import DiameterControl from '$lib/components/DiameterControl.svelte';
+	import OffsetScaleControl from '$lib/components/OffsetScaleControl.svelte';
 	import DialPreview from '$lib/components/DialPreview.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
@@ -11,6 +11,8 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+
+	let globalConfigDialogOpen = $state(false);
 </script>
 
 <svelte:head>
@@ -88,7 +90,7 @@
 				</div>
 				<h2 class="text-lg font-semibold text-gray-800">Disc Settings</h2>
 			</div>
-			<DiameterControl />
+			<OffsetScaleControl />
 			{#if doodledialStore.svgContent}
 				<hr class="my-4 border-gray-100" />
 				<div class="flex flex-col gap-3">
@@ -172,7 +174,7 @@
 			</button>
 
 			<button
-				onclick={() => globalConfig.open()}
+				onclick={() => (globalConfigDialogOpen = true)}
 				class="px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out hover:bg-gray-50 active:scale-95"
 				aria-label="Open global settings"
 				data-testid="global-config-gear-button"
@@ -211,5 +213,5 @@
 	</div>
 	<OptimizerConfigDialog />
 	<BruteforceResultDialog />
-	<GlobalConfigDialog />
+	<GlobalConfigDialog bind:open={globalConfigDialogOpen} />
 </main>

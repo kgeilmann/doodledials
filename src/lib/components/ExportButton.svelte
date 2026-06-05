@@ -6,12 +6,7 @@
 	let menuOpen = $state(false);
 	let discThicknessMm = $state('3');
 	let markThicknessMm = $state('0.5');
-
-	const STL_DIALOG_ID = 'stl-export-dialog';
-
-	function getStlDialog(): HTMLDialogElement | null {
-		return document.getElementById(STL_DIALOG_ID) as HTMLDialogElement | null;
-	}
+	let stlDialogEl: HTMLDialogElement | null = $state(null);
 
 	function parseThickness(value: string, fallback: number): number {
 		const parsed = Number.parseFloat(value);
@@ -71,11 +66,11 @@
 	function openStlDialog() {
 		if (!doodledialStore.svgContent) return;
 		menuOpen = false;
-		getStlDialog()?.showModal();
+		stlDialogEl?.showModal();
 	}
 
 	function closeStlDialog() {
-		getStlDialog()?.close();
+		stlDialogEl?.close();
 	}
 
 	function exportStlFromDialog() {
@@ -204,7 +199,7 @@
 </div>
 
 <dialog
-	id={STL_DIALOG_ID}
+	bind:this={stlDialogEl}
 	class="w-full max-w-md rounded-2xl border border-gray-200 p-0 shadow-2xl backdrop:bg-black/40"
 >
 	<div class="p-5">
