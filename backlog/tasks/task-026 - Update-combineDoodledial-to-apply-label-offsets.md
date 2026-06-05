@@ -4,18 +4,23 @@ title: Update combineDoodledial to apply label offsets
 status: To Do
 assignee: []
 created_date: '2026-04-12 01:12'
+updated_date: '2026-06-05 18:44'
 labels: []
-dependencies: [TASK-020, TASK-021]
+dependencies:
+  - TASK-021
 priority: high
 ordinal: 7000
 ---
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 Modify combineDoodledial in src/lib/utils/doodledial.ts to apply labelOffsetX and labelOffsetY when positioning path labels
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
+<!-- SECTION:PLAN:BEGIN -->
 ### 1. Locate combineDoodledial Function
 
 - File: `src/lib/utils/doodledial.ts`
@@ -94,3 +99,4 @@ pathLabel.translate(
 - Run `pnpm check` to verify TypeScript compiles
 - Run `pnpm lint` to check for any linting issues
 - Test that dragged labels appear in correct positions in the preview
+<!-- SECTION:PLAN:END -->

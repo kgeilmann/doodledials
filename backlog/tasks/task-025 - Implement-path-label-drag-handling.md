@@ -4,18 +4,24 @@ title: Implement path label drag handling
 status: To Do
 assignee: []
 created_date: '2026-04-12 01:12'
+updated_date: '2026-06-05 18:44'
 labels: []
-dependencies: [TASK-020, TASK-021, TASK-022]
+dependencies:
+  - TASK-021
+  - TASK-022
 priority: high
 ordinal: 6000
 ---
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 Add pointer event handlers in DialPreview.svelte to detect path label clicks and drag them when in edit mode. In edit mode, layer rotation dragging should be disabled.
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Plan
 
+<!-- SECTION:PLAN:BEGIN -->
 ### 1. Locate DialPreview.svelte
 
 - File: `src/lib/components/DialPreview.svelte`
@@ -158,3 +164,4 @@ $effect(() => {
 - Run `pnpm check` to verify TypeScript compiles
 - Run `pnpm lint` to check for any linting issues
 - Test that in edit mode, labels can be dragged and rotation is disabled
+<!-- SECTION:PLAN:END -->
