@@ -512,7 +512,7 @@ export async function runBruteforceOptimizer(
 	let feasibleSolutionsFound = options?.resumeContext?.feasibleSolutionsFound ?? 0;
 	let bestLayout: Record<string, number> | null = options?.resumeContext?.bestLayout ?? null;
 	const topLayouts: Record<string, number>[] = options?.resumeContext?.topLayouts ?? [];
-	let topLayoutsDirty = false;
+	let topLayoutsDirty = topLayouts.length > 0;
 	let stopReason: BruteforceOptimizerStopReason | undefined;
 
 	const isTimedOut = (): boolean => {
