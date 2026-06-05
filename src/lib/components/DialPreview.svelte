@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { combineDoodledial } from '$lib/utils/doodledial';
 	import { getAngleFromCenter } from '$lib/utils/rotation';
 	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
@@ -59,6 +60,7 @@
 	}
 
 	function handlePointerDown(e: PointerEvent) {
+		if (optimizerStore.optimizerPending) return;
 		didDrag = false;
 		const target = e.target as HTMLElement;
 
@@ -180,6 +182,7 @@
 	}
 
 	function handleClick(e: MouseEvent) {
+		if (optimizerStore.optimizerPending) return;
 		if (didDrag) return;
 		const target = e.target as HTMLElement;
 		const { layerId } = getLayerIdFromEvent(target);
@@ -254,7 +257,9 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	{#if doodledialStore.svgContent}
 		<div
-			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10"
+			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
+				? 'cursor-not-allowed'
+				: ''}"
 			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px;"
 			bind:this={svgContainer}
 			onpointerdown={handlePointerDown}

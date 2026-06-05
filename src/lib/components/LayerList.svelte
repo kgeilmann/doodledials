@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import RotationKnob from './RotationKnob.svelte';
 
 	function handleToggle(layerId: string) {
+		if (optimizerStore.optimizerPending) return;
 		doodledialStore.toggleVisibility(layerId);
 	}
 
 	function handleShowAll() {
+		if (optimizerStore.optimizerPending) return;
 		doodledialStore.showAllLayers();
 	}
 
 	function handleHideAll() {
+		if (optimizerStore.optimizerPending) return;
 		doodledialStore.hideAllLayers();
 	}
 
 	function handleSelect(layerId: string) {
+		if (optimizerStore.optimizerPending) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected === layerId) {
 			doodledialStore.setSelectedLayer(null);
@@ -24,15 +29,18 @@
 	}
 
 	function handleMouseEnter(layerId: string) {
+		if (optimizerStore.optimizerPending) return;
 		doodledialStore.setHighlightedLayer(layerId);
 	}
 
 	function handleMouseLeave() {
+		if (optimizerStore.optimizerPending) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	function handleRotationChange(layerId: string, rotation: number) {
+		if (optimizerStore.optimizerPending) return;
 		doodledialStore.setLayerRotation(layerId, rotation);
 	}
 
@@ -86,7 +94,10 @@
 				<button
 					type="button"
 					onclick={handleShowAll}
-					class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+					disabled={optimizerStore.optimizerPending}
+					class="text-xs font-medium {optimizerStore.optimizerPending
+						? 'text-gray-400 cursor-not-allowed'
+						: 'text-indigo-600 hover:text-indigo-800'}"
 				>
 					Show All
 				</button>
@@ -94,7 +105,10 @@
 				<button
 					type="button"
 					onclick={handleHideAll}
-					class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+					disabled={optimizerStore.optimizerPending}
+					class="text-xs font-medium {optimizerStore.optimizerPending
+						? 'text-gray-400 cursor-not-allowed'
+						: 'text-indigo-600 hover:text-indigo-800'}"
 				>
 					Hide All
 				</button>
@@ -105,12 +119,13 @@
 			<ul class="divide-y divide-gray-100">
 				{#each doodledialStore.layers as layer (layer.id)}
 					<li
-						class="flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer list-none {doodledialStore.selectedLayer ===
-						layer.id
+						class="flex items-center justify-between px-3 py-2.5 transition-colors list-none {optimizerStore.optimizerPending
+							? 'opacity-60'
+							: 'cursor-pointer hover:bg-gray-50'} {doodledialStore.selectedLayer === layer.id
 							? 'bg-indigo-50 border-l-2 border-indigo-500'
-							: 'hover:bg-gray-50'}"
+							: ''}"
 						role="menuitem"
-						tabindex="0"
+						tabindex={optimizerStore.optimizerPending ? -1 : 0}
 						onclick={() => handleSelect(layer.id)}
 						onkeydown={(e) => e.key === 'Enter' && handleSelect(layer.id)}
 						onmouseenter={() => handleMouseEnter(layer.id)}
@@ -164,11 +179,15 @@
 										type="button"
 										data-reset-label-auto={layer.id}
 										onclick={(e) => {
+											if (optimizerStore.optimizerPending) return;
 											e.stopPropagation();
 											doodledialStore.resetLayerLabelPlacementMode(layer.id);
 											void doodledialStore.requestLayerLabelAutoPlacement(layer.id);
 										}}
-										class="text-xs px-2 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100"
+										disabled={optimizerStore.optimizerPending}
+										class="text-xs px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed {optimizerStore.optimizerPending
+											? 'bg-rose-50 text-rose-400'
+											: 'bg-rose-50 text-rose-700 hover:bg-rose-100'}"
 										title="Retry automatic label placement"
 									>
 										Reset Auto
@@ -178,7 +197,7 @@
 									value={layer.rotation}
 									onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 									label="Rotate {layer.name}"
-									disabled={!layer.visible}
+									disabled={!layer.visible || optimizerStore.optimizerPending}
 								/>
 							</div>
 						</div>
@@ -188,7 +207,10 @@
 								e.stopPropagation();
 								handleToggle(layer.id);
 							}}
-							class="p-1 rounded hover:bg-gray-200 transition-colors"
+							disabled={optimizerStore.optimizerPending}
+							class="p-1 rounded transition-colors {optimizerStore.optimizerPending
+								? 'cursor-not-allowed opacity-50'
+								: 'hover:bg-gray-200'}"
 						>
 							{#if layer.visible}
 								<svg

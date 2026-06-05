@@ -32,15 +32,17 @@ class GlobalConfigStore {
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
 	constructor() {
 		this._load();
-		$effect(() => {
-			void this.diameter;
-			void this.centerHoleDiameter;
-			void this.pathLabelOptimizerEnabled;
-			void this.forceDirectedOptimizerEnabled;
-			void this.optimizerGapDefault;
-			void this.bruteforceTimeLimit;
-			void this.defaultExportFormat;
-			this._save();
+		$effect.root(() => {
+			$effect(() => {
+				void this.diameter;
+				void this.centerHoleDiameter;
+				void this.pathLabelOptimizerEnabled;
+				void this.forceDirectedOptimizerEnabled;
+				void this.optimizerGapDefault;
+				void this.bruteforceTimeLimit;
+				void this.defaultExportFormat;
+				this._save();
+			});
 		});
 	}
 

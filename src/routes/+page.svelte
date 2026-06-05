@@ -101,7 +101,8 @@
 							placeholder="Optional disc title..."
 							value={doodledialStore.discTitle}
 							oninput={(e) => doodledialStore.setDiscTitle(e.currentTarget.value)}
-							class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							disabled={optimizerStore.optimizerPending}
+							class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 						/>
 					</label>
 					<div class="flex items-center gap-3">
@@ -113,7 +114,8 @@
 							step="1"
 							value={doodledialStore.discTitleFontSize}
 							oninput={(e) => doodledialStore.setDiscTitleFontSize(Number(e.currentTarget.value))}
-							class="flex-1 accent-indigo-600"
+							disabled={optimizerStore.optimizerPending}
+							class="flex-1 accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
 						/>
 						<span class="text-xs text-gray-500 w-8 text-right"
 							>{doodledialStore.discTitleFontSize}</span
@@ -175,7 +177,8 @@
 
 			<button
 				onclick={() => (globalConfigDialogOpen = true)}
-				class="px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out hover:bg-gray-50 active:scale-95"
+				disabled={optimizerStore.optimizerPending}
+				class="px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
 				aria-label="Open global settings"
 				data-testid="global-config-gear-button"
 			>

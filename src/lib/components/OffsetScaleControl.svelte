@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 
 	function handleOffsetXInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
@@ -26,7 +27,8 @@
 				type="number"
 				value={doodledialStore.config.offsetX}
 				oninput={handleOffsetXInput}
-				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+				disabled={optimizerStore.optimizerPending}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 			/>
 			<span class="text-sm text-gray-500">mm</span>
 		</div>
@@ -40,7 +42,8 @@
 				type="number"
 				value={doodledialStore.config.offsetY}
 				oninput={handleOffsetYInput}
-				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+				disabled={optimizerStore.optimizerPending}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 			/>
 			<span class="text-sm text-gray-500">mm</span>
 		</div>
@@ -54,7 +57,8 @@
 			step="0.05"
 			value={doodledialStore.config.scale}
 			oninput={handleScaleInput}
-			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+			disabled={optimizerStore.optimizerPending}
+			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 		/>
 	</div>
 </div>

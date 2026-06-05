@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
+	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { parseSvgPaths } from '$lib/utils/doodledial';
 
 	let isDragging = $state(false);
 	let fileInput: HTMLInputElement;
 
 	function handleDragOver(e: DragEvent) {
+		if (optimizerStore.optimizerPending) return;
 		e.preventDefault();
 		isDragging = true;
 	}
 
 	function handleDragLeave(e: DragEvent) {
+		if (optimizerStore.optimizerPending) return;
 		e.preventDefault();
 		isDragging = false;
 	}
@@ -18,6 +21,7 @@
 	function handleDrop(e: DragEvent) {
 		e.preventDefault();
 		isDragging = false;
+		if (optimizerStore.optimizerPending) return;
 		const files = e.dataTransfer?.files;
 		if (files && files.length > 0) {
 			processFile(files[0]);
@@ -25,6 +29,7 @@
 	}
 
 	function handleFileSelect(e: Event) {
+		if (optimizerStore.optimizerPending) return;
 		const input = e.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			processFile(input.files[0]);
@@ -65,14 +70,17 @@
 	}
 
 	function openFilePicker() {
+		if (optimizerStore.optimizerPending) return;
 		fileInput?.click();
 	}
 </script>
 
 <div
-	class="relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ease-out {isDragging
+	class="relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ease-out {isDragging
 		? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
-		: 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'}"
+		: optimizerStore.optimizerPending
+			? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+			: 'border-gray-300 bg-gray-50 cursor-pointer hover:border-gray-400 hover:bg-gray-100'}"
 	ondragover={handleDragOver}
 	ondragleave={handleDragLeave}
 	ondrop={handleDrop}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
+	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { exportLaserSvg, exportStl, exportPreviewSvg } from '$lib/utils/export-formats';
 
 	let menuOpen = $state(false);
@@ -119,7 +120,7 @@
 	<div class="flex rounded-xl shadow-md shadow-indigo-100">
 		<button
 			onclick={handleMainClick}
-			disabled={!doodledialStore.svgContent}
+			disabled={!doodledialStore.svgContent || optimizerStore.optimizerPending}
 			class="group flex items-center gap-2 rounded-l-xl bg-indigo-600 px-5 py-2.5 font-medium text-white transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:bg-gray-300 enabled:hover:bg-indigo-700 enabled:hover:shadow-lg enabled:hover:shadow-indigo-200 enabled:active:scale-95"
 		>
 			<svg
@@ -145,7 +146,7 @@
 		</button>
 		<button
 			onclick={() => (menuOpen = !menuOpen)}
-			disabled={!doodledialStore.svgContent}
+			disabled={!doodledialStore.svgContent || optimizerStore.optimizerPending}
 			aria-expanded={menuOpen}
 			aria-haspopup="menu"
 			aria-label="Export options"
