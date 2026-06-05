@@ -7,7 +7,6 @@ created_date: '2026-04-12 01:12'
 updated_date: '2026-06-05 18:44'
 labels: []
 dependencies:
-  - TASK-021
   - TASK-022
 priority: high
 ordinal: 6000
