@@ -1,28 +1,44 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { doodledialStore } from './doodledial.svelte';
-import { globalConfig } from './global-config.svelte';
+import { createDoodledialStore, doodledialStore } from './doodledial.svelte';
 
 describe('doodledial store auto-placement trigger scheduler', () => {
+	function createStoreWithMockConfig() {
+		const mockConfig = {
+			pathLabelOptimizerEnabled: true,
+			diameter: 200,
+			save: vi.fn(),
+			open: vi.fn(),
+			close: vi.fn(),
+			reset: vi.fn(),
+			centerHoleDiameter: 2,
+			forceDirectedOptimizerEnabled: false,
+			optimizerGapDefault: 5,
+			bruteforceTimeLimit: 120,
+			defaultExportFormat: 'laser-svg' as const,
+			dialogOpen: false
+		};
+		const store = createDoodledialStore({ globalConfig: mockConfig });
+		store.addLayer('layer-1', 1, 'Layer 1');
+		return store;
+	}
+
 	beforeEach(() => {
 		vi.useFakeTimers();
-		globalConfig.pathLabelOptimizerEnabled = true;
-		doodledialStore.reset();
-		doodledialStore.addLayer('layer-1', 1, 'Layer 1');
 	});
 
 	afterEach(() => {
-		doodledialStore.setAutoPlacementRunner(null);
 		vi.useRealTimers();
 		vi.restoreAllMocks();
 	});
 
 	it('triggers debounced auto-placement on setScale and setOffsetX/Y', async () => {
+		const store = createStoreWithMockConfig();
 		const runner = vi.fn(async () => {});
-		doodledialStore.setAutoPlacementRunner(runner);
+		store.setAutoPlacementRunner(runner);
 
-		doodledialStore.setScale(1.1);
-		doodledialStore.setOffsetX(2);
-		doodledialStore.setOffsetY(-3);
+		store.setScale(1.1);
+		store.setOffsetX(2);
+		store.setOffsetY(-3);
 
 		expect(runner).not.toHaveBeenCalled();
 
@@ -32,11 +48,12 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 	});
 
 	it('does not trigger auto-placement on setLayerRotation or toggleVisibility', async () => {
+		const store = createStoreWithMockConfig();
 		const runner = vi.fn(async () => {});
-		doodledialStore.setAutoPlacementRunner(runner);
+		store.setAutoPlacementRunner(runner);
 
-		doodledialStore.setLayerRotation('layer-1', 45);
-		doodledialStore.toggleVisibility('layer-1');
+		store.setLayerRotation('layer-1', 45);
+		store.toggleVisibility('layer-1');
 
 		await vi.advanceTimersByTimeAsync(120);
 
@@ -44,6 +61,7 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 	});
 
 	it('reruns once when work becomes stale during an active single-flight run', async () => {
+		const store = createStoreWithMockConfig();
 		let invocationCount = 0;
 		let releaseFirstRun: () => void = () => {};
 		const firstRunDone = new Promise<void>((resolve) => {
@@ -57,10 +75,10 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 			}
 		});
 
-		doodledialStore.setAutoPlacementRunner(runner);
+		store.setAutoPlacementRunner(runner);
 
-		const firstRunPromise = doodledialStore.runAutoPlacementNow();
-		const staleRunPromise = doodledialStore.runAutoPlacementNow();
+		const firstRunPromise = store.runAutoPlacementNow();
+		const staleRunPromise = store.runAutoPlacementNow();
 
 		expect(runner).toHaveBeenCalledTimes(1);
 

@@ -1,13 +1,18 @@
 import type { DialConfig, LabelPlacementStatus, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
-import { globalConfig } from '$lib/stores/global-config.svelte';
+import { globalConfig as defaultGlobalConfig } from '$lib/stores/global-config.svelte';
 import { createLayerStore } from './layers.svelte';
 import { createDetectionStore } from './detection.svelte';
 import { createLabelPlacementStore } from './label-placement.svelte';
 
-function createDoodledialStore() {
-	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
-	config.diameter = globalConfig.diameter;
+interface GlobalConfigLike {
+	diameter: number;
+	pathLabelOptimizerEnabled: boolean;
+}
+
+function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
+	const globalConfig = options?.globalConfig ?? defaultGlobalConfig;
+	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG, diameter: globalConfig.diameter });
 	let svgContent = $state<SVGContent | null>(null);
 	let combinedSvg = $state<string | null>(null);
 	let isLoading = $state<boolean>(false);
@@ -30,7 +35,9 @@ function createDoodledialStore() {
 		}
 	});
 
-	const labelPlacementStore = createLabelPlacementStore();
+	const labelPlacementStore = createLabelPlacementStore({
+		getIsPlacementEnabled: () => globalConfig.pathLabelOptimizerEnabled
+	});
 
 	let discTitle = $state<string>('');
 	let discTitleX = $state<number>(100);
@@ -240,6 +247,7 @@ function createDoodledialStore() {
 	};
 }
 
+export { createDoodledialStore };
 export const doodledialStore = createDoodledialStore();
 
 declare global {
