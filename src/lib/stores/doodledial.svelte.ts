@@ -3,8 +3,7 @@ import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 import { globalConfig } from '$lib/stores/global-config.svelte';
 import { createLayerStore } from './layers.svelte';
 import { createDetectionStore } from './detection.svelte';
-
-type AutoPlacementRunner = () => void | Promise<void>;
+import { createLabelPlacementStore } from './label-placement.svelte';
 
 function createDoodledialStore() {
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG });
@@ -31,51 +30,12 @@ function createDoodledialStore() {
 		}
 	});
 
+	const labelPlacementStore = createLabelPlacementStore();
+
 	let discTitle = $state<string>('');
 	let discTitleX = $state<number>(100);
 	let discTitleY = $state<number>(20);
 	let discTitleFontSize = $state<number>(12);
-	let autoPlacementTimer: ReturnType<typeof setTimeout> | null = null;
-	let autoPlacementRunning = false;
-	let autoPlacementStale = false;
-	let autoPlacementRunner: AutoPlacementRunner | null = null;
-
-	async function executeAutoPlacementNow(): Promise<void> {
-		if (!globalConfig.pathLabelOptimizerEnabled) {
-			return;
-		}
-
-		if (autoPlacementRunning) {
-			autoPlacementStale = true;
-			return;
-		}
-
-		autoPlacementRunning = true;
-		try {
-			await autoPlacementRunner?.();
-		} finally {
-			autoPlacementRunning = false;
-			if (autoPlacementStale) {
-				autoPlacementStale = false;
-				await executeAutoPlacementNow();
-			}
-		}
-	}
-
-	function scheduleLabelAutoPlacement() {
-		if (!globalConfig.pathLabelOptimizerEnabled) {
-			return;
-		}
-
-		if (autoPlacementTimer) {
-			clearTimeout(autoPlacementTimer);
-		}
-
-		autoPlacementTimer = setTimeout(() => {
-			autoPlacementTimer = null;
-			void executeAutoPlacementNow();
-		}, 100);
-	}
 
 	return {
 		get discTitle() {
@@ -152,29 +112,25 @@ function createDoodledialStore() {
 		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
-			scheduleLabelAutoPlacement();
+			labelPlacementStore.schedule();
 		},
 		setOffsetY(offsetY: number) {
 			config = { ...config, offsetY };
-			scheduleLabelAutoPlacement();
+			labelPlacementStore.schedule();
 		},
 		setScale(scale: number) {
 			config = { ...config, scale };
-			scheduleLabelAutoPlacement();
+			labelPlacementStore.schedule();
 		},
 		setOptimizerGapMm(optimizerGapMm: number) {
 			config = { ...config, optimizerGapMm };
 			detectionStore.runDetectionNow();
 		},
-		setAutoPlacementRunner(runner: AutoPlacementRunner | null) {
-			if (!globalConfig.pathLabelOptimizerEnabled) {
-				autoPlacementRunner = null;
-				return;
-			}
-			autoPlacementRunner = runner;
+		setAutoPlacementRunner(runner: (() => void | Promise<void>) | null) {
+			labelPlacementStore.setRunner(runner);
 		},
 		runAutoPlacementNow() {
-			return executeAutoPlacementNow();
+			return labelPlacementStore.runNow();
 		},
 		setSvgContent(content: SVGContent | null) {
 			svgContent = content;
@@ -255,15 +211,7 @@ function createDoodledialStore() {
 			layerStore.resetLayerLabelPlacementMode(id);
 		},
 		requestLayerLabelAutoPlacement(id: string) {
-			if (!globalConfig.pathLabelOptimizerEnabled) {
-				return Promise.resolve();
-			}
-
-			if (!layerStore.getLayer(id)) {
-				return Promise.resolve();
-			}
-
-			return executeAutoPlacementNow();
+			return labelPlacementStore.requestLayerAutoPlacement(id, !!layerStore.getLayer(id));
 		},
 		showAllLayers() {
 			layerStore.showAllLayers();
@@ -275,13 +223,7 @@ function createDoodledialStore() {
 			layerStore.clearLayers();
 		},
 		reset() {
-			if (autoPlacementTimer) {
-				clearTimeout(autoPlacementTimer);
-				autoPlacementTimer = null;
-			}
-			autoPlacementRunning = false;
-			autoPlacementStale = false;
-			autoPlacementRunner = null;
+			labelPlacementStore.reset();
 			config = { ...DEFAULT_DIAL_CONFIG };
 			config.diameter = globalConfig.diameter;
 			svgContent = null;

@@ -1,5 +1,6 @@
 import type { Layer } from '$lib/types/doodledial';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
+import { SvelteMap } from 'svelte/reactivity';
 
 export interface DetectionStoreOptions {
 	getLayers: () => Layer[];
@@ -10,12 +11,23 @@ export interface DetectionStoreOptions {
 
 const DEBOUNCE_MS = 50;
 
+function replaceMapContent<K, V>(target: SvelteMap<K, V>, source: Map<K, V>) {
+	target.clear();
+	for (const [k, v] of source) {
+		target.set(k, v);
+	}
+}
+
+function clearMap<K, V>(target: SvelteMap<K, V>) {
+	target.clear();
+}
+
 export function createDetectionStore(options: DetectionStoreOptions) {
 	const { getLayers, getCombinedSvg, getConfig, onError } = options;
 
 	let checkingOverlaps = $state<boolean>(false);
-	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
-	let cutoutGaps = $state<Map<string, Set<string>>>(new Map());
+	const overlaps: SvelteMap<string, Map<string, number>> = new SvelteMap();
+	const cutoutGaps: SvelteMap<string, Set<string>> = new SvelteMap();
 
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	let detectionRunning = false;
@@ -54,16 +66,16 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 			const visibleLayers = allLayers.filter((l) => l.visible);
 
 			if (!svg || visibleLayers.length < 2) {
-				overlaps = new Map();
-				cutoutGaps = new Map();
+				clearMap(overlaps);
+				clearMap(cutoutGaps);
 				return;
 			}
 
 			try {
 				const result = await detectOverlaps(visibleLayers, svg);
-				overlaps = result;
+				replaceMapContent(overlaps, result);
 			} catch (err) {
-				overlaps = new Map();
+				clearMap(overlaps);
 				onError?.(`Overlap detection failed: ${err instanceof Error ? err.message : String(err)}`);
 			}
 
@@ -75,9 +87,9 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 					config.optimizerGapMm ?? 2,
 					config.diameter
 				);
-				cutoutGaps = result;
+				replaceMapContent(cutoutGaps, result);
 			} catch (err) {
-				cutoutGaps = new Map();
+				clearMap(cutoutGaps);
 				onError?.(`Gap detection failed: ${err instanceof Error ? err.message : String(err)}`);
 			}
 		} finally {
@@ -106,16 +118,16 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 			checkingOverlaps = checking;
 		},
 		setOverlaps(newOverlaps: Map<string, Map<string, number>>) {
-			overlaps = newOverlaps;
+			replaceMapContent(overlaps, newOverlaps);
 		},
 		clearOverlaps() {
-			overlaps = new Map();
+			clearMap(overlaps);
 		},
 		setCutoutGaps(newGaps: Map<string, Set<string>>) {
-			cutoutGaps = newGaps;
+			replaceMapContent(cutoutGaps, newGaps);
 		},
 		clearCutoutGaps() {
-			cutoutGaps = new Map();
+			clearMap(cutoutGaps);
 		},
 		reset() {
 			if (debounceTimer) {
@@ -124,8 +136,8 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 			}
 			detectionRunning = false;
 			detectionStale = false;
-			overlaps = new Map();
-			cutoutGaps = new Map();
+			clearMap(overlaps);
+			clearMap(cutoutGaps);
 			checkingOverlaps = false;
 		}
 	};

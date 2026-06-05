@@ -194,11 +194,11 @@ describe('DetectionStore', () => {
 	describe('checkingOverlaps state', () => {
 		it('is true during detection', async () => {
 			const { detectOverlaps } = await import('$lib/utils/overlap-detection');
-			let resolveOverlap: (v: unknown) => void;
+			let resolveOverlap: (v: Map<string, Map<string, number>>) => void;
 			vi.mocked(detectOverlaps).mockReturnValue(
-				new Promise((resolve) => {
+				new Promise<Map<string, Map<string, number>>>((resolve) => {
 					resolveOverlap = resolve;
-				}) as any
+				})
 			);
 
 			const runPromise = store.runDetectionNow();
@@ -214,20 +214,20 @@ describe('DetectionStore', () => {
 	describe('serialization / stale re-run', () => {
 		it('queues a re-run if scheduleDetection is called while a run is in progress', async () => {
 			const { detectOverlaps, detectCutoutGaps } = await import('$lib/utils/overlap-detection');
-			let resolveOverlap1: (v: unknown) => void;
-			let resolveOverlap2: (v: unknown) => void;
+			let resolveOverlap1: (v: Map<string, Map<string, number>>) => void;
+			let resolveOverlap2: (v: Map<string, Map<string, number>>) => void;
 			let overlapCalls = 0;
 
 			vi.mocked(detectOverlaps).mockImplementation(
 				() =>
-					new Promise((resolve) => {
+					new Promise<Map<string, Map<string, number>>>((resolve) => {
 						overlapCalls++;
 						if (overlapCalls === 1) {
 							resolveOverlap1 = resolve;
 						} else {
 							resolveOverlap2 = resolve;
 						}
-					}) as any
+					})
 			);
 			vi.mocked(detectCutoutGaps).mockResolvedValue(new Map());
 
@@ -287,9 +287,9 @@ describe('DetectionStore', () => {
 				onError
 			});
 			await store.runDetectionNow();
-			const passedLayers = vi.mocked(detectOverlaps).mock.calls[0][0] as any[];
+			const passedLayers = vi.mocked(detectOverlaps).mock.calls[0][0] as { id: string }[];
 			expect(passedLayers).toHaveLength(2);
-			expect(passedLayers.find((l: any) => l.id === 'c')).toBeUndefined();
+			expect(passedLayers.find((l) => l.id === 'c')).toBeUndefined();
 		});
 	});
 });
