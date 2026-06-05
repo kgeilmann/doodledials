@@ -187,7 +187,7 @@ function createDoodledialStore() {
 			layerStore.applyLayerRotations(rotations);
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
-			this.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
+			layerStore.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
 		},
 		setLayerLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
 			layerStore.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
@@ -242,7 +242,12 @@ function createDoodledialStore() {
 
 export const doodledialStore = createDoodledialStore();
 
+declare global {
+	interface Window {
+		__doodledialStore?: typeof doodledialStore;
+	}
+}
+
 if (typeof window !== 'undefined') {
-	(window as typeof window & { __doodledialStore?: typeof doodledialStore }).__doodledialStore =
-		doodledialStore;
+	window.__doodledialStore = doodledialStore;
 }

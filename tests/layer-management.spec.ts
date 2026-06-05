@@ -89,25 +89,20 @@ test.describe('Layer Management', () => {
 		await expect(firstLayerRow).toHaveClass(/bg-indigo-50/);
 
 		await page.evaluate(() => {
-			const store = (
-				window as Window & {
-					__doodledialStore?: {
-						setLayerLabelPlacementStatus: (id: string, status: unknown) => void;
-						setAutoPlacementRunner: (runner: () => Promise<void>) => void;
-					};
-				}
-			).__doodledialStore;
+			const store = (window as { __doodledialStore?: Record<string, unknown> }).__doodledialStore;
 
 			if (!store) {
 				throw new Error('doodledialStore test handle is not available');
 			}
 
-			store.setLayerLabelPlacementStatus('layer-1', {
+			(store.setLayerLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
 				status: 'error',
 				reason: 'no-valid-position-within-radius'
 			});
-			store.setAutoPlacementRunner(async () => {
-				store.setLayerLabelPlacementStatus('layer-1', { status: 'placed' });
+			(store.setAutoPlacementRunner as (runner: () => Promise<void>) => void)(async () => {
+				(store.setLayerLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
+					status: 'placed'
+				});
 			});
 		});
 
