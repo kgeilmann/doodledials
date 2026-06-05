@@ -1,8 +1,8 @@
-import type { DialConfig, LabelPlacementStatus, Layer, SVGContent } from '$lib/types/doodledial';
+import type { DialConfig, LabelPlacementStatus, SVGContent } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
-import { SvelteMap } from 'svelte/reactivity';
 import { detectOverlaps, detectCutoutGaps } from '$lib/utils/overlap-detection';
 import { globalConfig } from '$lib/stores/global-config.svelte';
+import { createLayerStore } from './layers.svelte';
 
 type AutoPlacementRunner = () => void | Promise<void>;
 
@@ -13,9 +13,15 @@ function createDoodledialStore() {
 	let combinedSvg = $state<string | null>(null);
 	let isLoading = $state<boolean>(false);
 	let error = $state<string | null>(null);
-	const layers: SvelteMap<string, Layer> = new SvelteMap();
-	let highlightedLayer = $state<string | null>(null);
-	let selectedLayer = $state<string | null>(null);
+
+	const layerStore = createLayerStore({
+		onChange() {
+			if (combinedSvg) {
+				runOverlapDetection();
+				runCutoutGapDetection();
+			}
+		}
+	});
 
 	let checkingOverlaps = $state<boolean>(false);
 	let overlaps = $state<Map<string, Map<string, number>>>(new Map());
@@ -29,29 +35,15 @@ function createDoodledialStore() {
 	let autoPlacementStale = false;
 	let autoPlacementRunner: AutoPlacementRunner | null = null;
 
-	function getLayerArray(): Layer[] {
-		return Array.from(layers.values()).sort((a, b) => a.index - b.index);
-	}
-
-	function getHiddenLayerCount(): number {
-		return Array.from(layers.values()).filter((l) => !l.visible).length;
-	}
-
 	async function runOverlapDetection() {
-		if (!combinedSvg || layers.size < 2) {
+		const visibleLayers = layerStore.layers.filter((l) => l.visible);
+		if (!combinedSvg || visibleLayers.length < 2) {
 			overlaps = new Map();
 			return;
 		}
 		checkingOverlaps = true;
 		try {
-			const layerArray = Array.from(layers.values())
-				.filter((l) => l.visible)
-				.sort((a, b) => a.index - b.index);
-			if (layerArray.length < 2) {
-				overlaps = new Map();
-				return;
-			}
-			const result = await detectOverlaps(layerArray, combinedSvg);
+			const result = await detectOverlaps(visibleLayers, combinedSvg);
 			overlaps = result;
 		} catch (err) {
 			console.error('Overlap detection failed:', err);
@@ -61,21 +53,15 @@ function createDoodledialStore() {
 	}
 
 	async function runCutoutGapDetection() {
-		if (!combinedSvg || layers.size < 2) {
+		const visibleLayers = layerStore.layers.filter((l) => l.visible);
+		if (!combinedSvg || visibleLayers.length < 2) {
 			cutoutGaps = new Map();
 			return;
 		}
 		try {
-			const layerArray = Array.from(layers.values())
-				.filter((l) => l.visible)
-				.sort((a, b) => a.index - b.index);
-			if (layerArray.length < 2) {
-				cutoutGaps = new Map();
-				return;
-			}
 			const optimizerGapMm = config.optimizerGapMm ?? 2;
 			const result = await detectCutoutGaps(
-				layerArray,
+				visibleLayers,
 				combinedSvg,
 				optimizerGapMm,
 				config.diameter
@@ -152,16 +138,16 @@ function createDoodledialStore() {
 			return error;
 		},
 		get layers() {
-			return getLayerArray();
+			return layerStore.layers;
 		},
 		get hiddenLayerCount() {
-			return getHiddenLayerCount();
+			return layerStore.hiddenLayerCount;
 		},
 		get highlightedLayer() {
-			return highlightedLayer;
+			return layerStore.highlightedLayer;
 		},
 		get selectedLayer() {
-			return selectedLayer;
+			return layerStore.selectedLayer;
 		},
 
 		get checkingOverlaps() {
@@ -176,8 +162,8 @@ function createDoodledialStore() {
 		get autoPathLabelPlacementEnabled() {
 			return globalConfig.pathLabelOptimizerEnabled;
 		},
-		getLayer(id: string): Layer | undefined {
-			return layers.get(id);
+		getLayer(id: string) {
+			return layerStore.getLayer(id);
 		},
 		setDiameter(diameter: number) {
 			config = { ...config, diameter };
@@ -227,7 +213,7 @@ function createDoodledialStore() {
 		},
 		setCombinedSvg(svg: string | null) {
 			combinedSvg = svg;
-			if (svg && layers.size >= 2) {
+			if (svg && layerStore.layers.length >= 2) {
 				runOverlapDetection();
 				runCutoutGapDetection();
 			}
@@ -239,10 +225,10 @@ function createDoodledialStore() {
 			error = err;
 		},
 		setHighlightedLayer(layerId: string | null) {
-			highlightedLayer = layerId;
+			layerStore.setHighlightedLayer(layerId);
 		},
 		setSelectedLayer(layerId: string | null) {
-			selectedLayer = layerId;
+			layerStore.setSelectedLayer(layerId);
 		},
 		setCheckingOverlaps(checking: boolean) {
 			checkingOverlaps = checking;
@@ -266,126 +252,60 @@ function createDoodledialStore() {
 			cutoutGaps = new Map();
 		},
 		addLayer(layerId: string, index: number, name: string) {
-			const newLayer: Layer = {
-				id: layerId,
-				name: name,
-				index: index,
-				visible: true,
-				rotation: 0,
-				labelPlacementMode: 'auto',
-				labelPlacementStatus: { status: 'placed' }
-			};
-			layers.set(layerId, newLayer);
-			overlaps = new Map();
-			cutoutGaps = new Map();
+			layerStore.addLayer(layerId, index, name);
 		},
 		toggleVisibility(id: string) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, { ...layer, visible: !layer.visible });
-			}
+			layerStore.toggleVisibility(id);
 		},
 		setLayerRotation(id: string, rotation: number) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, { ...layer, rotation });
-			}
-			runOverlapDetection();
-			runCutoutGapDetection();
+			layerStore.setLayerRotation(id, rotation);
 		},
 		applyLayerRotations(rotations: Record<string, number>) {
-			Object.entries(rotations).forEach(([id, rotation]) => {
-				const layer = layers.get(id);
-				if (layer) {
-					layers.set(id, { ...layer, rotation });
-				}
-			});
-
-			runOverlapDetection();
-			runCutoutGapDetection();
+			layerStore.applyLayerRotations(rotations);
 		},
 		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
 			this.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
 		},
 		setLayerLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, {
-					...layer,
-					labelOffsetX,
-					labelOffsetY,
-					labelPlacementMode: 'manual'
-				});
-			}
-			runOverlapDetection();
-			runCutoutGapDetection();
+			layerStore.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
 		},
 		setLayerLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, {
-					...layer,
-					labelOffsetX,
-					labelOffsetY,
-					labelPlacementMode: 'auto'
-				});
-			}
-			runOverlapDetection();
-			runCutoutGapDetection();
+			layerStore.setLayerLabelOffsetAuto(id, labelOffsetX, labelOffsetY);
 		},
-		getLayerLabelOffset(id: string): { labelOffsetX: number; labelOffsetY: number } | undefined {
-			const layer = layers.get(id);
-			if (layer) {
-				return {
-					labelOffsetX: layer.labelOffsetX || 0,
-					labelOffsetY: layer.labelOffsetY || 0
-				};
-			}
-			return undefined;
+		getLayerLabelOffset(id: string) {
+			return layerStore.getLayerLabelOffset(id);
 		},
-		getLayerLabelPlacementMode(id: string): 'auto' | 'manual' {
-			return layers.get(id)?.labelPlacementMode || 'auto';
+		getLayerLabelPlacementMode(id: string) {
+			return layerStore.getLayerLabelPlacementMode(id);
 		},
 		setLayerLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, { ...layer, labelPlacementStatus: status });
-			}
+			layerStore.setLayerLabelPlacementStatus(id, status);
 		},
-		getLayerLabelPlacementStatus(id: string): LabelPlacementStatus {
-			return layers.get(id)?.labelPlacementStatus || { status: 'placed' };
+		getLayerLabelPlacementStatus(id: string) {
+			return layerStore.getLayerLabelPlacementStatus(id);
 		},
 		resetLayerLabelPlacementMode(id: string) {
-			const layer = layers.get(id);
-			if (layer) {
-				layers.set(id, { ...layer, labelPlacementMode: 'auto' });
-			}
+			layerStore.resetLayerLabelPlacementMode(id);
 		},
 		requestLayerLabelAutoPlacement(id: string) {
 			if (!globalConfig.pathLabelOptimizerEnabled) {
 				return Promise.resolve();
 			}
 
-			if (!layers.has(id)) {
+			if (!layerStore.getLayer(id)) {
 				return Promise.resolve();
 			}
 
 			return executeAutoPlacementNow();
 		},
 		showAllLayers() {
-			layers.forEach((layer) => {
-				layers.set(layer.id, { ...layer, visible: true });
-			});
-			overlaps = new Map();
+			layerStore.showAllLayers();
 		},
 		hideAllLayers() {
-			layers.forEach((layer) => {
-				layers.set(layer.id, { ...layer, visible: false });
-			});
-			overlaps = new Map();
+			layerStore.hideAllLayers();
 		},
 		clearLayers() {
-			layers.clear();
+			layerStore.clearLayers();
 		},
 		reset() {
 			if (autoPlacementTimer) {
@@ -401,7 +321,7 @@ function createDoodledialStore() {
 			combinedSvg = null;
 			isLoading = false;
 			error = null;
-			layers.clear();
+			layerStore.reset();
 			discTitle = '';
 			discTitleX = 100;
 			discTitleY = 20;

@@ -1,0 +1,338 @@
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { createLayerStore } from './layers.svelte';
+
+describe('LayerStore', () => {
+	let store: ReturnType<typeof createLayerStore>;
+
+	beforeEach(() => {
+		store = createLayerStore();
+	});
+
+	describe('initial state', () => {
+		it('starts with empty layers', () => {
+			expect(store.layers).toEqual([]);
+			expect(store.hiddenLayerCount).toBe(0);
+		});
+
+		it('starts with no selection or highlight', () => {
+			expect(store.selectedLayer).toBeNull();
+			expect(store.highlightedLayer).toBeNull();
+		});
+	});
+
+	describe('addLayer', () => {
+		it('adds a layer and returns it via getLayer', () => {
+			store.addLayer('layer-1', 1, 'Layer 1');
+			expect(store.layers).toHaveLength(1);
+			const layer = store.getLayer('layer-1');
+			expect(layer).toBeDefined();
+			expect(layer!.id).toBe('layer-1');
+			expect(layer!.name).toBe('Layer 1');
+			expect(layer!.index).toBe(1);
+			expect(layer!.visible).toBe(true);
+			expect(layer!.rotation).toBe(0);
+			expect(layer!.labelPlacementMode).toBe('auto');
+			expect(layer!.labelPlacementStatus).toEqual({ status: 'placed' });
+		});
+
+		it('sorts layers by index', () => {
+			store.addLayer('b', 2, 'B');
+			store.addLayer('a', 1, 'A');
+			expect(store.layers[0].id).toBe('a');
+			expect(store.layers[1].id).toBe('b');
+		});
+
+		it('returns undefined for non-existent layer', () => {
+			expect(store.getLayer('non-existent')).toBeUndefined();
+		});
+	});
+
+	describe('toggleVisibility', () => {
+		it('toggles layer visibility', () => {
+			store.addLayer('layer-1', 1, 'Layer 1');
+			expect(store.getLayer('layer-1')!.visible).toBe(true);
+			store.toggleVisibility('layer-1');
+			expect(store.getLayer('layer-1')!.visible).toBe(false);
+			store.toggleVisibility('layer-1');
+			expect(store.getLayer('layer-1')!.visible).toBe(true);
+		});
+
+		it('does nothing for non-existent layer', () => {
+			store.toggleVisibility('ghost');
+			expect(store.layers).toHaveLength(0);
+		});
+
+		it('updates hiddenLayerCount', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			expect(store.hiddenLayerCount).toBe(0);
+			store.toggleVisibility('a');
+			expect(store.hiddenLayerCount).toBe(1);
+			store.toggleVisibility('a');
+			expect(store.hiddenLayerCount).toBe(0);
+		});
+	});
+
+	describe('setLayerRotation', () => {
+		it('sets rotation on a layer', () => {
+			store.addLayer('layer-1', 1, 'Layer 1');
+			store.setLayerRotation('layer-1', 45);
+			expect(store.getLayer('layer-1')!.rotation).toBe(45);
+		});
+
+		it('does nothing for non-existent layer', () => {
+			store.setLayerRotation('ghost', 45);
+			expect(store.getLayer('ghost')).toBeUndefined();
+		});
+	});
+
+	describe('applyLayerRotations', () => {
+		it('applies multiple rotations', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.applyLayerRotations({ a: 10, b: 20 });
+			expect(store.getLayer('a')!.rotation).toBe(10);
+			expect(store.getLayer('b')!.rotation).toBe(20);
+		});
+
+		it('skips non-existent layers', () => {
+			store.addLayer('a', 1, 'A');
+			store.applyLayerRotations({ a: 10, ghost: 30 });
+			expect(store.getLayer('a')!.rotation).toBe(10);
+		});
+	});
+
+	describe('selection and highlighting', () => {
+		it('setSelectedLayer updates selectedLayer', () => {
+			store.addLayer('a', 1, 'A');
+			store.setSelectedLayer('a');
+			expect(store.selectedLayer).toBe('a');
+			store.setSelectedLayer(null);
+			expect(store.selectedLayer).toBeNull();
+		});
+
+		it('setHighlightedLayer updates highlightedLayer', () => {
+			store.addLayer('a', 1, 'A');
+			store.setHighlightedLayer('a');
+			expect(store.highlightedLayer).toBe('a');
+			store.setHighlightedLayer(null);
+			expect(store.highlightedLayer).toBeNull();
+		});
+	});
+
+	describe('showAllLayers and hideAllLayers', () => {
+		it('showAllLayers makes all layers visible', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.toggleVisibility('a');
+			store.showAllLayers();
+			expect(store.getLayer('a')!.visible).toBe(true);
+			expect(store.getLayer('b')!.visible).toBe(true);
+			expect(store.hiddenLayerCount).toBe(0);
+		});
+
+		it('hideAllLayers hides all layers', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.hideAllLayers();
+			expect(store.getLayer('a')!.visible).toBe(false);
+			expect(store.getLayer('b')!.visible).toBe(false);
+			expect(store.hiddenLayerCount).toBe(2);
+		});
+	});
+
+	describe('clearLayers', () => {
+		it('removes all layers', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.setSelectedLayer('a');
+			store.clearLayers();
+			expect(store.layers).toHaveLength(0);
+			expect(store.selectedLayer).toBeNull();
+		});
+	});
+
+	describe('label placement methods', () => {
+		it('setLayerLabelOffsetManual sets offset and mode to manual', () => {
+			store.addLayer('a', 1, 'A');
+			store.setLayerLabelOffsetManual('a', 10, 20);
+			const offset = store.getLayerLabelOffset('a');
+			expect(offset).toEqual({ labelOffsetX: 10, labelOffsetY: 20 });
+			expect(store.getLayerLabelPlacementMode('a')).toBe('manual');
+		});
+
+		it('setLayerLabelOffsetAuto sets offset and mode to auto', () => {
+			store.addLayer('a', 1, 'A');
+			store.setLayerLabelOffsetManual('a', 10, 20);
+			store.setLayerLabelOffsetAuto('a', 5, 5);
+			const offset = store.getLayerLabelOffset('a');
+			expect(offset).toEqual({ labelOffsetX: 5, labelOffsetY: 5 });
+			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+		});
+
+		it('getLayerLabelOffset returns undefined for non-existent layer', () => {
+			expect(store.getLayerLabelOffset('ghost')).toBeUndefined();
+		});
+
+		it('getLayerLabelOffset returns zeros when no offset set', () => {
+			store.addLayer('a', 1, 'A');
+			expect(store.getLayerLabelOffset('a')).toEqual({ labelOffsetX: 0, labelOffsetY: 0 });
+		});
+
+		it('getLayerLabelPlacementStatus returns placed as default', () => {
+			store.addLayer('a', 1, 'A');
+			expect(store.getLayerLabelPlacementStatus('a')).toEqual({ status: 'placed' });
+		});
+
+		it('setLayerLabelPlacementStatus updates status', () => {
+			store.addLayer('a', 1, 'A');
+			store.setLayerLabelPlacementStatus('a', {
+				status: 'error',
+				reason: 'no-valid-position-within-radius'
+			});
+			expect(store.getLayerLabelPlacementStatus('a')).toEqual({
+				status: 'error',
+				reason: 'no-valid-position-within-radius'
+			});
+		});
+
+		it('resetLayerLabelPlacementMode resets mode to auto', () => {
+			store.addLayer('a', 1, 'A');
+			store.setLayerLabelOffsetManual('a', 10, 20);
+			expect(store.getLayerLabelPlacementMode('a')).toBe('manual');
+			store.resetLayerLabelPlacementMode('a');
+			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+		});
+
+		it('getLayerLabelPlacementMode returns auto as default', () => {
+			store.addLayer('a', 1, 'A');
+			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+		});
+	});
+
+	describe('onChange callback', () => {
+		it('calls onChange when a layer is added', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on toggleVisibility', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.toggleVisibility('a');
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on setLayerRotation', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.setLayerRotation('a', 45);
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on applyLayerRotations', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.applyLayerRotations({ a: 90 });
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on setLayerLabelOffsetManual', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.setLayerLabelOffsetManual('a', 10, 20);
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on showAllLayers', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			onChange.mockClear();
+			store.showAllLayers();
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on hideAllLayers', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.hideAllLayers();
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('calls onChange on clearLayers', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.clearLayers();
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('does NOT call onChange for selection changes', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.setSelectedLayer('a');
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		it('does NOT call onChange for highlight changes', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.setHighlightedLayer('a');
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		it('does NOT call onChange for read operations', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			onChange.mockClear();
+			store.getLayer('a');
+			store.getLayerLabelOffset('a');
+			store.getLayerLabelPlacementMode('a');
+			store.getLayerLabelPlacementStatus('a');
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		it('calls onChange only once for a batch of changes', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			onChange.mockClear();
+			store.applyLayerRotations({ a: 10, b: 20 });
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('reset', () => {
+		it('clears all layers and selection', () => {
+			store.addLayer('a', 1, 'A');
+			store.setSelectedLayer('a');
+			store.reset();
+			expect(store.layers).toHaveLength(0);
+			expect(store.selectedLayer).toBeNull();
+			expect(store.highlightedLayer).toBeNull();
+			expect(store.hiddenLayerCount).toBe(0);
+		});
+	});
+});
