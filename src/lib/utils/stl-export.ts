@@ -59,7 +59,7 @@ function transformPoint(point: MmPoint, options: TransformOptions): MmPoint {
 }
 
 function pxToMm(point: MmPoint, cx: number, cy: number, scale: number): THREE.Vector2 {
-	return new THREE.Vector2((point.x - cx) * scale, (point.y - cy) * scale);
+	return new THREE.Vector2((point.x - cx) * scale, (cy - point.y) * scale);
 }
 
 function toClosedPolygon(points: THREE.Vector2[]): THREE.Vector2[] {
@@ -449,7 +449,7 @@ export function exportStl(
 				);
 				return new THREE.Vector2(
 					(transformed.x - cx) * viewboxToMmScale,
-					(transformed.y - cy) * viewboxToMmScale
+					(cy - transformed.y) * viewboxToMmScale
 				);
 			};
 
@@ -481,7 +481,7 @@ export function exportStl(
 				);
 				return new THREE.Vector2(
 					(transformed.x - cx) * viewboxToMmScale,
-					(transformed.y - cy) * viewboxToMmScale
+					(cy - transformed.y) * viewboxToMmScale
 				);
 			};
 
@@ -507,7 +507,7 @@ export function exportStl(
 		const mapPoint = (point: THREE.Vector2) =>
 			new THREE.Vector2(
 				(titleCenterX + point.x) * viewboxToMmScale,
-				(titleCenterY + point.y) * viewboxToMmScale
+				(-titleCenterY - point.y) * viewboxToMmScale
 			);
 
 		if (raised) {
