@@ -75,11 +75,35 @@ function toClosedPolygon(points: THREE.Vector2[]): THREE.Vector2[] {
 	return result;
 }
 
+interface ElementTransform {
+	a: number;
+	b: number;
+	c: number;
+	d: number;
+	e: number;
+	f: number;
+}
+
+function parseElementTransform(transformStr: string | undefined): ElementTransform | null {
+	if (!transformStr) return null;
+
+	const match = transformStr.match(/matrix\(([^)]+)\)/);
+	if (!match) return null;
+
+	const values = match[1].split(/[ ,]+/).map((v) => Number.parseFloat(v));
+	if (values.length < 6) {
+		return null;
+	}
+
+	return { a: values[0], b: values[1], c: values[2], d: values[3], e: values[4], f: values[5] };
+}
+
 function pathDataToPolygon(
 	pathData: string,
 	options: TransformOptions,
 	sampleStepPx: number,
-	viewboxToMmScale: number
+	viewboxToMmScale: number,
+	elementTransform?: ElementTransform | null
 ): THREE.Vector2[] {
 	const properties = new svgPathProperties(pathData);
 	const length = properties.getTotalLength();
@@ -93,7 +117,17 @@ function pathDataToPolygon(
 	for (let index = 0; index <= stepCount; index += 1) {
 		const sampleLength = (length * index) / stepCount;
 		const point = properties.getPointAtLength(sampleLength);
-		const transformed = transformPoint({ x: point.x, y: point.y }, options);
+
+		// Apply the SVG element's own transform first (normalization from parseSvgPaths)
+		let pathPoint: MmPoint = { x: point.x, y: point.y };
+		if (elementTransform) {
+			pathPoint = {
+				x: elementTransform.a * point.x + elementTransform.c * point.y + elementTransform.e,
+				y: elementTransform.b * point.x + elementTransform.d * point.y + elementTransform.f
+			};
+		}
+
+		const transformed = transformPoint(pathPoint, options);
 		points.push(pxToMm(transformed, options.cx, options.cy, viewboxToMmScale));
 	}
 
@@ -299,7 +333,18 @@ export function exportStl(
 				return;
 			}
 
-			const polygon = pathDataToPolygon(d, cutoutTransform, sampleStepPx, viewboxToMmScale);
+			const transformRaw = cutout.attr('transform');
+			const elemTransform = parseElementTransform(
+				typeof transformRaw === 'string' ? transformRaw : undefined
+			);
+
+			const polygon = pathDataToPolygon(
+				d,
+				cutoutTransform,
+				sampleStepPx,
+				viewboxToMmScale,
+				elemTransform
+			);
 			if (polygon.length >= 3) {
 				holePolygons.push(polygon);
 			}
