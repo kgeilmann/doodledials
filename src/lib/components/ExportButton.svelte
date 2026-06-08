@@ -7,6 +7,7 @@
 	let menuOpen = $state(false);
 	let discThicknessMm = $state('3');
 	let markThicknessMm = $state('0.5');
+	let raised = $state(true);
 	let stlDialogEl: HTMLDialogElement | null = $state(null);
 
 	function parseThickness(value: string, fallback: number): number {
@@ -84,7 +85,8 @@
 				getVisibleLayers(),
 				{
 					discThicknessMm: parseThickness(discThicknessMm, 3),
-					markThicknessMm: parseThickness(markThicknessMm, 0.5)
+					markThicknessMm: parseThickness(markThicknessMm, 0.5),
+					raised
 				}
 			);
 			createDownload(stl, makeFilename('doodledial', 'stl'), 'model/stl');
@@ -231,6 +233,38 @@
 					class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
 				/>
 			</label>
+		</div>
+
+		<div class="mt-4">
+			<span class="text-xs font-medium text-gray-600">Mark style</span>
+			<div class="mt-1 flex gap-2">
+				<button
+					type="button"
+					onclick={() => (raised = true)}
+					class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition"
+					class:bg-indigo-600={raised}
+					class:text-white={raised}
+					class:border={!raised}
+					class:border-gray-300={!raised}
+					class:text-gray-600={!raised}
+					class:hover:bg-gray-50={!raised}
+				>
+					Raised
+				</button>
+				<button
+					type="button"
+					onclick={() => (raised = false)}
+					class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition"
+					class:bg-indigo-600={!raised}
+					class:text-white={!raised}
+					class:border={raised}
+					class:border-gray-300={raised}
+					class:text-gray-600={raised}
+					class:hover:bg-gray-50={raised}
+				>
+					Recessed
+				</button>
+			</div>
 		</div>
 
 		<div class="mt-5 flex items-center justify-end gap-2">

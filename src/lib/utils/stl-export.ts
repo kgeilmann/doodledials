@@ -14,6 +14,7 @@ export interface StlExportOptions {
 	discTitleX?: number;
 	discTitleY?: number;
 	discTitleFontSize?: number;
+	raised?: boolean;
 }
 
 interface TransformOptions {
@@ -260,6 +261,59 @@ function labelShapesToExtrudedMeshes(
 	return meshes;
 }
 
+function clampToDisc(points: THREE.Vector2[], maxRadiusMm: number): THREE.Vector2[] {
+	const maxR = Math.max(maxRadiusMm, 0);
+	return points.map((p) => {
+		const dist = Math.hypot(p.x, p.y);
+		if (dist > maxR && dist > 0) {
+			const scale = maxR / dist;
+			return new THREE.Vector2(p.x * scale, p.y * scale);
+		}
+		return p;
+	});
+}
+
+function polygonToHolePath(points: THREE.Vector2[], maxRadiusMm?: number): THREE.Path | null {
+	if (points.length < 3) return null;
+
+	let pts = points.slice();
+	if (maxRadiusMm !== undefined) {
+		pts = clampToDisc(pts, maxRadiusMm);
+	}
+	const first = pts[0];
+	const last = pts[pts.length - 1];
+	if (first.x === last.x && first.y === last.y) {
+		pts.pop();
+	}
+	if (pts.length < 3) return null;
+
+	if (!THREE.ShapeUtils.isClockWise(pts)) {
+		pts.reverse();
+	}
+
+	const path = new THREE.Path();
+	path.moveTo(pts[0].x, pts[0].y);
+	for (let i = 1; i < pts.length; i++) {
+		path.lineTo(pts[i].x, pts[i].y);
+	}
+	path.closePath();
+	return path;
+}
+
+function labelShapesToHolePaths(
+	shapes: THREE.Shape[],
+	mapPoint: (point: THREE.Vector2) => THREE.Vector2,
+	maxRadiusMm?: number
+): THREE.Path[] {
+	const paths: THREE.Path[] = [];
+	for (const shape of shapes) {
+		const points = shape.getPoints().map(mapPoint);
+		const holePath = polygonToHolePath(points, maxRadiusMm);
+		if (holePath) paths.push(holePath);
+	}
+	return paths;
+}
+
 export function exportStl(
 	content: SVGContent,
 	config: DialConfig,
@@ -269,6 +323,7 @@ export function exportStl(
 	const discThicknessMm = options?.discThicknessMm ?? 3;
 	const markThicknessMm = options?.markThicknessMm ?? 0.5;
 	const sampleStepPx = options?.sampleStepPx ?? 2;
+	const raised = options?.raised ?? true;
 
 	const doc = SVG(content.raw) as Svg;
 	const viewbox = doc.viewbox();
@@ -301,6 +356,7 @@ export function exportStl(
 		holePolygons.push(centerHolePoints);
 	}
 	const topMeshes: THREE.Mesh[] = [];
+	const recessPaths: THREE.Path[] = [];
 
 	const activeLayers = layers ?? [];
 	for (const layer of activeLayers) {
@@ -364,9 +420,16 @@ export function exportStl(
 				rotationOnlyTransform,
 				viewboxToMmScale
 			);
-			const shape = pathPolygonToShape(polygon);
-			if (shape) {
-				topMeshes.push(extrudeShape(shape, markThicknessMm, discThicknessMm));
+			if (raised) {
+				const shape = pathPolygonToShape(polygon);
+				if (shape) {
+					topMeshes.push(extrudeShape(shape, markThicknessMm, discThicknessMm));
+				}
+			} else {
+				const holePath = polygonToHolePath(polygon, discRadiusMm - 0.1);
+				if (holePath) {
+					recessPaths.push(holePath);
+				}
 			}
 		});
 
@@ -379,23 +442,24 @@ export function exportStl(
 				height: Math.max(bbox.height, 1)
 			});
 
-			topMeshes.push(
-				...labelShapesToExtrudedMeshes(
-					shapes,
-					(point: THREE.Vector2) => {
-						const transformed = transformPoint(
-							{ x: bbox.x + point.x, y: bbox.y + point.y },
-							rotationOnlyTransform
-						);
-						return new THREE.Vector2(
-							(transformed.x - cx) * viewboxToMmScale,
-							(transformed.y - cy) * viewboxToMmScale
-						);
-					},
-					markThicknessMm,
-					discThicknessMm
-				)
-			);
+			const mapPoint = (point: THREE.Vector2) => {
+				const transformed = transformPoint(
+					{ x: bbox.x + point.x, y: bbox.y + point.y },
+					rotationOnlyTransform
+				);
+				return new THREE.Vector2(
+					(transformed.x - cx) * viewboxToMmScale,
+					(transformed.y - cy) * viewboxToMmScale
+				);
+			};
+
+			if (raised) {
+				topMeshes.push(
+					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, discThicknessMm)
+				);
+			} else {
+				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, discRadiusMm - 0.1));
+			}
 		});
 
 		layerGroup.find('.path-label').forEach((labelElement) => {
@@ -407,23 +471,27 @@ export function exportStl(
 				height: Math.max(bbox.height, 1)
 			});
 
-			topMeshes.push(
-				...labelShapesToExtrudedMeshes(
-					shapes,
-					(point: THREE.Vector2) => {
-						const transformed = transformPoint(
-							{ x: bbox.x + point.x, y: bbox.y + point.y },
-							cutoutTransform
-						);
-						return new THREE.Vector2(
-							(transformed.x - cx) * viewboxToMmScale,
-							(transformed.y - cy) * viewboxToMmScale
-						);
+			const mapPoint = (point: THREE.Vector2) => {
+				const transformed = transformPoint(
+					{
+						x: bbox.x + point.x + (layer.labelOffsetX ?? 0),
+						y: bbox.y + point.y + (layer.labelOffsetY ?? 0)
 					},
-					markThicknessMm,
-					discThicknessMm
-				)
-			);
+					cutoutTransform
+				);
+				return new THREE.Vector2(
+					(transformed.x - cx) * viewboxToMmScale,
+					(transformed.y - cy) * viewboxToMmScale
+				);
+			};
+
+			if (raised) {
+				topMeshes.push(
+					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, discThicknessMm)
+				);
+			} else {
+				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, discRadiusMm - 0.1));
+			}
 		});
 	}
 
@@ -436,27 +504,43 @@ export function exportStl(
 		const titleCenterX = (options.discTitleX ?? 100) - cx;
 		const titleCenterY = (options.discTitleY ?? 20) - cy;
 
-		topMeshes.push(
-			...labelShapesToExtrudedMeshes(
-				titleShapes,
-				(point: THREE.Vector2) =>
-					new THREE.Vector2(
-						(titleCenterX + point.x) * viewboxToMmScale,
-						(titleCenterY + point.y) * viewboxToMmScale
-					),
-				markThicknessMm,
-				discThicknessMm
-			)
-		);
+		const mapPoint = (point: THREE.Vector2) =>
+			new THREE.Vector2(
+				(titleCenterX + point.x) * viewboxToMmScale,
+				(titleCenterY + point.y) * viewboxToMmScale
+			);
+
+		if (raised) {
+			topMeshes.push(
+				...labelShapesToExtrudedMeshes(titleShapes, mapPoint, markThicknessMm, discThicknessMm)
+			);
+		} else {
+			recessPaths.push(...labelShapesToHolePaths(titleShapes, mapPoint, discRadiusMm - 0.1));
+		}
 	}
 
 	const discShape = createDiscShape(discRadiusMm, holePolygons);
-	const discMesh = extrudeShape(discShape, discThicknessMm, 0);
 
 	const scene = new THREE.Scene();
-	scene.add(discMesh);
-	for (const mesh of topMeshes) {
-		scene.add(mesh);
+
+	if (raised) {
+		const discMesh = extrudeShape(discShape, discThicknessMm, 0);
+		scene.add(discMesh);
+		for (const mesh of topMeshes) {
+			scene.add(mesh);
+		}
+	} else {
+		const bottomThickness = Math.max(discThicknessMm - markThicknessMm, 0);
+		if (bottomThickness > 0) {
+			const bottomShape = createDiscShape(discRadiusMm, holePolygons);
+			scene.add(extrudeShape(bottomShape, bottomThickness, 0));
+		}
+
+		const topShape = createDiscShape(discRadiusMm, holePolygons);
+		for (const path of recessPaths) {
+			topShape.holes.push(path);
+		}
+		scene.add(extrudeShape(topShape, Math.min(markThicknessMm, discThicknessMm), bottomThickness));
 	}
 
 	const exporter = new STLExporter();
