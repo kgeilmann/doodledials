@@ -217,7 +217,11 @@ function getLineAttribute(element: Path | Text, attributeName: 'x1' | 'y1' | 'x2
 	return typeof value === 'number' ? value : Number.parseFloat(String(value ?? 0));
 }
 
-function createDiscShape(radiusMm: number, holePolygons: THREE.Vector2[][]): THREE.Shape {
+function createDiscShape(
+	radiusMm: number,
+	holePolygons: THREE.Vector2[][],
+	circularHolesMm: number[] = []
+): THREE.Shape {
 	const shape = new THREE.Shape();
 	shape.absarc(0, 0, radiusMm, 0, Math.PI * 2, false);
 
@@ -232,14 +236,28 @@ function createDiscShape(radiusMm: number, holePolygons: THREE.Vector2[][]): THR
 		}
 	}
 
+	for (const holeRadius of circularHolesMm) {
+		if (holeRadius > 0) {
+			const hole = new THREE.Path();
+			hole.absarc(0, 0, holeRadius, 0, Math.PI * 2, true);
+			shape.holes.push(hole);
+		}
+	}
+
 	return shape;
 }
 
-function extrudeShape(shape: THREE.Shape, depthMm: number, zOffsetMm: number): THREE.Mesh {
+function extrudeShape(
+	shape: THREE.Shape,
+	depthMm: number,
+	zOffsetMm: number,
+	curveSegments = 64
+): THREE.Mesh {
 	const geometry = new THREE.ExtrudeGeometry(shape, {
 		depth: depthMm,
 		steps: 1,
-		bevelEnabled: false
+		bevelEnabled: false,
+		curveSegments
 	});
 	geometry.translate(0, 0, zOffsetMm);
 	return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial());
@@ -340,21 +358,6 @@ export function exportStl(
 	const centerHoleRadiusMm = config.centerHoleDiameter / 2;
 
 	const holePolygons: THREE.Vector2[][] = [];
-
-	if (centerHoleRadiusMm > 0) {
-		const centerHolePoints: THREE.Vector2[] = [];
-		const segments = 32;
-		for (let i = 0; i <= segments; i++) {
-			const angle = (i / segments) * Math.PI * 2;
-			centerHolePoints.push(
-				new THREE.Vector2(
-					centerHoleRadiusMm * Math.cos(angle),
-					centerHoleRadiusMm * Math.sin(angle)
-				)
-			);
-		}
-		holePolygons.push(centerHolePoints);
-	}
 	const topMeshes: THREE.Mesh[] = [];
 	const recessPaths: THREE.Path[] = [];
 
@@ -519,7 +522,11 @@ export function exportStl(
 		}
 	}
 
-	const discShape = createDiscShape(discRadiusMm, holePolygons);
+	const discShape = createDiscShape(
+		discRadiusMm,
+		holePolygons,
+		centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
+	);
 
 	const scene = new THREE.Scene();
 
@@ -532,11 +539,19 @@ export function exportStl(
 	} else {
 		const bottomThickness = Math.max(discThicknessMm - markThicknessMm, 0);
 		if (bottomThickness > 0) {
-			const bottomShape = createDiscShape(discRadiusMm, holePolygons);
+			const bottomShape = createDiscShape(
+				discRadiusMm,
+				holePolygons,
+				centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
+			);
 			scene.add(extrudeShape(bottomShape, bottomThickness, 0));
 		}
 
-		const topShape = createDiscShape(discRadiusMm, holePolygons);
+		const topShape = createDiscShape(
+			discRadiusMm,
+			holePolygons,
+			centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
+		);
 		for (const path of recessPaths) {
 			topShape.holes.push(path);
 		}
