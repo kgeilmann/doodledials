@@ -57,8 +57,8 @@ function transformPoint(point: MmPoint, options: TransformOptions): MmPoint {
 	return rotateAround(translated, options.cx, options.cy, options.rotationDeg);
 }
 
-function pxToMm(point: MmPoint, cx: number, cy: number): THREE.Vector2 {
-	return new THREE.Vector2((point.x - cx) / MM_TO_PX, (point.y - cy) / MM_TO_PX);
+function pxToMm(point: MmPoint, cx: number, cy: number, scale: number): THREE.Vector2 {
+	return new THREE.Vector2((point.x - cx) * scale, (point.y - cy) * scale);
 }
 
 function toClosedPolygon(points: THREE.Vector2[]): THREE.Vector2[] {
@@ -78,7 +78,8 @@ function toClosedPolygon(points: THREE.Vector2[]): THREE.Vector2[] {
 function pathDataToPolygon(
 	pathData: string,
 	options: TransformOptions,
-	sampleStepPx: number
+	sampleStepPx: number,
+	viewboxToMmScale: number
 ): THREE.Vector2[] {
 	const properties = new svgPathProperties(pathData);
 	const length = properties.getTotalLength();
@@ -93,7 +94,7 @@ function pathDataToPolygon(
 		const sampleLength = (length * index) / stepCount;
 		const point = properties.getPointAtLength(sampleLength);
 		const transformed = transformPoint({ x: point.x, y: point.y }, options);
-		points.push(pxToMm(transformed, options.cx, options.cy));
+		points.push(pxToMm(transformed, options.cx, options.cy, viewboxToMmScale));
 	}
 
 	return toClosedPolygon(points);
@@ -103,12 +104,13 @@ function lineToPolygon(
 	start: MmPoint,
 	end: MmPoint,
 	widthMm: number,
-	options: TransformOptions
+	options: TransformOptions,
+	viewboxToMmScale: number
 ): THREE.Vector2[] {
 	const transformedStart = transformPoint(start, options);
 	const transformedEnd = transformPoint(end, options);
-	const startMm = pxToMm(transformedStart, options.cx, options.cy);
-	const endMm = pxToMm(transformedEnd, options.cx, options.cy);
+	const startMm = pxToMm(transformedStart, options.cx, options.cy, viewboxToMmScale);
+	const endMm = pxToMm(transformedEnd, options.cx, options.cy, viewboxToMmScale);
 
 	const dx = endMm.x - startMm.x;
 	const dy = endMm.y - startMm.y;
@@ -238,9 +240,14 @@ export function exportStl(
 	const viewbox = doc.viewbox();
 	const cx = viewbox.cx;
 	const cy = viewbox.cy;
-	const offsetXPx = config.offsetX * MM_TO_PX;
-	const offsetYPx = config.offsetY * MM_TO_PX;
+
+	const discCircle = doc.findOne('#disc');
+	const discCircleRadius = discCircle ? Number(discCircle.attr('r')) : 0;
 	const discRadiusMm = config.diameter / 2;
+	const viewboxToMmScale = discCircleRadius > 0 ? discRadiusMm / discCircleRadius : 1 / MM_TO_PX;
+
+	const offsetViewboxX = config.offsetX / viewboxToMmScale;
+	const offsetViewboxY = config.offsetY / viewboxToMmScale;
 	const centerHoleRadiusMm = config.centerHoleDiameter / 2;
 
 	const holePolygons: THREE.Vector2[][] = [];
@@ -281,8 +288,8 @@ export function exportStl(
 			cx,
 			cy,
 			scale: config.scale,
-			offsetXPx,
-			offsetYPx,
+			offsetXPx: offsetViewboxX,
+			offsetYPx: offsetViewboxY,
 			rotationDeg: layer.rotation
 		};
 
@@ -292,7 +299,7 @@ export function exportStl(
 				return;
 			}
 
-			const polygon = pathDataToPolygon(d, cutoutTransform, sampleStepPx);
+			const polygon = pathDataToPolygon(d, cutoutTransform, sampleStepPx, viewboxToMmScale);
 			if (polygon.length >= 3) {
 				holePolygons.push(polygon);
 			}
@@ -304,12 +311,13 @@ export function exportStl(
 			const x2 = getLineAttribute(markLine as Path, 'x2');
 			const y2 = getLineAttribute(markLine as Path, 'y2');
 			const strokeWidthPx = Number.parseFloat(String(markLine.attr('stroke-width') ?? '2')) || 2;
-			const widthMm = Math.max(strokeWidthPx / MM_TO_PX, 0.25);
+			const widthMm = Math.max(strokeWidthPx * viewboxToMmScale, 0.25);
 			const polygon = lineToPolygon(
 				{ x: x1, y: y1 },
 				{ x: x2, y: y2 },
 				widthMm,
-				rotationOnlyTransform
+				rotationOnlyTransform,
+				viewboxToMmScale
 			);
 			const shape = pathPolygonToShape(polygon);
 			if (shape) {
@@ -335,8 +343,8 @@ export function exportStl(
 							rotationOnlyTransform
 						);
 						return new THREE.Vector2(
-							(transformed.x - cx) / MM_TO_PX,
-							(transformed.y - cy) / MM_TO_PX
+							(transformed.x - cx) * viewboxToMmScale,
+							(transformed.y - cy) * viewboxToMmScale
 						);
 					},
 					markThicknessMm,
@@ -363,8 +371,8 @@ export function exportStl(
 							cutoutTransform
 						);
 						return new THREE.Vector2(
-							(transformed.x - cx) / MM_TO_PX,
-							(transformed.y - cy) / MM_TO_PX
+							(transformed.x - cx) * viewboxToMmScale,
+							(transformed.y - cy) * viewboxToMmScale
 						);
 					},
 					markThicknessMm,
@@ -388,8 +396,8 @@ export function exportStl(
 				titleShapes,
 				(point: THREE.Vector2) =>
 					new THREE.Vector2(
-						(titleCenterX + point.x) / MM_TO_PX,
-						(titleCenterY + point.y) / MM_TO_PX
+						(titleCenterX + point.x) * viewboxToMmScale,
+						(titleCenterY + point.y) * viewboxToMmScale
 					),
 				markThicknessMm,
 				discThicknessMm
