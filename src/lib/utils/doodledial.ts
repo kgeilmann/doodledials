@@ -243,6 +243,18 @@ export function createOptimizerSvgTemplate(
 	}
 
 	applyDiscScaling(doc, config);
+	const scaleFactor = config.diameter / config.maxDiameter;
+	doc.find('.mark-wrapper').forEach((wrapper) => {
+		wrapper.scale(scaleFactor, cx, cy);
+	});
+	if (config.sizeToFit) {
+		doc.find('.cutout').forEach((cutout) => {
+			const wrapper = cutout.parent() as G;
+			if (wrapper) {
+				wrapper.scale(scaleFactor, cx, cy);
+			}
+		});
+	}
 
 	return {
 		rawTemplate: doc.svg(),
@@ -285,6 +297,18 @@ export function precomputeOptimizerSvgContent(content: SVGContent, config: DialC
 	removePathLabels(doc);
 
 	applyDiscScaling(doc, config);
+	const scaleFactor = config.diameter / config.maxDiameter;
+	doc.find('.mark-wrapper').forEach((wrapper) => {
+		wrapper.scale(scaleFactor, cx, cy);
+	});
+	if (config.sizeToFit) {
+		doc.find('.cutout').forEach((cutout) => {
+			const wrapper = cutout.parent() as G;
+			if (wrapper) {
+				wrapper.scale(scaleFactor, cx, cy);
+			}
+		});
+	}
 
 	return {
 		...content,
@@ -356,6 +380,14 @@ export function combineDoodledial(
 		doc.find('.mark-wrapper').forEach((wrapper) => {
 			wrapper.scale(scaleFactor, cx, cy);
 		});
+		if (applyCutoutTransforms && config.sizeToFit) {
+			doc.find('.cutout').forEach((cutout) => {
+				const wrapper = cutout.parent() as G;
+				if (wrapper) {
+					wrapper.scale(scaleFactor, cx, cy);
+				}
+			});
+		}
 	}
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;

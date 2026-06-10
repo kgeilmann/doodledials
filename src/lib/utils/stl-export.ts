@@ -351,7 +351,8 @@ export function exportStl(
 	const discCircle = doc.findOne('#disc');
 	const discCircleRadius = discCircle ? Number(discCircle.attr('r')) : 0;
 	const discRadiusMm = config.diameter / 2;
-	const viewboxToMmScale = discCircleRadius > 0 ? discRadiusMm / discCircleRadius : 1 / MM_TO_PX;
+	const viewboxToMmScale =
+		discCircleRadius > 0 ? (discRadiusMm * Math.SQRT2) / discCircleRadius : 1 / MM_TO_PX;
 
 	const offsetViewboxX = config.offsetX / viewboxToMmScale;
 	const offsetViewboxY = config.offsetY / viewboxToMmScale;
