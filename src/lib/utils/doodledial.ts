@@ -34,6 +34,7 @@ export function parseSvgPaths(svgContent: string): {
 	});
 
 	style.rule('.mark-line', {
+		stroke: 'black',
 		'stroke-width': 2
 	});
 
@@ -111,7 +112,7 @@ export function parseSvgPaths(svgContent: string): {
 		path.remove();
 		layer.add(path);
 		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
-		discElements.add(mark);
+		layer.add(mark);
 		const pathLabel = createPathLabel(layerId, index + 1, {
 			x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
 			cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
