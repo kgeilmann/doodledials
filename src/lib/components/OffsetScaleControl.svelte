@@ -12,6 +12,11 @@
 		doodledialStore.setOffsetY(value);
 	}
 
+	function handleDiameterInput(e: Event) {
+		const value = parseInt((e.target as HTMLInputElement).value) || 0;
+		doodledialStore.setDiameter(value);
+	}
+
 	function handleScaleInput(e: Event) {
 		const value = parseFloat((e.target as HTMLInputElement).value) || 1;
 		doodledialStore.setScale(value);
@@ -19,6 +24,21 @@
 </script>
 
 <div class="space-y-4">
+	<div class="flex items-center justify-between">
+		<label for="diameter-input" class="text-sm font-medium text-gray-700">Diameter</label>
+		<div class="flex items-center gap-2">
+			<input
+				id="diameter-input"
+				type="number"
+				value={doodledialStore.config.diameter}
+				oninput={handleDiameterInput}
+				disabled={optimizerStore.optimizerPending}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+			/>
+			<span class="text-sm text-gray-500">mm</span>
+		</div>
+	</div>
+
 	<div class="flex items-center justify-between">
 		<label for="offsetX-input" class="text-sm font-medium text-gray-700">X Offset</label>
 		<div class="flex items-center gap-2">
