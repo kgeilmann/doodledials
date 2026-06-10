@@ -100,7 +100,7 @@
 		}
 
 		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
-		if (!layerId && !isDiscTitle) {
+		if (!layerId) {
 			// Background click — start pan mode
 			if (!scrollContainer || !svgContainer) return;
 			isPanning = true;
