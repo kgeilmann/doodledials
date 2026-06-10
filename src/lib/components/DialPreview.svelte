@@ -4,6 +4,7 @@
 	import { combineDoodledial } from '$lib/utils/doodledial';
 	import { getAngleFromCenter } from '$lib/utils/rotation';
 	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
+	import RulerOverlay from './RulerOverlay.svelte';
 
 	const VIEWBOX_PADDING = 1.1;
 
@@ -393,6 +394,12 @@
 				</div>
 			</div>
 		</div>
+		<RulerOverlay
+			containerEl={outerWrapper}
+			{scrollContainer}
+			maxDiameter={doodledialStore.config.maxDiameter}
+			show={!!doodledialStore.combinedSvg}
+		/>
 		<div
 			class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
 			onpointerdown={(e) => e.stopPropagation()}
