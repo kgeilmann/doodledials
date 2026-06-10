@@ -52,6 +52,7 @@ export function parseSvgPaths(svgContent: string): {
 	});
 
 	const all = SVG().group().attr('id', 'all');
+	const discElements = SVG().group().attr('id', 'disc-elements');
 
 	doc.children().forEach((c) => {
 		c.remove();
@@ -69,12 +70,12 @@ export function parseSvgPaths(svgContent: string): {
 	const normalizedTranslateY =
 		(NORMALIZED_IMAGE_DIMENSION - normalizedHeight) / 2 - sourceViewBox.y * sourceScale;
 	const maxImageDimension = NORMALIZED_IMAGE_DIMENSION;
-	doc
+	discElements
 		.circle(maxImageDimension * Math.SQRT2)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('disc');
 
-	doc
+	discElements
 		.circle(2 * MM_TO_PX)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('center-hole');
@@ -110,7 +111,7 @@ export function parseSvgPaths(svgContent: string): {
 		path.remove();
 		layer.add(path);
 		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
-		layer.add(mark);
+		discElements.add(mark);
 		const pathLabel = createPathLabel(layerId, index + 1, {
 			x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
 			cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
@@ -124,6 +125,8 @@ export function parseSvgPaths(svgContent: string): {
 			index: index + 1
 		});
 	});
+
+	all.add(discElements);
 
 	doc.viewbox(
 		-(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX,
