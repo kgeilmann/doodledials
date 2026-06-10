@@ -436,13 +436,18 @@ function applyCutoutTransformsForGroup(group: G, config: DialConfig, cx: number,
 }
 
 function applyDiscScaling(doc: Svg, config: DialConfig): void {
-	const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
+	const viewBox = doc.viewbox();
+	const discCircle = doc.findOne('#disc');
+	const discRadius = discCircle ? Number(discCircle.attr('r')) : 0;
+	const correctionFactor = discRadius > 0 ? viewBox.width / (2 * discRadius) : 1;
+
+	const pixelDiameter = ((config.maxDiameter * DPI) / MM_PER_INCH) * correctionFactor;
 	doc.width(pixelDiameter);
 	doc.height(pixelDiameter);
 
 	const discElements = doc.findOne('#disc-elements') as G | null;
 	if (discElements) {
-		discElements.scale(config.diameter / config.maxDiameter, doc.viewbox().cx, doc.viewbox().cy);
+		discElements.scale(config.diameter / config.maxDiameter, viewBox.cx, viewBox.cy);
 	}
 }
 
