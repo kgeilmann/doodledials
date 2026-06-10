@@ -7,6 +7,12 @@
 
 	const VIEWBOX_PADDING = 1.1;
 
+	const ZOOM_MIN = 0.25;
+	const ZOOM_MAX = 3;
+	const ZOOM_STEP = 0.1;
+
+	let zoomLevel = $state(1);
+
 	let isDragging = $state(false);
 	let dragLayerId = $state<string | null>(null);
 	let svgContainer: HTMLDivElement | null = $state(null);
@@ -195,6 +201,25 @@
 		}
 	}
 
+	function handleWheel(e: WheelEvent) {
+		if (optimizerStore.optimizerPending) return;
+		e.preventDefault();
+		const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+		zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomLevel + delta));
+	}
+
+	function zoomIn() {
+		zoomLevel = Math.min(ZOOM_MAX, zoomLevel + ZOOM_STEP);
+	}
+
+	function zoomOut() {
+		zoomLevel = Math.max(ZOOM_MIN, zoomLevel - ZOOM_STEP);
+	}
+
+	function resetZoom() {
+		zoomLevel = 1;
+	}
+
 	function updatePreview() {
 		if (doodledialStore.svgContent) {
 			try {
@@ -260,12 +285,13 @@
 			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
 				? 'cursor-not-allowed'
 				: ''}"
-			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px;"
+			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px; transform: scale({zoomLevel}); transform-origin: center center;"
 			bind:this={svgContainer}
 			onpointerdown={handlePointerDown}
 			onpointermove={handlePointerMove}
 			onpointerup={handlePointerUp}
 			onclick={handleClick}
+			onwheel={handleWheel}
 		>
 			{#if hiddenCount > 0}
 				<div
@@ -297,6 +323,39 @@
 					</button>
 				</div>
 			{/if}
+			<div
+				class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
+				onpointerdown={(e) => e.stopPropagation()}
+			>
+				<button
+					type="button"
+					onclick={zoomOut}
+					disabled={zoomLevel <= ZOOM_MIN}
+					class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+				>
+					−
+				</button>
+				<span class="text-gray-600 font-medium tabular-nums min-w-[3ch] text-center"
+					>{Math.round(zoomLevel * 100)}%</span
+				>
+				<button
+					type="button"
+					onclick={zoomIn}
+					disabled={zoomLevel >= ZOOM_MAX}
+					class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+				>
+					+
+				</button>
+				<span class="w-px h-4 bg-gray-300 mx-0.5"></span>
+				<button
+					type="button"
+					onclick={resetZoom}
+					disabled={zoomLevel === 1}
+					class="px-1.5 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500"
+				>
+					reset
+				</button>
+			</div>
 			<div class="max-w-full max-h-full flex items-center justify-center">
 				{@html doodledialStore.combinedSvg || ''}
 			</div>
