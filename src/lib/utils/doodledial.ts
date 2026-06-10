@@ -236,14 +236,7 @@ export function createOptimizerSvgTemplate(
 		svgLayer.attr('transform', rotationPlaceholder);
 	}
 
-	const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
-	doc.width(pixelDiameter);
-	doc.height(pixelDiameter);
-
-	const discElements = doc.findOne('#disc-elements') as G | null;
-	if (discElements) {
-		discElements.scale(config.diameter / config.maxDiameter, cx, cy);
-	}
+	applyDiscScaling(doc, config);
 
 	return {
 		rawTemplate: doc.svg(),
@@ -285,14 +278,7 @@ export function precomputeOptimizerSvgContent(content: SVGContent, config: DialC
 	applyCutoutTransforms(doc, config, cx, cy);
 	removePathLabels(doc);
 
-	const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
-	doc.width(pixelDiameter);
-	doc.height(pixelDiameter);
-
-	const discElements = doc.findOne('#disc-elements') as G | null;
-	if (discElements) {
-		discElements.scale(config.diameter / config.maxDiameter, cx, cy);
-	}
+	applyDiscScaling(doc, config);
 
 	return {
 		...content,
@@ -359,15 +345,7 @@ export function combineDoodledial(
 	}
 
 	if (applyDiameter) {
-		const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
-		doc.width(pixelDiameter);
-		doc.height(pixelDiameter);
-
-		const discElements = doc.findOne('#disc-elements') as G | null;
-		if (discElements) {
-			const scaleFactor = config.diameter / config.maxDiameter;
-			discElements.scale(scaleFactor, cx, cy);
-		}
+		applyDiscScaling(doc, config);
 	}
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
@@ -445,6 +423,17 @@ function applyCutoutTransformsForGroup(group: G, config: DialConfig, cx: number,
 		group.add(wrapper);
 		wrapper.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 	});
+}
+
+function applyDiscScaling(doc: Svg, config: DialConfig): void {
+	const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
+	doc.width(pixelDiameter);
+	doc.height(pixelDiameter);
+
+	const discElements = doc.findOne('#disc-elements') as G | null;
+	if (discElements) {
+		discElements.scale(config.diameter / config.maxDiameter, doc.viewbox().cx, doc.viewbox().cy);
+	}
 }
 
 function removePathLabels(doc: Svg): void {
