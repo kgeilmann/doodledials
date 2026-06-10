@@ -348,10 +348,16 @@ export function combineDoodledial(
 		if (selected!) allLayers?.add(selected);
 	}
 
+	const pixelDiameter = (config.maxDiameter * DPI) / MM_PER_INCH;
+	doc.width(pixelDiameter);
+	doc.height(pixelDiameter);
+
 	if (applyDiameter) {
-		const pixelDiameter = (config.diameter * DPI) / MM_PER_INCH;
-		doc.width(pixelDiameter);
-		doc.height(pixelDiameter);
+		const discElements = doc.findOne('#disc-elements') as G | null;
+		if (discElements) {
+			const scaleFactor = config.diameter / config.maxDiameter;
+			discElements.scale(scaleFactor, cx, cy);
+		}
 	}
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
