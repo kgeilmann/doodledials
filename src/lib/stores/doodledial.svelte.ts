@@ -109,7 +109,6 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			if (!Number.isFinite(diameter)) return;
 			const clamped = Math.min(Math.max(diameter, config.minDiameter), config.maxDiameter);
 			config = { ...config, diameter: clamped };
-			globalConfig.diameter = clamped;
 		},
 		setCenterHoleDiameter(centerHoleDiameter: number) {
 			if (!Number.isFinite(centerHoleDiameter)) return;

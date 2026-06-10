@@ -68,7 +68,6 @@
 		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
 		globalConfig.defaultExportFormat = draftDefaultExportFormat;
 		globalConfig.save();
-		doodledialStore.setDiameter(draftDiameter);
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
 		open = false;
 	}

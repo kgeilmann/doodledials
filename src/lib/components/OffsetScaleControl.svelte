@@ -34,6 +34,8 @@
 			<input
 				id="diameter-input"
 				type="number"
+				min={doodledialStore.config.minDiameter}
+				max={doodledialStore.config.maxDiameter}
 				value={doodledialStore.config.diameter}
 				oninput={handleDiameterInput}
 				disabled={optimizerStore.optimizerPending}
