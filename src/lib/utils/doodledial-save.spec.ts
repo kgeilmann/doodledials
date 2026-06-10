@@ -13,7 +13,8 @@ const SAMPLE_METADATA: DoodleDialMetadata = {
 		scale: 1,
 		sizeToFit: true,
 		centerHoleDiameter: 2,
-		optimizerGapMm: 2
+		optimizerGapMm: 2,
+		pathLabelFontSize: 10
 	},
 	layers: [{ id: 'layer-0', name: 'Layer 1', index: 1, visible: true, rotation: 45 }],
 	discTitle: 'My Dial',

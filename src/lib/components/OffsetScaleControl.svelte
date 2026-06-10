@@ -25,6 +25,11 @@
 	function handleSizeToFitToggle() {
 		doodledialStore.setSizeToFit(!doodledialStore.config.sizeToFit);
 	}
+
+	function handlePathLabelFontSizeInput(e: Event) {
+		const value = parseInt((e.target as HTMLInputElement).value) || 10;
+		doodledialStore.setPathLabelFontSize(value);
+	}
 </script>
 
 <div class="space-y-4">
@@ -110,5 +115,24 @@
 					: 'translate-x-[3px]'}"
 			></span>
 		</button>
+	</div>
+
+	<div class="flex items-center justify-between">
+		<label for="path-label-font-size-input" class="text-sm font-medium text-gray-700"
+			>Label Font Size</label
+		>
+		<div class="flex items-center gap-2">
+			<input
+				id="path-label-font-size-input"
+				type="number"
+				min="4"
+				max="40"
+				value={doodledialStore.config.pathLabelFontSize}
+				oninput={handlePathLabelFontSizeInput}
+				disabled={optimizerStore.optimizerPending}
+				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+			/>
+			<span class="text-sm text-gray-500">px</span>
+		</div>
 	</div>
 </div>

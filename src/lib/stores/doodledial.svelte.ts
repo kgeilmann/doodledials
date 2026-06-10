@@ -137,6 +137,10 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = { ...config, scale };
 			labelPlacementStore.schedule();
 		},
+		setPathLabelFontSize(size: number) {
+			config = { ...config, pathLabelFontSize: size };
+			labelPlacementStore.schedule();
+		},
 		setSizeToFit(sizeToFit: boolean) {
 			config = { ...config, sizeToFit };
 			if (originalRawSvg) {

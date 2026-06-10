@@ -67,7 +67,8 @@ function buildInput(layers: Layer[]) {
 			offsetY: 0,
 			scale: 1,
 			sizeToFit: true,
-			centerHoleDiameter: 2
+			centerHoleDiameter: 2,
+			pathLabelFontSize: 10
 		},
 		layers,
 		svgContent: {

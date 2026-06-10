@@ -42,7 +42,8 @@ const SAMPLE_CONFIG: DialConfig = {
 	offsetY: 0,
 	scale: 1,
 	sizeToFit: true,
-	centerHoleDiameter: 2
+	centerHoleDiameter: 2,
+	pathLabelFontSize: 10
 };
 
 function getParsedGeometry(svg: string): {

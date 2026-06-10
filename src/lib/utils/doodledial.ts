@@ -363,6 +363,7 @@ export function combineDoodledial(
 				const pathLabel = label as Text;
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
+				pathLabel.font('size', config.pathLabelFontSize);
 				pathLabel.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
 			});
 		}

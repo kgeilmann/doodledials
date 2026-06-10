@@ -28,6 +28,7 @@ export interface DialConfig {
 	sizeToFit: boolean;
 	centerHoleDiameter: number;
 	optimizerGapMm?: number;
+	pathLabelFontSize: number;
 }
 
 export interface SVGContent {
@@ -46,5 +47,6 @@ export const DEFAULT_DIAL_CONFIG = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 2,
-	optimizerGapMm: 2
+	optimizerGapMm: 2,
+	pathLabelFontSize: 10
 } as const satisfies DialConfig;

@@ -115,7 +115,8 @@
 					scale: doodledialStore.config.scale,
 					sizeToFit: doodledialStore.config.sizeToFit,
 					centerHoleDiameter: doodledialStore.config.centerHoleDiameter,
-					optimizerGapMm: doodledialStore.config.optimizerGapMm ?? 2
+					optimizerGapMm: doodledialStore.config.optimizerGapMm ?? 2,
+					pathLabelFontSize: doodledialStore.config.pathLabelFontSize
 				},
 				layers: doodledialStore.layers.map((l) => ({
 					id: l.id,

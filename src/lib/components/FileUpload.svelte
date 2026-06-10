@@ -109,6 +109,7 @@
 		doodledialStore.setSizeToFit(metadata.config.sizeToFit ?? true);
 		doodledialStore.setCenterHoleDiameter(metadata.config.centerHoleDiameter);
 		doodledialStore.setOptimizerGapMm(metadata.config.optimizerGapMm);
+		doodledialStore.setPathLabelFontSize(metadata.config.pathLabelFontSize);
 
 		doodledialStore.setDiscTitle(metadata.discTitle);
 		doodledialStore.setDiscTitlePosition(metadata.discTitleX, metadata.discTitleY);
