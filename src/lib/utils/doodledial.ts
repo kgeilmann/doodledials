@@ -407,7 +407,12 @@ function applyCutoutTransforms(doc: Svg, config: DialConfig, cx: number, cy: num
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
 	doc.find('.cutout').forEach((cutout) => {
-		cutout.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+		const wrapper = SVG().group();
+		const parent = cutout.parent() as G;
+		cutout.remove();
+		wrapper.add(cutout);
+		parent.add(wrapper);
+		wrapper.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 	});
 }
 
@@ -415,7 +420,11 @@ function applyCutoutTransformsForGroup(group: G, config: DialConfig, cx: number,
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
 	group.find('.cutout').forEach((c) => {
-		c.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
+		const wrapper = SVG().group();
+		c.remove();
+		wrapper.add(c);
+		group.add(wrapper);
+		wrapper.scale(config.scale, cx, cy).translate(offsetXPx, offsetYPx);
 	});
 }
 
