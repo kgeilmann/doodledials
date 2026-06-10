@@ -115,7 +115,9 @@ export function parseSvgPaths(
 		path.remove();
 		layer.add(path);
 		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
-		layer.add(mark);
+		const markWrapper = SVG().group().addClass('mark-wrapper');
+		markWrapper.add(mark);
+		layer.add(markWrapper);
 		const pathLabel = createPathLabel(layerId, index + 1, {
 			x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
 			cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
@@ -350,6 +352,10 @@ export function combineDoodledial(
 
 	if (applyDiameter) {
 		applyDiscScaling(doc, config);
+		const scaleFactor = config.diameter / config.maxDiameter;
+		doc.find('.mark-wrapper').forEach((wrapper) => {
+			wrapper.scale(scaleFactor, cx, cy);
+		});
 	}
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
