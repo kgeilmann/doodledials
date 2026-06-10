@@ -105,13 +105,15 @@
 				version: 1,
 				svgContent: {
 					raw: doodledialStore.svgContent.raw,
-					filename: doodledialStore.svgContent.filename
+					filename: doodledialStore.svgContent.filename,
+					originalRaw: doodledialStore.originalRawSvg ?? undefined
 				},
 				config: {
 					diameter: doodledialStore.config.diameter,
 					offsetX: doodledialStore.config.offsetX,
 					offsetY: doodledialStore.config.offsetY,
 					scale: doodledialStore.config.scale,
+					sizeToFit: doodledialStore.config.sizeToFit,
 					centerHoleDiameter: doodledialStore.config.centerHoleDiameter,
 					optimizerGapMm: doodledialStore.config.optimizerGapMm ?? 2
 				},

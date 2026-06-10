@@ -4,6 +4,7 @@ import { globalConfig as defaultGlobalConfig } from '$lib/stores/global-config.s
 import { createLayerStore } from './layers.svelte';
 import { createDetectionStore } from './detection.svelte';
 import { createLabelPlacementStore } from './label-placement.svelte';
+import { parseSvgPaths } from '$lib/utils/doodledial';
 
 interface GlobalConfigLike {
 	diameter: number;
@@ -14,6 +15,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	const globalConfig = options?.globalConfig ?? defaultGlobalConfig;
 	let config = $state<DialConfig>({ ...DEFAULT_DIAL_CONFIG, diameter: globalConfig.diameter });
 	let svgContent = $state<SVGContent | null>(null);
+	let originalRawSvg = $state<string | null>(null);
 	let combinedSvg = $state<string | null>(null);
 	let isLoading = $state<boolean>(false);
 	let error = $state<string | null>(null);
@@ -62,6 +64,9 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		},
 		get svgContent() {
 			return svgContent;
+		},
+		get originalRawSvg() {
+			return originalRawSvg;
 		},
 		get combinedSvg() {
 			return combinedSvg;
@@ -132,6 +137,24 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		setScale(scale: number) {
 			config = { ...config, scale };
 			labelPlacementStore.schedule();
+		},
+		setSizeToFit(sizeToFit: boolean) {
+			config = { ...config, sizeToFit };
+			if (originalRawSvg) {
+				const parsed = parseSvgPaths(originalRawSvg, sizeToFit);
+				layerStore.clearLayers();
+				for (const layer of parsed.layers) {
+					layerStore.addLayer(layer.id, layer.index, layer.name);
+				}
+				svgContent = {
+					raw: parsed.updatedSvg,
+					filename: svgContent?.filename ?? ''
+				};
+			}
+			labelPlacementStore.schedule();
+		},
+		setOriginalRawSvg(raw: string | null) {
+			originalRawSvg = raw;
 		},
 		setOptimizerGapMm(optimizerGapMm: number) {
 			config = { ...config, optimizerGapMm };
@@ -238,6 +261,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = { ...DEFAULT_DIAL_CONFIG };
 			config.diameter = globalConfig.diameter;
 			svgContent = null;
+			originalRawSvg = null;
 			combinedSvg = null;
 			isLoading = false;
 			error = null;

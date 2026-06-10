@@ -55,7 +55,8 @@
 				return;
 			}
 
-			const parsed = parseSvgPaths(raw);
+			doodledialStore.setOriginalRawSvg(raw);
+			const parsed = parseSvgPaths(raw, doodledialStore.config.sizeToFit);
 
 			doodledialStore.clearLayers();
 			parsed.layers.forEach((layer) => {
@@ -100,10 +101,12 @@
 			}
 		}
 
+		doodledialStore.setOriginalRawSvg(metadata.svgContent.originalRaw ?? null);
 		doodledialStore.setDiameter(metadata.config.diameter);
 		doodledialStore.setOffsetX(metadata.config.offsetX);
 		doodledialStore.setOffsetY(metadata.config.offsetY);
 		doodledialStore.setScale(metadata.config.scale);
+		doodledialStore.setSizeToFit(metadata.config.sizeToFit ?? true);
 		doodledialStore.setCenterHoleDiameter(metadata.config.centerHoleDiameter);
 		doodledialStore.setOptimizerGapMm(metadata.config.optimizerGapMm);
 

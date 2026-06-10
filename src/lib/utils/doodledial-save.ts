@@ -1,11 +1,12 @@
 export interface DoodleDialMetadata {
 	version: 1;
-	svgContent: { raw: string; filename: string };
+	svgContent: { raw: string; filename: string; originalRaw?: string };
 	config: {
 		diameter: number;
 		offsetX: number;
 		offsetY: number;
 		scale: number;
+		sizeToFit: boolean;
 		centerHoleDiameter: number;
 		optimizerGapMm: number;
 	};

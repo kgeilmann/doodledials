@@ -12,7 +12,10 @@ const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 3 * MM_TO_PX;
 const NORMALIZED_IMAGE_DIMENSION = DEFAULT_DIAL_CONFIG.maxDiameter;
 
-export function parseSvgPaths(svgContent: string): {
+export function parseSvgPaths(
+	svgContent: string,
+	sizeToFit: boolean = true
+): {
 	layers: { id: string; name: string; index: number }[];
 	updatedSvg: string;
 } {
@@ -63,7 +66,7 @@ export function parseSvgPaths(svgContent: string): {
 
 	const sourceViewBox = doc.viewbox();
 	const sourceMaxDimension = Math.max(sourceViewBox.width, sourceViewBox.height) || 1;
-	const sourceScale = NORMALIZED_IMAGE_DIMENSION / sourceMaxDimension;
+	const sourceScale = sizeToFit ? NORMALIZED_IMAGE_DIMENSION / sourceMaxDimension : 1;
 	const normalizedWidth = sourceViewBox.width * sourceScale;
 	const normalizedHeight = sourceViewBox.height * sourceScale;
 	const normalizedTranslateX =

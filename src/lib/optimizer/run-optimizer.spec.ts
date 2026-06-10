@@ -224,6 +224,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -262,6 +263,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -301,6 +303,7 @@ describe('runOptimizer', () => {
 					offsetX: 0,
 					offsetY: 0,
 					scale: 1,
+					sizeToFit: true,
 					centerHoleDiameter: 2
 				},
 				layers,
@@ -351,6 +354,7 @@ describe('runOptimizer', () => {
 						offsetX: 0,
 						offsetY: 0,
 						scale: 1,
+						sizeToFit: true,
 						centerHoleDiameter: 2
 					},
 					layers,
@@ -385,6 +389,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -440,6 +445,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -476,6 +482,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -527,6 +534,7 @@ describe('runOptimizer', () => {
 				offsetX: 0,
 				offsetY: 0,
 				scale: 1,
+				sizeToFit: true,
 				centerHoleDiameter: 2
 			},
 			layers,
@@ -576,6 +584,7 @@ describe('runOptimizer', () => {
 					offsetX: 0,
 					offsetY: 0,
 					scale: 1,
+					sizeToFit: true,
 					centerHoleDiameter: 2
 				},
 				layers,
@@ -634,6 +643,7 @@ describe('runOptimizer', () => {
 					offsetX: 0,
 					offsetY: 0,
 					scale: 1,
+					sizeToFit: true,
 					centerHoleDiameter: 2
 				},
 				layers,

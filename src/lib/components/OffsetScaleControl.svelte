@@ -21,6 +21,10 @@
 		const value = parseFloat((e.target as HTMLInputElement).value) || 1;
 		doodledialStore.setScale(value);
 	}
+
+	function handleSizeToFitToggle() {
+		doodledialStore.setSizeToFit(!doodledialStore.config.sizeToFit);
+	}
 </script>
 
 <div class="space-y-4">
@@ -80,5 +84,29 @@
 			disabled={optimizerStore.optimizerPending}
 			class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 		/>
+	</div>
+
+	<div class="flex items-center justify-between">
+		<label for="size-to-fit-toggle" class="text-sm font-medium text-gray-700">Size to Fit</label>
+		<button
+			id="size-to-fit-toggle"
+			type="button"
+			role="switch"
+			aria-checked={doodledialStore.config.sizeToFit}
+			aria-label="Toggle size to fit"
+			onclick={handleSizeToFitToggle}
+			disabled={!doodledialStore.originalRawSvg || optimizerStore.optimizerPending}
+			class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {doodledialStore
+				.config.sizeToFit
+				? 'bg-indigo-600'
+				: 'bg-gray-300'} disabled:opacity-50 disabled:cursor-not-allowed"
+		>
+			<span
+				class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform duration-200 {doodledialStore
+					.config.sizeToFit
+					? 'translate-x-[18px]'
+					: 'translate-x-[3px]'}"
+			></span>
+		</button>
 	</div>
 </div>

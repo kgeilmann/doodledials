@@ -302,6 +302,7 @@
 		void doodledialStore.config.offsetY;
 		void doodledialStore.config.scale;
 		void doodledialStore.config.diameter;
+		void doodledialStore.config.sizeToFit;
 		if (doodledialStore.svgContent) {
 			updatePreview();
 		}

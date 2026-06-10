@@ -30,6 +30,7 @@ const BASE_CONFIG: DialConfig = {
 	offsetX: 0,
 	offsetY: 0,
 	scale: 1,
+	sizeToFit: true,
 	centerHoleDiameter: 2
 };
 
