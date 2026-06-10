@@ -145,7 +145,7 @@
 
 	function handleMainClick() {
 		menuOpen = false;
-		exportDoodleDial();
+		handleFormatSelect(globalConfig.defaultExportFormat);
 	}
 
 	function handleFormatSelect(format: 'preview-svg' | 'laser-svg' | 'stl') {
