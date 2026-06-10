@@ -207,7 +207,7 @@
 		</div>
 		<div class="flex-1 p-4">
 			<div class="relative h-full w-full">
-				<div class="h-full flex items-center justify-center overflow-auto">
+				<div class="h-full flex items-center justify-center">
 					<DialPreview />
 				</div>
 				<OptimizerProgressOverlay />

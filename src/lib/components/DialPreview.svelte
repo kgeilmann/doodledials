@@ -10,12 +10,15 @@
 	const ZOOM_MIN = 0.25;
 	const ZOOM_MAX = 3;
 	const ZOOM_STEP = 0.1;
+	const CARD_PADDING = 32;
 
 	let zoomLevel = $state(1);
+	let fitSize = $state(0);
 
 	let isDragging = $state(false);
 	let dragLayerId = $state<string | null>(null);
 	let svgContainer: HTMLDivElement | null = $state(null);
+	let outerWrapper: HTMLDivElement | null = $state(null);
 	let didDrag = false;
 
 	let isDraggingLabel = $state(false);
@@ -270,9 +273,29 @@
 			updatePreview();
 		}
 	});
+
+	$effect(() => {
+		const ps = paddedPixelSize;
+		const el = outerWrapper;
+		if (!el) {
+			fitSize = ps;
+			return;
+		}
+
+		const update = () => {
+			const avail = Math.min(el.clientWidth, el.clientHeight);
+			fitSize = Math.min(ps, Math.max(avail - CARD_PADDING, 200));
+		};
+
+		update();
+
+		const ro = new ResizeObserver(update);
+		ro.observe(el);
+		return () => ro.disconnect();
+	});
 </script>
 
-<div class="w-full h-full flex items-center justify-center relative">
+<div class="w-full h-full flex items-center justify-center relative" bind:this={outerWrapper}>
 	<div
 		class="absolute inset-0 opacity-10"
 		style="background-image: radial-gradient(circle, #6366f1 1px, transparent 1px); background-size: 20px 20px;"
@@ -281,84 +304,91 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	{#if doodledialStore.svgContent}
-		<div
-			class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
-				? 'cursor-not-allowed'
-				: ''}"
-			style="width: {paddedPixelSize}px; height: {paddedPixelSize}px; transform: scale({zoomLevel}); transform-origin: center center;"
-			bind:this={svgContainer}
-			onpointerdown={handlePointerDown}
-			onpointermove={handlePointerMove}
-			onpointerup={handlePointerUp}
-			onclick={handleClick}
-			onwheel={handleWheel}
-		>
-			{#if hiddenCount > 0}
-				<div
-					class="absolute top-0 left-0 right-0 bg-amber-400 text-amber-900 text-xs px-3 py-2 rounded-t-xl flex items-center gap-2 z-20 shadow-sm"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4 shrink-0"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-						aria-hidden="true"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-					<span class="flex-1">
-						{hiddenCount} of {doodledialStore.layers.length} layers hidden — excluded from export, optimization,
-						and overlap checks
-					</span>
-					<button
-						type="button"
-						onclick={() => doodledialStore.showAllLayers()}
-						class="bg-amber-300 hover:bg-amber-200 active:bg-amber-400 px-2 py-0.5 rounded text-xs font-medium transition-colors"
-					>
-						Show all
-					</button>
-				</div>
-			{/if}
+		<div class="absolute inset-0 overflow-auto flex">
 			<div
-				class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
-				onpointerdown={(e) => e.stopPropagation()}
+				class="shrink-0 flex items-center justify-center"
+				style="width: {fitSize * zoomLevel}px; height: {fitSize * zoomLevel}px; margin: auto;"
 			>
-				<button
-					type="button"
-					onclick={zoomOut}
-					disabled={zoomLevel <= ZOOM_MIN}
-					class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+				<div
+					class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
+						? 'cursor-not-allowed'
+						: ''}"
+					style="width: {fitSize}px; height: {fitSize}px; transform: scale({zoomLevel}); transform-origin: center center;"
+					bind:this={svgContainer}
+					onpointerdown={handlePointerDown}
+					onpointermove={handlePointerMove}
+					onpointerup={handlePointerUp}
+					onclick={handleClick}
+					onwheel={handleWheel}
 				>
-					−
-				</button>
-				<span class="text-gray-600 font-medium tabular-nums min-w-[3ch] text-center"
-					>{Math.round(zoomLevel * 100)}%</span
-				>
-				<button
-					type="button"
-					onclick={zoomIn}
-					disabled={zoomLevel >= ZOOM_MAX}
-					class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
-				>
-					+
-				</button>
-				<span class="w-px h-4 bg-gray-300 mx-0.5"></span>
-				<button
-					type="button"
-					onclick={resetZoom}
-					disabled={zoomLevel === 1}
-					class="px-1.5 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500"
-				>
-					reset
-				</button>
+					{#if hiddenCount > 0}
+						<div
+							class="absolute top-0 left-0 right-0 bg-amber-400 text-amber-900 text-xs px-3 py-2 rounded-t-xl flex items-center gap-2 z-20 shadow-sm"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-4 w-4 shrink-0"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+							<span class="flex-1">
+								{hiddenCount} of {doodledialStore.layers.length} layers hidden — excluded from export,
+								optimization, and overlap checks
+							</span>
+							<button
+								type="button"
+								onclick={() => doodledialStore.showAllLayers()}
+								class="bg-amber-300 hover:bg-amber-200 active:bg-amber-400 px-2 py-0.5 rounded text-xs font-medium transition-colors"
+							>
+								Show all
+							</button>
+						</div>
+					{/if}
+					<div class="max-w-full max-h-full flex items-center justify-center">
+						{@html doodledialStore.combinedSvg || ''}
+					</div>
+				</div>
 			</div>
-			<div class="max-w-full max-h-full flex items-center justify-center">
-				{@html doodledialStore.combinedSvg || ''}
-			</div>
+		</div>
+		<div
+			class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
+			onpointerdown={(e) => e.stopPropagation()}
+		>
+			<button
+				type="button"
+				onclick={zoomOut}
+				disabled={zoomLevel <= ZOOM_MIN}
+				class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+			>
+				−
+			</button>
+			<span class="text-gray-600 font-medium tabular-nums min-w-[3ch] text-center"
+				>{Math.round(zoomLevel * 100)}%</span
+			>
+			<button
+				type="button"
+				onclick={zoomIn}
+				disabled={zoomLevel >= ZOOM_MAX}
+				class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+			>
+				+
+			</button>
+			<span class="w-px h-4 bg-gray-300 mx-0.5"></span>
+			<button
+				type="button"
+				onclick={resetZoom}
+				disabled={zoomLevel === 1}
+				class="px-1.5 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500"
+			>
+				reset
+			</button>
 		</div>
 	{:else}
 		<div class="flex flex-col items-center gap-4 text-gray-400 relative z-10">
