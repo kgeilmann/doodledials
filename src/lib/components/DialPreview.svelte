@@ -21,6 +21,13 @@
 	let outerWrapper: HTMLDivElement | null = $state(null);
 	let didDrag = false;
 
+	let scrollContainer: HTMLDivElement | null = $state(null);
+	let isPanning = $state(false);
+	let panStartX = 0;
+	let panStartY = 0;
+	let scrollStartLeft = 0;
+	let scrollStartTop = 0;
+
 	let isDraggingLabel = $state(false);
 	let dragLabelLayerId = $state<string | null>(null);
 	let labelDragStartSvgX = $state(0);
@@ -93,15 +100,25 @@
 		}
 
 		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
-		if (!layerId) return;
+		if (!layerId && !isDiscTitle) {
+			// Background click — start pan mode
+			if (!scrollContainer || !svgContainer) return;
+			isPanning = true;
+			panStartX = e.clientX;
+			panStartY = e.clientY;
+			scrollStartLeft = scrollContainer.scrollLeft;
+			scrollStartTop = scrollContainer.scrollTop;
+			svgContainer.setPointerCapture(e.pointerId);
+			return;
+		}
 
-		doodledialStore.setHighlightedLayer(layerId);
+		doodledialStore.setHighlightedLayer(layerId!);
 
 		if (isPathLabel) {
 			isDraggingLabel = true;
 			dragLabelLayerId = layerId;
 
-			const layer = doodledialStore.getLayer(layerId);
+			const layer = doodledialStore.getLayer(layerId!);
 			labelInitialOffsetX = layer?.labelOffsetX || 0;
 			labelInitialOffsetY = layer?.labelOffsetY || 0;
 			labelDragLayerRotation = layer?.rotation || 0;
@@ -125,6 +142,15 @@
 	}
 
 	function handlePointerMove(e: PointerEvent) {
+		if (isPanning) {
+			const dx = e.clientX - panStartX;
+			const dy = e.clientY - panStartY;
+			if (scrollContainer) {
+				scrollContainer.scrollLeft = scrollStartLeft - dx;
+				scrollContainer.scrollTop = scrollStartTop - dy;
+			}
+			return;
+		}
 		if (isDraggingLabel && dragLabelLayerId) {
 			const currentPoint = getSvgPoint(e.clientX, e.clientY);
 			if (!currentPoint) return;
@@ -162,6 +188,13 @@
 	}
 
 	function handlePointerUp(e: PointerEvent) {
+		if (isPanning) {
+			isPanning = false;
+			if (svgContainer) {
+				svgContainer.releasePointerCapture(e.pointerId);
+			}
+			return;
+		}
 		if (isDragging || isDraggingLabel || isDraggingTitle) {
 			const target = e.target as HTMLElement;
 			target.releasePointerCapture(e.pointerId);
@@ -304,7 +337,7 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	{#if doodledialStore.svgContent}
-		<div class="absolute inset-0 overflow-auto flex">
+		<div class="absolute inset-0 overflow-auto flex cursor-grab" bind:this={scrollContainer}>
 			<div
 				class="shrink-0 flex items-center justify-center overflow-hidden rounded-xl"
 				style="width: {fitSize * zoomLevel}px; height: {fitSize * zoomLevel}px; margin: auto;"
@@ -312,7 +345,9 @@
 				<div
 					class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
 						? 'cursor-not-allowed'
-						: ''}"
+						: isPanning
+							? 'cursor-grabbing'
+							: ''}"
 					style="width: {fitSize}px; height: {fitSize}px; transform: scale({zoomLevel}); transform-origin: center center;"
 					bind:this={svgContainer}
 					onpointerdown={handlePointerDown}
