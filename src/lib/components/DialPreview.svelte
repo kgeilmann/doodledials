@@ -306,7 +306,7 @@
 	{#if doodledialStore.svgContent}
 		<div class="absolute inset-0 overflow-auto flex">
 			<div
-				class="shrink-0 flex items-center justify-center"
+				class="shrink-0 flex items-center justify-center overflow-hidden rounded-xl"
 				style="width: {fitSize * zoomLevel}px; height: {fitSize * zoomLevel}px; margin: auto;"
 			>
 				<div
