@@ -3,7 +3,6 @@
 	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { exportLaserSvg, exportStl, exportPreviewSvg } from '$lib/utils/export-formats';
-	import { embedMetadata, type DoodleDialMetadata } from '$lib/utils/doodledial-save';
 
 	let menuOpen = $state(false);
 	let discThicknessMm = $state('3');
@@ -92,52 +91,6 @@
 			);
 			createDownload(stl, makeFilename('doodledial', 'stl'), 'model/stl');
 			closeStlDialog();
-		} catch (err) {
-			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
-		}
-	}
-
-	function exportDoodleDial() {
-		if (!doodledialStore.combinedSvg || !doodledialStore.svgContent) return;
-
-		try {
-			const metadata: DoodleDialMetadata = {
-				version: 1,
-				svgContent: {
-					raw: doodledialStore.svgContent.raw,
-					filename: doodledialStore.svgContent.filename,
-					originalRaw: doodledialStore.originalRawSvg ?? undefined
-				},
-				config: {
-					diameter: doodledialStore.config.diameter,
-					offsetX: doodledialStore.config.offsetX,
-					offsetY: doodledialStore.config.offsetY,
-					scale: doodledialStore.config.scale,
-					sizeToFit: doodledialStore.config.sizeToFit,
-					centerHoleDiameter: doodledialStore.config.centerHoleDiameter,
-					optimizerGapMm: doodledialStore.config.optimizerGapMm ?? 2,
-					pathLabelFontSize: doodledialStore.config.pathLabelFontSize
-				},
-				layers: doodledialStore.layers.map((l) => ({
-					id: l.id,
-					name: l.name,
-					index: l.index,
-					visible: l.visible,
-					rotation: l.rotation,
-					labelOffsetX: l.labelOffsetX,
-					labelOffsetY: l.labelOffsetY,
-					labelPlacementMode: l.labelPlacementMode,
-					labelPlacementStatus: l.labelPlacementStatus
-				})),
-				discTitle: doodledialStore.discTitle,
-				discTitleX: doodledialStore.discTitleX,
-				discTitleY: doodledialStore.discTitleY,
-				discTitleFontSize: doodledialStore.discTitleFontSize
-			};
-
-			const svg = embedMetadata(doodledialStore.combinedSvg, metadata);
-			createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
-			menuOpen = false;
 		} catch (err) {
 			doodledialStore.setError(err instanceof Error ? err.message : 'Export failed');
 		}

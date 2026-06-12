@@ -55,8 +55,6 @@ export class OptimizerCancelledError extends Error {
 	}
 }
 
-type OptimizerStopReason = 'convergence' | 'max_iteration_count';
-
 const CONVERGENCE_THRESHOLD = 0.001;
 const MAX_ITERATIONS = 500;
 const MIN_OVERLAP_PIXELS = 2;
@@ -120,10 +118,6 @@ export type LayerForceMap = Record<string, number>;
 
 function createZeroForceMap(layerIds: string[]): LayerForceMap {
 	return Object.fromEntries(layerIds.map((layerId) => [layerId, 0]));
-}
-
-function sumForceMap(forces: LayerForceMap, layerIds: string[]): number {
-	return layerIds.reduce((sum, layerId) => sum + (forces[layerId] ?? 0), 0);
 }
 
 function shortestSignedAngleDifference(fromAngle: number, toAngle: number): number {
@@ -524,8 +518,6 @@ export async function runOptimizer(
 	onProgress?: (progress: OptimizerProgress) => void,
 	options?: OptimizerOptions
 ): Promise<OptimizerResult> {
-	const startedAtMs = Date.now();
-	console.log('[optimizer] Frontend optimizer called:', input);
 	throwIfCancelled(options?.signal);
 
 	const layerIds = input.layers.map((layer) => layer.id);
@@ -546,13 +538,9 @@ export async function runOptimizer(
 	let state = shouldInitializeRandomly
 		? initializeRandomLayout(input.layers, options?.randomSeed)
 		: initializeLayout(input.layers);
-	let stopReason: OptimizerStopReason = 'max_iteration_count';
-	let completedIterations = 0;
-	let lastAverageForceMagnitude = 0;
 
 	for (let iteration = 1; iteration <= simulatedIterations; iteration++) {
 		throwIfCancelled(options?.signal);
-		const layoutBefore = { ...state };
 		const currentOverlaps = await detectLayoutOverlaps(
 			input,
 			state,
@@ -563,15 +551,10 @@ export async function runOptimizer(
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds, tuning);
 		const uniqueContributions = calculateUniqueContributions(state, layerIds, tuning);
 		const uniqueForceMap = calculateUniqueForceMap(uniqueContributions, layerIds, tuning);
-		const restoringRawSum = sumForceMap(restoringContributions, layerIds);
-		const restoringNormalizedSum = sumForceMap(restoringForceMap, layerIds);
-		const uniqueRawSum = sumForceMap(uniqueContributions, layerIds);
-		const uniqueNormalizedSum = sumForceMap(uniqueForceMap, layerIds);
 		const overlapAggregate = calculateOverlapAggregate(currentOverlaps, layerIds);
 		throwIfCancelled(options?.signal);
 		let totalForceMagnitude = 0;
 		const nextState = { ...state };
-		const layerForces: Record<string, number> = {};
 
 		for (const layerId of layerIds) {
 			throwIfCancelled(options?.signal);
@@ -591,14 +574,11 @@ export async function runOptimizer(
 				overlapForce +
 				tuning.restoringForceWeight * restoringForce +
 				tuning.uniqueForceWeight * uniqueForce;
-			layerForces[layerId] = totalForce;
 			nextState[layerId] = integrateAngle(state[layerId], totalForce, tuning.timeStepDt);
 			totalForceMagnitude += Math.abs(totalForce);
 		}
 
 		const averageForceMagnitude = layerIds.length > 0 ? totalForceMagnitude / layerIds.length : 0;
-		lastAverageForceMagnitude = averageForceMagnitude;
-		completedIterations = iteration;
 		const nextGapAnalysis = analyzeCircularGaps(nextState, layerIds);
 		const minimumGap =
 			nextGapAnalysis.gaps.length > 0
@@ -617,37 +597,12 @@ export async function runOptimizer(
 			totalIterations: simulatedIterations
 		});
 
-		const elapsedMs = Date.now() - startedAtMs;
-
-		console.log('[optimizer] Frontend optimizer iteration:', {
-			iteration,
-			elapsedMs,
-			averageForceMagnitude,
-			overlapAggregate,
-			restoringRawSum,
-			restoringNormalizedSum,
-			uniqueRawSum,
-			uniqueNormalizedSum,
-			forces: layerForces,
-			layoutBefore,
-			layoutAfter: nextState
-		});
-
 		state = nextState;
 
 		if (shouldConverge(averageForceMagnitude, CONVERGENCE_THRESHOLD)) {
-			stopReason = 'convergence';
 			break;
 		}
 	}
-
-	console.log('[optimizer] Frontend optimizer stopped:', {
-		reason: stopReason,
-		iterations: completedIterations,
-		maxIterations: simulatedIterations,
-		averageForceMagnitude: lastAverageForceMagnitude,
-		elapsedMs: Date.now() - startedAtMs
-	});
 
 	const layout = shouldRoundOutputAngles ? roundLayoutAngles(state) : state;
 	return { layout };

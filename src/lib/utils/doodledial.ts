@@ -21,11 +21,11 @@ export function parseSvgPaths(
 } {
 	const doc = SVG(svgContent) as Svg;
 	if ('width' in doc.css()) {
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		doc.css('width', null);
 	}
 	if ('height' in doc.css()) {
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		doc.css('height', null);
 	}
 
@@ -99,13 +99,13 @@ export function parseSvgPaths(
 		path.addClass('cutout');
 		path.scale(sourceScale, 0, 0).translate(normalizedTranslateX, normalizedTranslateY);
 
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		path.css('stroke', null);
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		path.css('stroke-width', null);
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		path.css('fill', null);
-		// @ts-expect-error - css() returns unknown type
+		// @ts-expect-error - css() signature expects string but null clears the property
 		path.css('fill-opacity', null);
 
 		const layerId = `layer-${index}`;

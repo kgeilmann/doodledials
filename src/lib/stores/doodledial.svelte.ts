@@ -280,13 +280,3 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 
 export { createDoodledialStore };
 export const doodledialStore = createDoodledialStore();
-
-declare global {
-	interface Window {
-		__doodledialStore?: typeof doodledialStore;
-	}
-}
-
-if (typeof window !== 'undefined') {
-	window.__doodledialStore = doodledialStore;
-}

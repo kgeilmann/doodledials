@@ -423,7 +423,6 @@ export async function runBruteforceOptimizer(
 	};
 
 	const startedAtMs = Date.now();
-	console.log('[optimizer] Frontend brute-force optimizer called:', input);
 	throwIfCancelled(options?.signal);
 
 	const layerIds = input.layers.map((layer) => layer.id);
@@ -891,13 +890,6 @@ export async function runBruteforceOptimizer(
 		depth: remainingLayerIds.length,
 		feasibleSolutionsFound,
 		stopReason
-	});
-
-	console.log('[optimizer] Frontend brute-force optimizer stopped:', {
-		reason: stopReason,
-		nodesVisited,
-		feasibleSolutionsFound,
-		elapsedMs: Date.now() - startedAtMs
 	});
 
 	const selectedLayout = bestLayout ?? buildDefaultLayout(input.layers, anchorLayerId, layerIds);
