@@ -561,5 +561,17 @@ export function exportStl(
 
 	const exporter = new STLExporter();
 	const stl = exporter.parse(scene, { binary: false }) as string;
+
+	scene.traverse((child) => {
+		if (child instanceof THREE.Mesh) {
+			child.geometry.dispose();
+			if (Array.isArray(child.material)) {
+				child.material.forEach((m) => m.dispose());
+			} else {
+				child.material.dispose();
+			}
+		}
+	});
+
 	return stl.replace(/^solid\s+[^\n]+/, 'solid doodledial');
 }

@@ -257,55 +257,34 @@
 		zoomLevel = 1;
 	}
 
-	function updatePreview() {
-		if (doodledialStore.svgContent) {
-			try {
-				const layers = doodledialStore.layers;
-				const highlightedLayer = doodledialStore.highlightedLayer;
-				const currentSelected = doodledialStore.selectedLayer;
-				const combined = combineDoodledial(
-					doodledialStore.svgContent,
-					doodledialStore.config,
-					layers,
-					highlightedLayer,
-					currentSelected,
-					{
-						discTitle: doodledialStore.discTitle,
-						discTitleX: doodledialStore.discTitleX,
-						discTitleY: doodledialStore.discTitleY,
-						discTitleFontSize: doodledialStore.discTitleFontSize
-					}
-				);
-				doodledialStore.setCombinedSvg(combined);
-				doodledialStore.setError(null);
-			} catch (err) {
-				doodledialStore.setError(err instanceof Error ? err.message : 'Failed to generate preview');
-				doodledialStore.setCombinedSvg(null);
-			}
+	let combinedSvg = $derived.by(() => {
+		if (!doodledialStore.svgContent) return null;
+		try {
+			return combineDoodledial(
+				doodledialStore.svgContent,
+				doodledialStore.config,
+				doodledialStore.layers,
+				doodledialStore.highlightedLayer,
+				doodledialStore.selectedLayer,
+				{
+					discTitle: doodledialStore.discTitle,
+					discTitleX: doodledialStore.discTitleX,
+					discTitleY: doodledialStore.discTitleY,
+					discTitleFontSize: doodledialStore.discTitleFontSize
+				}
+			);
+		} catch {
+			return null;
 		}
-	}
+	});
 
 	$effect(() => {
-		void doodledialStore.layers.length;
-		doodledialStore.layers.forEach((l) => {
-			void l.visible;
-			void l.rotation;
-			void l.labelOffsetX;
-			void l.labelOffsetY;
-		});
-		void doodledialStore.highlightedLayer;
-		void doodledialStore.selectedLayer;
-		void doodledialStore.discTitle;
-		void doodledialStore.discTitleX;
-		void doodledialStore.discTitleY;
-		void doodledialStore.discTitleFontSize;
-		void doodledialStore.config.offsetX;
-		void doodledialStore.config.offsetY;
-		void doodledialStore.config.scale;
-		void doodledialStore.config.diameter;
-		void doodledialStore.config.sizeToFit;
-		if (doodledialStore.svgContent) {
-			updatePreview();
+		if (doodledialStore.svgContent && combinedSvg === null) {
+			doodledialStore.setCombinedSvg(null);
+			doodledialStore.setError('Failed to generate preview');
+		} else if (combinedSvg) {
+			doodledialStore.setCombinedSvg(combinedSvg);
+			doodledialStore.setError(null);
 		}
 	});
 

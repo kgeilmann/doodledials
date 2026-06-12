@@ -334,8 +334,8 @@ export function combineDoodledial(
 	const applyDiameter = options?.applyDiameter ?? true;
 	const useCrosshair = options?.useCrosshair ?? true;
 
-	let highlighted: G;
-	let selected: G;
+	let highlighted: G | undefined;
+	let selected: G | undefined;
 
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
@@ -371,8 +371,8 @@ export function combineDoodledial(
 
 	if (includeHighlighting) {
 		const allLayers = doc.findOne('#all');
-		if (highlighted!) allLayers?.add(highlighted);
-		if (selected!) allLayers?.add(selected);
+		if (highlighted) allLayers?.add(highlighted);
+		if (selected) allLayers?.add(selected);
 	}
 
 	if (applyDiameter) {
