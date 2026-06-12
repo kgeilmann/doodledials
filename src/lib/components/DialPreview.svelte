@@ -336,6 +336,39 @@
 					onclick={handleClick}
 					onwheel={handleWheel}
 				>
+					<div
+						class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
+						onpointerdown={(e) => e.stopPropagation()}
+					>
+						<button
+							type="button"
+							onclick={zoomOut}
+							disabled={zoomLevel <= ZOOM_MIN}
+							class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+						>
+							−
+						</button>
+						<span class="text-gray-600 font-medium tabular-nums min-w-[3ch] text-center"
+							>{Math.round(zoomLevel * 100)}%</span
+						>
+						<button
+							type="button"
+							onclick={zoomIn}
+							disabled={zoomLevel >= ZOOM_MAX}
+							class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
+						>
+							+
+						</button>
+						<span class="w-px h-4 bg-gray-300 mx-0.5"></span>
+						<button
+							type="button"
+							onclick={resetZoom}
+							disabled={zoomLevel === 1}
+							class="px-1.5 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500"
+						>
+							reset
+						</button>
+					</div>
 					{#if hiddenCount > 0}
 						<div
 							class="absolute top-0 left-0 right-0 bg-amber-400 text-amber-900 text-xs px-3 py-2 rounded-t-xl flex items-center gap-2 z-20 shadow-sm"
@@ -371,39 +404,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<div
-			class="absolute top-2 right-2 z-30 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 text-xs select-none"
-			onpointerdown={(e) => e.stopPropagation()}
-		>
-			<button
-				type="button"
-				onclick={zoomOut}
-				disabled={zoomLevel <= ZOOM_MIN}
-				class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
-			>
-				−
-			</button>
-			<span class="text-gray-600 font-medium tabular-nums min-w-[3ch] text-center"
-				>{Math.round(zoomLevel * 100)}%</span
-			>
-			<button
-				type="button"
-				onclick={zoomIn}
-				disabled={zoomLevel >= ZOOM_MAX}
-				class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold"
-			>
-				+
-			</button>
-			<span class="w-px h-4 bg-gray-300 mx-0.5"></span>
-			<button
-				type="button"
-				onclick={resetZoom}
-				disabled={zoomLevel === 1}
-				class="px-1.5 h-6 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500"
-			>
-				reset
-			</button>
 		</div>
 	{:else}
 		<div class="flex flex-col items-center gap-4 text-gray-400 relative z-10">
