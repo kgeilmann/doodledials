@@ -10,6 +10,8 @@ interface PersistedConfig {
 	optimizerGapDefault: number;
 	bruteforceTimeLimit: number;
 	defaultExportFormat: ExportFormat;
+	labelFontFamily: string;
+	titleFontFamily: string;
 }
 
 export const DEFAULTS = {
@@ -19,7 +21,9 @@ export const DEFAULTS = {
 	forceDirectedOptimizerEnabled: false,
 	optimizerGapDefault: 5,
 	bruteforceTimeLimit: 120,
-	defaultExportFormat: 'laser-svg'
+	defaultExportFormat: 'laser-svg',
+	labelFontFamily: 'monospace',
+	titleFontFamily: 'sans-serif'
 } as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
@@ -30,6 +34,8 @@ class GlobalConfigStore {
 	optimizerGapDefault: number = $state(DEFAULTS.optimizerGapDefault);
 	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
+	labelFontFamily: string = $state(DEFAULTS.labelFontFamily);
+	titleFontFamily: string = $state(DEFAULTS.titleFontFamily);
 	constructor() {
 		this._load();
 		$effect.root(() => {
@@ -41,6 +47,8 @@ class GlobalConfigStore {
 				void this.optimizerGapDefault;
 				void this.bruteforceTimeLimit;
 				void this.defaultExportFormat;
+				void this.labelFontFamily;
+				void this.titleFontFamily;
 				this._save();
 			});
 		});
@@ -58,6 +66,8 @@ class GlobalConfigStore {
 		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
+		this.labelFontFamily = DEFAULTS.labelFontFamily;
+		this.titleFontFamily = DEFAULTS.titleFontFamily;
 	}
 
 	private _load(): void {
@@ -75,6 +85,8 @@ class GlobalConfigStore {
 				this.optimizerGapDefault = parsed.optimizerGapDefault ?? DEFAULTS.optimizerGapDefault;
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
+				this.labelFontFamily = parsed.labelFontFamily ?? DEFAULTS.labelFontFamily;
+				this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
 			}
 		} catch (e) {
 			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
@@ -92,7 +104,9 @@ class GlobalConfigStore {
 				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled,
 				optimizerGapDefault: this.optimizerGapDefault,
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
-				defaultExportFormat: this.defaultExportFormat
+				defaultExportFormat: this.defaultExportFormat,
+				labelFontFamily: this.labelFontFamily,
+				titleFontFamily: this.titleFontFamily
 			})
 		);
 	}
