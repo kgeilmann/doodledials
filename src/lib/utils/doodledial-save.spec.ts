@@ -12,8 +12,8 @@ const SAMPLE_METADATA: DoodleDialMetadata = {
 		offsetY: 3,
 		scale: 1,
 		sizeToFit: true,
-		centerHoleDiameter: 2,
-		optimizerGapMm: 2,
+		centerHoleDiameter: 0.5,
+		optimizerGapMm: 3,
 		pathLabelFontSize: 10,
 		titleFontFamily: 'sans-serif'
 	},

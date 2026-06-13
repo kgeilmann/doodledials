@@ -40,7 +40,7 @@ describe('global config store', () => {
 
 	it('uses defaults when localStorage is empty', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.diameter).toBe(200);
+		expect(globalConfig.diameter).toBe(100);
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 	});
 
@@ -64,7 +64,7 @@ describe('global config store', () => {
 	it('falls back to defaults when localStorage has corrupt data', async () => {
 		localStorage.setItem(STORAGE_KEY, 'not-json');
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.diameter).toBe(200);
+		expect(globalConfig.diameter).toBe(100);
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 	});
 
@@ -83,13 +83,13 @@ describe('global config store', () => {
 		globalConfig.diameter = 150;
 		globalConfig.pathLabelOptimizerEnabled = true;
 		globalConfig.reset();
-		expect(globalConfig.diameter).toBe(200);
+		expect(globalConfig.diameter).toBe(100);
 		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
 	});
 
-	it('has default centerHoleDiameter of 2', async () => {
+	it('has default centerHoleDiameter of 0.5', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.centerHoleDiameter).toBe(2);
+		expect(globalConfig.centerHoleDiameter).toBe(0.5);
 	});
 
 	it('persists and restores centerHoleDiameter', async () => {
@@ -104,12 +104,12 @@ describe('global config store', () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.centerHoleDiameter = 3;
 		globalConfig.reset();
-		expect(globalConfig.centerHoleDiameter).toBe(2);
+		expect(globalConfig.centerHoleDiameter).toBe(0.5);
 	});
 
-	it('has default optimizerGapDefault of 5', async () => {
+	it('has default optimizerGapDefault of 3', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.optimizerGapDefault).toBe(5);
+		expect(globalConfig.optimizerGapDefault).toBe(3);
 	});
 
 	it('persists and restores optimizerGapDefault', async () => {
@@ -124,7 +124,7 @@ describe('global config store', () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.optimizerGapDefault = 10;
 		globalConfig.reset();
-		expect(globalConfig.optimizerGapDefault).toBe(5);
+		expect(globalConfig.optimizerGapDefault).toBe(3);
 	});
 
 	it('has default bruteforceTimeLimit of 120', async () => {

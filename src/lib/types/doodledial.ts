@@ -38,7 +38,7 @@ export interface SVGContent {
 }
 
 export const DEFAULT_DIAL_CONFIG = {
-	diameter: 200,
+	diameter: 100,
 	minDiameter: 50,
 	maxDiameter: 200,
 	borderWidth: 2,
@@ -47,8 +47,8 @@ export const DEFAULT_DIAL_CONFIG = {
 	offsetY: 0,
 	scale: 1,
 	sizeToFit: true,
-	centerHoleDiameter: 2,
-	optimizerGapMm: 2,
+	centerHoleDiameter: 0.5,
+	optimizerGapMm: 3,
 	pathLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'
 } as const satisfies DialConfig;

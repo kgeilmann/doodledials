@@ -14,11 +14,11 @@ interface PersistedConfig {
 }
 
 export const DEFAULTS = {
-	diameter: 200,
-	centerHoleDiameter: 2,
+	diameter: 100,
+	centerHoleDiameter: 0.5,
 	pathLabelOptimizerEnabled: false,
 	forceDirectedOptimizerEnabled: false,
-	optimizerGapDefault: 5,
+	optimizerGapDefault: 3,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
 	titleFontFamily: 'sans-serif'

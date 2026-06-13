@@ -5,14 +5,14 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 	function createStoreWithMockConfig() {
 		const mockConfig = {
 			pathLabelOptimizerEnabled: true,
-			diameter: 200,
+			diameter: 100,
 			save: vi.fn(),
 			open: vi.fn(),
 			close: vi.fn(),
 			reset: vi.fn(),
-			centerHoleDiameter: 2,
+			centerHoleDiameter: 0.5,
 			forceDirectedOptimizerEnabled: false,
-			optimizerGapDefault: 5,
+			optimizerGapDefault: 3,
 			bruteforceTimeLimit: 120,
 			defaultExportFormat: 'laser-svg' as const,
 			dialogOpen: false,
