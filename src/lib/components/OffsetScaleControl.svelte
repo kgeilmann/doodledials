@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { FONT_FAMILIES } from '$lib/utils/constants';
 
 	function handleOffsetXInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
@@ -29,6 +30,16 @@
 	function handlePathLabelFontSizeInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 10;
 		doodledialStore.setPathLabelFontSize(value);
+	}
+
+	function handleLabelFontFamilyChange(e: Event) {
+		const value = (e.target as HTMLSelectElement).value;
+		doodledialStore.setLabelFontFamily(value);
+	}
+
+	function handleTitleFontFamilyChange(e: Event) {
+		const value = (e.target as HTMLSelectElement).value;
+		doodledialStore.setTitleFontFamily(value);
 	}
 </script>
 
@@ -134,5 +145,39 @@
 			/>
 			<span class="text-sm text-gray-500">px</span>
 		</div>
+	</div>
+
+	<div class="flex items-center justify-between">
+		<label for="label-font-family-select" class="text-sm font-medium text-gray-700"
+			>Label Font</label
+		>
+		<select
+			id="label-font-family-select"
+			value={doodledialStore.config.labelFontFamily}
+			onchange={handleLabelFontFamilyChange}
+			disabled={optimizerStore.optimizerPending}
+			class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+		>
+			{#each FONT_FAMILIES as font (font)}
+				<option value={font}>{font}</option>
+			{/each}
+		</select>
+	</div>
+
+	<div class="flex items-center justify-between">
+		<label for="title-font-family-select" class="text-sm font-medium text-gray-700"
+			>Title Font</label
+		>
+		<select
+			id="title-font-family-select"
+			value={doodledialStore.config.titleFontFamily}
+			onchange={handleTitleFontFamilyChange}
+			disabled={optimizerStore.optimizerPending}
+			class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+		>
+			{#each FONT_FAMILIES as font (font)}
+				<option value={font}>{font}</option>
+			{/each}
+		</select>
 	</div>
 </div>
