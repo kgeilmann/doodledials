@@ -15,7 +15,9 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 			optimizerGapDefault: 5,
 			bruteforceTimeLimit: 120,
 			defaultExportFormat: 'laser-svg' as const,
-			dialogOpen: false
+			dialogOpen: false,
+			labelFontFamily: '',
+			titleFontFamily: ''
 		};
 		const store = createDoodledialStore({ globalConfig: mockConfig });
 		store.addLayer('layer-1', 1, 'Layer 1');
