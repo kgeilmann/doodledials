@@ -364,7 +364,11 @@ export function combineDoodledial(
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
 				pathLabel.font('size', config.pathLabelFontSize);
+				pathLabel.font('family', config.labelFontFamily);
 				pathLabel.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
+			});
+			svgLayer.find('.layer-label').forEach((label) => {
+				(label as Text).font('family', config.labelFontFamily);
 			});
 		}
 	});
@@ -423,7 +427,7 @@ export function combineDoodledial(
 		titleEl.addClass('disc-title');
 		titleEl.attr('data-disc-title', 'true');
 		titleEl.font({
-			family: 'sans-serif',
+			family: config.titleFontFamily,
 			size: options?.discTitleFontSize ?? 12,
 			anchor: 'middle',
 			weight: 'bold'
