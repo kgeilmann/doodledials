@@ -32,7 +32,9 @@ const BASE_CONFIG: DialConfig = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 2,
-	pathLabelFontSize: 10
+	pathLabelFontSize: 10,
+	labelFontFamily: 'monospace',
+	titleFontFamily: 'sans-serif'
 };
 
 function getBBox(el: unknown): { cx: number; cy: number; width: number; height: number } {
