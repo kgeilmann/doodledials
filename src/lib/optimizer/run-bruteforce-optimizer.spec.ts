@@ -69,7 +69,6 @@ function buildInput(layers: Layer[]) {
 			sizeToFit: true,
 			centerHoleDiameter: 2,
 			pathLabelFontSize: 10,
-			labelFontFamily: 'monospace',
 			titleFontFamily: 'sans-serif'
 		},
 		layers,

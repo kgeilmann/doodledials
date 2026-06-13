@@ -364,11 +364,11 @@ export function combineDoodledial(
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
 				pathLabel.font('size', config.pathLabelFontSize);
-				pathLabel.font('family', config.labelFontFamily);
+				pathLabel.font('family', 'monospace');
 				pathLabel.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
 			});
 			svgLayer.find('.layer-label').forEach((label) => {
-				(label as Text).font('family', config.labelFontFamily);
+				(label as Text).font('family', 'monospace');
 			});
 		}
 	});

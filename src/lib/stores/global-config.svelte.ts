@@ -10,7 +10,6 @@ interface PersistedConfig {
 	optimizerGapDefault: number;
 	bruteforceTimeLimit: number;
 	defaultExportFormat: ExportFormat;
-	labelFontFamily: string;
 	titleFontFamily: string;
 }
 
@@ -22,7 +21,6 @@ export const DEFAULTS = {
 	optimizerGapDefault: 5,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
-	labelFontFamily: 'monospace',
 	titleFontFamily: 'sans-serif'
 } as const satisfies PersistedConfig;
 
@@ -34,7 +32,6 @@ class GlobalConfigStore {
 	optimizerGapDefault: number = $state(DEFAULTS.optimizerGapDefault);
 	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
-	labelFontFamily: string = $state(DEFAULTS.labelFontFamily);
 	titleFontFamily: string = $state(DEFAULTS.titleFontFamily);
 	constructor() {
 		this._load();
@@ -47,7 +44,6 @@ class GlobalConfigStore {
 				void this.optimizerGapDefault;
 				void this.bruteforceTimeLimit;
 				void this.defaultExportFormat;
-				void this.labelFontFamily;
 				void this.titleFontFamily;
 				this._save();
 			});
@@ -66,7 +62,6 @@ class GlobalConfigStore {
 		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
-		this.labelFontFamily = DEFAULTS.labelFontFamily;
 		this.titleFontFamily = DEFAULTS.titleFontFamily;
 	}
 
@@ -85,7 +80,6 @@ class GlobalConfigStore {
 				this.optimizerGapDefault = parsed.optimizerGapDefault ?? DEFAULTS.optimizerGapDefault;
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
-				this.labelFontFamily = parsed.labelFontFamily ?? DEFAULTS.labelFontFamily;
 				this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
 			}
 		} catch (e) {
@@ -105,7 +99,6 @@ class GlobalConfigStore {
 				optimizerGapDefault: this.optimizerGapDefault,
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
 				defaultExportFormat: this.defaultExportFormat,
-				labelFontFamily: this.labelFontFamily,
 				titleFontFamily: this.titleFontFamily
 			})
 		);

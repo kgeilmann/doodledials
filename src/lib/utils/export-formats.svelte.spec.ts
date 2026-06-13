@@ -44,7 +44,6 @@ const SAMPLE_CONFIG: DialConfig = {
 	sizeToFit: true,
 	centerHoleDiameter: 2,
 	pathLabelFontSize: 10,
-	labelFontFamily: 'monospace',
 	titleFontFamily: 'sans-serif'
 };
 

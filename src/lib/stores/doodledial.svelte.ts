@@ -9,7 +9,6 @@ import { parseSvgPaths } from '$lib/utils/doodledial';
 interface GlobalConfigLike {
 	diameter: number;
 	pathLabelOptimizerEnabled: boolean;
-	labelFontFamily: string;
 	titleFontFamily: string;
 }
 
@@ -18,7 +17,6 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	let config = $state<DialConfig>({
 		...DEFAULT_DIAL_CONFIG,
 		diameter: globalConfig.diameter,
-		labelFontFamily: globalConfig.labelFontFamily,
 		titleFontFamily: globalConfig.titleFontFamily
 	});
 	let svgContent = $state<SVGContent | null>(null);
@@ -148,10 +146,6 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = { ...config, pathLabelFontSize: size };
 			labelPlacementStore.schedule();
 		},
-		setLabelFontFamily(fontFamily: string) {
-			config = { ...config, labelFontFamily: fontFamily };
-			labelPlacementStore.schedule();
-		},
 		setTitleFontFamily(fontFamily: string) {
 			config = { ...config, titleFontFamily: fontFamily };
 		},
@@ -278,7 +272,6 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = {
 				...DEFAULT_DIAL_CONFIG,
 				diameter: globalConfig.diameter,
-				labelFontFamily: globalConfig.labelFontFamily,
 				titleFontFamily: globalConfig.titleFontFamily
 			};
 			svgContent = null;

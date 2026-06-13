@@ -10,7 +10,6 @@ export interface DoodleDialMetadata {
 		centerHoleDiameter: number;
 		optimizerGapMm: number;
 		pathLabelFontSize: number;
-		labelFontFamily: string;
 		titleFontFamily: string;
 	};
 	layers: Array<{

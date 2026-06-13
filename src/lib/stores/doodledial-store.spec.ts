@@ -16,7 +16,6 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 			bruteforceTimeLimit: 120,
 			defaultExportFormat: 'laser-svg' as const,
 			dialogOpen: false,
-			labelFontFamily: 'monospace',
 			titleFontFamily: 'sans-serif'
 		};
 		const store = createDoodledialStore({ globalConfig: mockConfig });
