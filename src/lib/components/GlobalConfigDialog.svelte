@@ -2,6 +2,7 @@
 	import { DEFAULTS, globalConfig } from '$lib/stores/global-config.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import type { ExportFormat } from '$lib/utils/export-formats';
+	import { FONT_FAMILIES } from '$lib/utils/constants';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -14,6 +15,8 @@
 	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
 	let draftOptimizerGapDefault = $state(globalConfig.optimizerGapDefault);
 	let draftBruteforceTimeLimit = $state(globalConfig.bruteforceTimeLimit);
+	let draftLabelFontFamily = $state(globalConfig.labelFontFamily);
+	let draftTitleFontFamily = $state(globalConfig.titleFontFamily);
 
 	function handleDiameterInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
@@ -57,6 +60,8 @@
 		draftOptimizerGapDefault = DEFAULTS.optimizerGapDefault;
 		draftBruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		draftDefaultExportFormat = DEFAULTS.defaultExportFormat;
+		draftLabelFontFamily = DEFAULTS.labelFontFamily;
+		draftTitleFontFamily = DEFAULTS.titleFontFamily;
 	}
 
 	function handleOK() {
@@ -67,6 +72,8 @@
 		globalConfig.optimizerGapDefault = draftOptimizerGapDefault;
 		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
 		globalConfig.defaultExportFormat = draftDefaultExportFormat;
+		globalConfig.labelFontFamily = draftLabelFontFamily;
+		globalConfig.titleFontFamily = draftTitleFontFamily;
 		globalConfig.save();
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
 		open = false;
@@ -299,6 +306,44 @@
 							<span>3D STL</span>
 						</label>
 					</fieldset>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between mb-2">
+						<label for="global-label-font-family" class="text-sm font-medium text-gray-700"
+							>Label Font</label
+						>
+						<select
+							id="global-label-font-family"
+							value={draftLabelFontFamily}
+							onchange={(e) => (draftLabelFontFamily = (e.target as HTMLSelectElement).value)}
+							class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+						>
+							{#each FONT_FAMILIES as font (font)}
+								<option value={font}>{font}</option>
+							{/each}
+						</select>
+					</div>
+					<p class="text-xs text-gray-500">Default font for mark labels and path labels</p>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="flex items-center justify-between mb-2">
+						<label for="global-title-font-family" class="text-sm font-medium text-gray-700"
+							>Title Font</label
+						>
+						<select
+							id="global-title-font-family"
+							value={draftTitleFontFamily}
+							onchange={(e) => (draftTitleFontFamily = (e.target as HTMLSelectElement).value)}
+							class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+						>
+							{#each FONT_FAMILIES as font (font)}
+								<option value={font}>{font}</option>
+							{/each}
+						</select>
+					</div>
+					<p class="text-xs text-gray-500">Default font for the disc title</p>
 				</div>
 			</div>
 
