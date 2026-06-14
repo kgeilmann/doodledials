@@ -102,10 +102,37 @@ function shapesToSvgPath(shapes: THREE.Shape[], minX: number, maxY: number, scal
 	return pathData.trim();
 }
 
+function stripCombining(str: string): string {
+	return str.replace(/[\u0300-\u036f]/g, '');
+}
+
+function isStandaloneNine(label: string): boolean {
+	return stripCombining(label) === '9';
+}
+
+function addUnderscorePath(
+	pathData: string,
+	fontWidth: number,
+	fontHeight: number,
+	scale: number
+): string {
+	const barWidth = fontWidth * 0.6 * scale;
+	const barHeight = Math.max(2, fontHeight * 0.03 * scale);
+	const barX = fontWidth * scale * 0.2;
+	const barY = fontHeight * scale + 2;
+	return (
+		pathData +
+		` M ${barX} ${barY} L ${barX + barWidth} ${barY} L ${barX + barWidth} ${barY + barHeight} L ${barX} ${barY + barHeight} Z`
+	);
+}
+
 export function labelToSvgStrokePath(label: string, layout: LabelGlyphLayout): string {
 	if (!label) return '';
 
-	const shapes = font.generateShapes(label, 100);
+	const cleanLabel = stripCombining(label);
+	if (!cleanLabel) return '';
+
+	const shapes = font.generateShapes(cleanLabel, 100);
 	if (shapes.length === 0) return '';
 
 	const { minX, maxX, minY, maxY } = getBounds(shapes);
@@ -115,13 +142,22 @@ export function labelToSvgStrokePath(label: string, layout: LabelGlyphLayout): s
 	if (fontWidth <= 0 || fontHeight <= 0) return '';
 
 	const scale = Math.min(layout.width / fontWidth, layout.height / fontHeight);
-	return shapesToSvgPath(shapes, minX, maxY, scale);
+	let pathData = shapesToSvgPath(shapes, minX, maxY, scale);
+
+	if (isStandaloneNine(label)) {
+		pathData = addUnderscorePath(pathData, fontWidth, fontHeight, scale);
+	}
+
+	return pathData;
 }
 
 export function labelToThreeShapes(label: string, layout: LabelGlyphLayout): THREE.Shape[] {
 	if (!label) return [];
 
-	const generated = font.generateShapes(label, 100);
+	const cleanLabel = stripCombining(label);
+	if (!cleanLabel) return [];
+
+	const generated = font.generateShapes(cleanLabel, 100);
 	if (generated.length === 0) return [];
 
 	const { minX, maxX, minY, maxY } = getBounds(generated);
@@ -144,6 +180,23 @@ export function labelToThreeShapes(label: string, layout: LabelGlyphLayout): THR
 		} catch {
 			// skip degenerate shapes
 		}
+	}
+
+	if (isStandaloneNine(label)) {
+		const barWidth = fontWidth * 0.6 * scale;
+		const barHeight = Math.max(2, fontHeight * 0.03 * scale);
+		const barX = fontWidth * scale * 0.2;
+		const barY = fontHeight * scale + 2;
+		const barShape = pointsToShape(
+			[
+				new THREE.Vector2(barX, barY),
+				new THREE.Vector2(barX, barY + barHeight),
+				new THREE.Vector2(barX + barWidth, barY + barHeight),
+				new THREE.Vector2(barX + barWidth, barY)
+			],
+			[]
+		);
+		result.push(barShape);
 	}
 
 	return result;

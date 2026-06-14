@@ -75,6 +75,11 @@ export function exportLaserSvg(
 		text.css('fill', engraveColor);
 	});
 
+	doc.find('.nine-underscore').forEach((el) => {
+		el.addClass(engraveClassName);
+		el.css('stroke', engraveColor);
+	});
+
 	doc.find('.disc-title').forEach((el) => {
 		el.addClass(engraveClassName);
 		el.css('fill', engraveColor);

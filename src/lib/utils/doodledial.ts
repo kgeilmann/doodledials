@@ -173,6 +173,12 @@ function createMark(
 	text.font({ family: 'monospace', size: 10, anchor: 'middle' });
 	text.center(centerX, markEndY + 8);
 
+	if (layerNumber === 9) {
+		const underscore = markGroup.line(centerX - 3, markEndY + 12, centerX + 3, markEndY + 12);
+		underscore.addClass('nine-underscore');
+		underscore.stroke({ width: 1, color: 'black' });
+	}
+
 	return markGroup;
 }
 
@@ -180,14 +186,24 @@ function createPathLabel(
 	layerId: string,
 	layerIndex: number,
 	pathBox: { x2: number; cy: number }
-): Text {
+): G {
+	const group = SVG().group();
+	group.id('path-label-' + layerId);
+
 	const pathLabel = SVG().text(String(layerIndex));
 	pathLabel.addClass('path-label');
-	pathLabel.id('path-label-' + layerId);
 	pathLabel.attr('data-layer-id', layerId);
 	pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
 	pathLabel.center(pathBox.x2 + 4, pathBox.cy - 5);
-	return pathLabel;
+	group.add(pathLabel);
+
+	if (layerIndex === 9) {
+		const underscore = group.line(pathBox.x2 + 1, pathBox.cy, pathBox.x2 + 7, pathBox.cy);
+		underscore.addClass('nine-underscore');
+		underscore.stroke({ width: 1, color: 'black' });
+	}
+
+	return group;
 }
 
 export interface CombineDoodledialOptions {
@@ -360,12 +376,25 @@ export function combineDoodledial(
 
 		if (includePathLabels && applyCutoutTransforms) {
 			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
-				const pathLabel = label as Text;
+				const group = label as G;
+				const pathLabel = group.findOne('.path-label') as Text;
+				if (!pathLabel) return;
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
 				pathLabel.font('size', config.pathLabelFontSize);
 				pathLabel.font('family', 'monospace');
-				pathLabel.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
+				const underscore = group.findOne('.nine-underscore');
+				if (underscore) {
+					const bbox = pathLabel.bbox();
+					const baseY = bbox.y + bbox.height + 1;
+					const midX = bbox.x + bbox.width / 2;
+					const halfLen = bbox.width * 0.4;
+					underscore.attr('y1', baseY);
+					underscore.attr('y2', baseY);
+					underscore.attr('x1', midX - halfLen);
+					underscore.attr('x2', midX + halfLen);
+				}
+				group.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
 			});
 			svgLayer.find('.layer-label').forEach((label) => {
 				(label as Text).font('family', 'monospace');
@@ -489,7 +518,7 @@ function applyDiscScaling(doc: Svg, config: DialConfig): void {
 }
 
 function removePathLabels(doc: Svg): void {
-	doc.find('.path-label').forEach((label) => {
+	doc.find('[id^="path-label-"]').forEach((label) => {
 		label.remove();
 	});
 }
