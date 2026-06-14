@@ -377,6 +377,7 @@ export function combineDoodledial(
 
 		svgLayer.find('.layer-label').forEach((el) => {
 			(el as Text).text(String(layer.index));
+			(el as Text).font('size', config.pathLabelFontSize);
 		});
 
 		if (includePathLabels && applyCutoutTransforms) {
@@ -448,6 +449,9 @@ export function combineDoodledial(
 		const scaleFactor = config.diameter / config.maxDiameter;
 		doc.find('.mark-wrapper').forEach((wrapper) => {
 			wrapper.scale(scaleFactor, cx, cy);
+		});
+		doc.find('[id^="path-label-"]').forEach((label) => {
+			label.scale(scaleFactor, cx, cy);
 		});
 		if (applyCutoutTransforms && config.sizeToFit) {
 			doc.find('.cutout').forEach((cutout) => {
