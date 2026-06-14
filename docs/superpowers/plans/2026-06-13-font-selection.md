@@ -13,6 +13,7 @@
 ### Task 1: Add font constants and type fields
 
 **Files:**
+
 - Modify: `src/lib/utils/constants.ts`
 - Modify: `src/lib/types/doodledial.ts`
 
@@ -72,6 +73,7 @@ git commit -m "feat: add font family types and constants"
 ### Task 2: Add global default font fields to global-config store
 
 **Files:**
+
 - Modify: `src/lib/stores/global-config.svelte.ts`
 
 - [ ] **Step 1: Add fields to PersistedConfig interface**
@@ -124,21 +126,21 @@ this.labelFontFamily = DEFAULTS.labelFontFamily;
 this.titleFontFamily = DEFAULTS.titleFontFamily;
 ```
 
-- [ ] **Step 6: Update _load()**
+- [ ] **Step 6: Update \_load()**
 
 ```typescript
 this.labelFontFamily = parsed.labelFontFamily ?? DEFAULTS.labelFontFamily;
 this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
 ```
 
-- [ ] **Step 7: Update _save()**
+- [ ] **Step 7: Update \_save()**
 
 ```typescript
 JSON.stringify({
 	// ... existing fields
 	labelFontFamily: this.labelFontFamily,
 	titleFontFamily: this.titleFontFamily
-})
+});
 ```
 
 - [ ] **Step 8: Commit**
@@ -153,6 +155,7 @@ git commit -m "feat: add global default font family settings"
 ### Task 3: Add per-disc font setters to doodledial store
 
 **Files:**
+
 - Modify: `src/lib/stores/doodledial.svelte.ts`
 
 - [ ] **Step 1: Update GlobalConfigLike interface**
@@ -194,7 +197,12 @@ Add these after `setPathLabelFontSize` (line 143).
 - [ ] **Step 4: Update reset()**
 
 ```typescript
-config = { ...DEFAULT_DIAL_CONFIG, diameter: globalConfig.diameter, labelFontFamily: globalConfig.labelFontFamily, titleFontFamily: globalConfig.titleFontFamily };
+config = {
+	...DEFAULT_DIAL_CONFIG,
+	diameter: globalConfig.diameter,
+	labelFontFamily: globalConfig.labelFontFamily,
+	titleFontFamily: globalConfig.titleFontFamily
+};
 ```
 
 - [ ] **Step 5: Commit**
@@ -209,6 +217,7 @@ git commit -m "feat: add per-disc font family setters to doodledial store"
 ### Task 4: Add font dropdowns to OffsetScaleControl (per-disc)
 
 **Files:**
+
 - Modify: `src/lib/components/OffsetScaleControl.svelte`
 
 - [ ] **Step 1: Add import and handler functions**
@@ -273,6 +282,7 @@ git commit -m "feat: add font family dropdowns to disc settings"
 ### Task 5: Add font dropdowns to GlobalConfigDialog (global defaults)
 
 **Files:**
+
 - Modify: `src/lib/components/GlobalConfigDialog.svelte`
 
 - [ ] **Step 1: Add import**
@@ -356,6 +366,7 @@ git commit -m "feat: add font family dropdowns to global settings"
 ### Task 6: Use font families in SVG rendering
 
 **Files:**
+
 - Modify: `src/lib/utils/doodledial.ts`
 
 **Background:** `config` is passed to `combineDoodledial()`. Since `DialConfig` now includes `labelFontFamily` and `titleFontFamily`, we can read them from `config` inside `combineDoodledial`. For `parseSvgPaths`, `createMark` and `createPathLabel` keep defaulting to `'monospace'` — the fonts get updated later in `combineDoodledial`.
@@ -404,6 +415,7 @@ git commit -m "feat: apply font families from config in SVG rendering"
 ### Task 7: Include font families in save/restore metadata
 
 **Files:**
+
 - Modify: `src/lib/utils/doodledial-save.ts`
 - Modify: `src/lib/utils/doodledial-save.spec.ts`
 
@@ -432,7 +444,7 @@ const SAMPLE_METADATA: DoodleDialMetadata = {
 		pathLabelFontSize: 10,
 		labelFontFamily: 'monospace',
 		titleFontFamily: 'sans-serif'
-	},
+	}
 	// ... rest
 };
 ```
@@ -453,6 +465,7 @@ git commit -m "feat: include font families in save/restore metadata"
 ```bash
 pnpm check
 ```
+
 Expected: No type errors.
 
 - [ ] **Step 2: Run lint**
@@ -460,6 +473,7 @@ Expected: No type errors.
 ```bash
 pnpm lint
 ```
+
 Expected: No lint errors.
 
 - [ ] **Step 3: Fix any issues found**

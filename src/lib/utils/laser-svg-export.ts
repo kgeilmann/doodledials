@@ -1,5 +1,5 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { CenterMarkType, DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from './doodledial';
 
 export interface LaserExportOptions {
@@ -8,6 +8,7 @@ export interface LaserExportOptions {
 	cutColor?: string;
 	engraveColor?: string;
 	cutStrokeWidth?: number;
+	centerMarkType?: CenterMarkType;
 }
 
 export function exportLaserSvg(
@@ -21,6 +22,7 @@ export function exportLaserSvg(
 	const cutColor = options?.cutColor ?? '#ff0000';
 	const engraveColor = options?.engraveColor ?? 'rgb(0, 0, 0)';
 	const cutStrokeWidth = options?.cutStrokeWidth ?? 0.1;
+	const centerMarkType = options?.centerMarkType ?? config.centerMarkType;
 
 	const combinedSvg = combineDoodledial(content, config, layers, null, null, {
 		includePathLabels: true,
@@ -28,7 +30,7 @@ export function exportLaserSvg(
 		respectLayerVisibility: true,
 		applyCutoutTransforms: true,
 		applyDiameter: true,
-		centerMarkType: 'hole'
+		centerMarkType
 	});
 
 	const doc = SVG(combinedSvg) as Svg;
@@ -63,6 +65,11 @@ export function exportLaserSvg(
 			hole.css('stroke-dasharray', 'none');
 		});
 	}
+
+	doc.find('.center-crosshair').forEach((crosshair) => {
+		crosshair.addClass(engraveClassName);
+		crosshair.css('stroke', engraveColor);
+	});
 
 	doc.find('.mark-line').forEach((markLine) => {
 		markLine.addClass(engraveClassName);
