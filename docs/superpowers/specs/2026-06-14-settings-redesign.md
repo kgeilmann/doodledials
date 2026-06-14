@@ -10,12 +10,12 @@ The current settings architecture has ambiguous scope boundaries, duplication be
 
 Organized into tabbed sections in the Global Config dialog:
 
-| Tab | Fields |
-|-----|--------|
-| **Default Disc Settings** | `diameter`, `centerHoleDiameter`, `centerMarkType`, `titleFontFamily`, `pathLabelFontSize`, `discTitleFontSize` |
-| **Default Optimizer Settings** | `optimizerGapDefault`, `bruteforceTimeLimit` |
-| **Experimental** | `pathLabelOptimizerEnabled`, `forceDirectedOptimizerEnabled` |
-| **Export** | `defaultExportFormat` |
+| Tab                            | Fields                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Default Disc Settings**      | `diameter`, `centerHoleDiameter`, `centerMarkType`, `titleFontFamily`, `pathLabelFontSize`, `discTitleFontSize` |
+| **Default Optimizer Settings** | `optimizerGapDefault`, `bruteforceTimeLimit`                                                                    |
+| **Experimental**               | `pathLabelOptimizerEnabled`, `forceDirectedOptimizerEnabled`                                                    |
+| **Export**                     | `defaultExportFormat`                                                                                           |
 
 All fields persist across sessions via `localStorage` (unchanged mechanism). `pathLabelFontSize` and `discTitleFontSize` are added as new global fields; other fields already exist.
 
@@ -23,10 +23,10 @@ All fields persist across sessions via `localStorage` (unchanged mechanism). `pa
 
 Organized into labeled sections in the sidebar Disc Settings panel:
 
-| Section | Fields |
-|---------|--------|
-| **Dimensions** | `diameter` |
-| **Image** | `offsetX`, `offsetY`, `scale`, `sizeToFit` |
+| Section        | Fields                                                                   |
+| -------------- | ------------------------------------------------------------------------ |
+| **Dimensions** | `diameter`                                                               |
+| **Image**      | `offsetX`, `offsetY`, `scale`, `sizeToFit`                               |
 | **Typography** | `pathLabelFontSize`, `titleFontFamily`, `discTitle`, `discTitleFontSize` |
 
 Per-disc settings are seeded from the global "Default Disc Settings" tab on disc creation, but diverge independently during the session. On save/load via SVG metadata, per-disc values are preserved. The disc title (`discTitle`) has no global default.
