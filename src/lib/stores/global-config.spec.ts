@@ -166,4 +166,24 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.defaultExportFormat).toBe('laser-svg');
 	});
+
+	it('has default centerMarkType of hole', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.centerMarkType).toBe('hole');
+	});
+
+	it('persists and restores centerMarkType', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.centerMarkType = 'crosshair';
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.centerMarkType).toBe('crosshair');
+	});
+
+	it('resets centerMarkType to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.centerMarkType = 'none';
+		globalConfig.reset();
+		expect(globalConfig.centerMarkType).toBe('hole');
+	});
 });

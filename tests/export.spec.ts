@@ -51,7 +51,7 @@ test.describe('Export', () => {
 		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
 
 		await page.locator('[aria-haspopup="menu"]').click();
-		const svgMenuItem = page.locator('button:has-text("Laser SVG")');
+		const svgMenuItem = page.getByRole('menuitem', { name: 'Laser SVG', exact: true });
 		await expect(svgMenuItem).toBeVisible();
 
 		const [download] = await Promise.all([page.waitForEvent('download'), svgMenuItem.click()]);
