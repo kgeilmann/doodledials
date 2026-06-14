@@ -32,6 +32,7 @@ const BASE_CONFIG: DialConfig = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 0.5,
+	centerMarkType: 'hole',
 	pathLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'
 };

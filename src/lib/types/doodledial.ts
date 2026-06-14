@@ -1,3 +1,5 @@
+export type CenterMarkType = 'hole' | 'crosshair' | 'none';
+
 export type LabelPlacementMode = 'auto' | 'manual';
 
 export type LabelPlacementStatus =
@@ -27,6 +29,7 @@ export interface DialConfig {
 	scale: number;
 	sizeToFit: boolean;
 	centerHoleDiameter: number;
+	centerMarkType: CenterMarkType;
 	optimizerGapMm?: number;
 	pathLabelFontSize: number;
 	titleFontFamily: string;
@@ -48,6 +51,7 @@ export const DEFAULT_DIAL_CONFIG = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 0.5,
+	centerMarkType: 'hole',
 	optimizerGapMm: 3,
 	pathLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'

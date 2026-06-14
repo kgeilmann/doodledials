@@ -68,9 +68,10 @@ function buildInput(layers: Layer[]) {
 			scale: 1,
 			sizeToFit: true,
 			centerHoleDiameter: 2,
+			centerMarkType: 'hole',
 			pathLabelFontSize: 10,
 			titleFontFamily: 'sans-serif'
-		},
+		} as const,
 		layers,
 		svgContent: {
 			raw: '<svg viewBox="0 0 200 200"></svg>',
