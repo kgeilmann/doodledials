@@ -62,6 +62,18 @@
 		draftBruteforceTimeLimit = value;
 	}
 
+	function handlePathLabelFontSizeInputChange(e: Event) {
+		const value = parseInt((e.target as HTMLInputElement).value);
+		if (!Number.isFinite(value)) return;
+		draftPathLabelFontSize = value;
+	}
+
+	function handleDiscTitleFontSizeInputChange(e: Event) {
+		const value = parseInt((e.target as HTMLInputElement).value);
+		if (!Number.isFinite(value)) return;
+		draftDiscTitleFontSize = value;
+	}
+
 	function handleReset() {
 		draftDiameter = DEFAULTS.diameter;
 		draftCenterHoleDiameter = DEFAULTS.centerHoleDiameter;
@@ -288,10 +300,7 @@
 									min="4"
 									max="40"
 									value={draftPathLabelFontSize}
-									oninput={(e) => {
-										const v = parseInt((e.target as HTMLInputElement).value);
-										if (Number.isFinite(v)) draftPathLabelFontSize = v;
-									}}
+									onchange={handlePathLabelFontSizeInputChange}
 									class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 								/>
 								<span class="text-sm text-gray-500">px</span>
@@ -312,10 +321,7 @@
 									min="8"
 									max="36"
 									value={draftDiscTitleFontSize}
-									oninput={(e) => {
-										const v = parseInt((e.target as HTMLInputElement).value);
-										if (Number.isFinite(v)) draftDiscTitleFontSize = v;
-									}}
+									onchange={handleDiscTitleFontSizeInputChange}
 									class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 								/>
 								<span class="text-sm text-gray-500">px</span>
