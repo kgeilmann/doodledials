@@ -93,6 +93,18 @@
 			<div class="flex gap-2">
 				<button
 					type="button"
+					onclick={() => doodledialStore.renumberLayersByAngle()}
+					disabled={optimizerStore.optimizerPending}
+					class="text-xs font-medium {optimizerStore.optimizerPending
+						? 'text-gray-400 cursor-not-allowed'
+						: 'text-indigo-600 hover:text-indigo-800'}"
+					title="Reorder layers by their rotation angle"
+				>
+					Renumber by Angle
+				</button>
+				<span class="text-gray-300">|</span>
+				<button
+					type="button"
 					onclick={handleShowAll}
 					disabled={optimizerStore.optimizerPending}
 					class="text-xs font-medium {optimizerStore.optimizerPending

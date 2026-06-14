@@ -267,6 +267,9 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		clearLayers() {
 			layerStore.clearLayers();
 		},
+		renumberLayersByAngle() {
+			layerStore.renumberLayersByAngle();
+		},
 		reset() {
 			labelPlacementStore.reset();
 			config = {

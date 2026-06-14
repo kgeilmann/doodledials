@@ -145,6 +145,23 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		}
 	}
 
+	function renumberLayersByAngle() {
+		const sorted = Array.from(layers.values())
+			.map((layer) => ({
+				...layer,
+				rotation: ((layer.rotation % 360) + 360) % 360
+			}))
+			.sort((a, b) => {
+				if (a.rotation !== b.rotation) return a.rotation - b.rotation;
+				return a.index - b.index;
+			});
+
+		sorted.forEach((layer, i) => {
+			layers.set(layer.id, { ...layer, index: i + 1 });
+		});
+		notifyChange();
+	}
+
 	function reset() {
 		layers.clear();
 		selectedLayer = null;
@@ -179,6 +196,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		setLayerLabelPlacementStatus,
 		getLayerLabelPlacementStatus,
 		resetLayerLabelPlacementMode,
+		renumberLayersByAngle,
 		setHighlightedLayer(layerId: string | null) {
 			highlightedLayer = layerId;
 		},

@@ -375,15 +375,29 @@ export function combineDoodledial(
 			applyCutoutTransformsForGroup(svgLayer, config, cx, cy);
 		}
 
+		svgLayer.find('.layer-label').forEach((el) => {
+			(el as Text).text(String(layer.index));
+		});
+
 		if (includePathLabels && applyCutoutTransforms) {
 			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
 				const group = label as G;
 				const pathLabel = group.findOne('.path-label') as Text;
 				if (!pathLabel) return;
+				pathLabel.text(String(layer.index));
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
 				pathLabel.font('size', config.pathLabelFontSize);
 				pathLabel.font('family', 'monospace');
+				const pathUnderscore = group.findOne('.nine-underscore');
+				if (layer.index === 9 && !pathUnderscore) {
+					const newUnderscore = doc.line(0, 0, 0, 0);
+					newUnderscore.addClass('nine-underscore');
+					newUnderscore.stroke({ width: 1, color: 'black' });
+					group.add(newUnderscore);
+				} else if (layer.index !== 9 && pathUnderscore) {
+					pathUnderscore.remove();
+				}
 				const underscore = group.findOne('.nine-underscore');
 				if (underscore) {
 					const bbox = pathLabel.bbox();
@@ -400,6 +414,26 @@ export function combineDoodledial(
 			svgLayer.find('.layer-label').forEach((label) => {
 				(label as Text).font('family', 'monospace');
 			});
+		}
+
+		const markWrapper = svgLayer.findOne('.mark-wrapper');
+		if (markWrapper) {
+			const markUnderscore = markWrapper.findOne('.nine-underscore');
+			if (layer.index === 9 && !markUnderscore) {
+				const layerLabel = markWrapper.findOne('.layer-label') as Text;
+				if (layerLabel) {
+					const bbox = layerLabel.bbox();
+					const baseY = bbox.y + bbox.height + 1;
+					const midX = bbox.x + bbox.width / 2;
+					const halfLen = bbox.width * 0.4;
+					const newUnderscore = doc.line(midX - halfLen, baseY, midX + halfLen, baseY);
+					newUnderscore.addClass('nine-underscore');
+					newUnderscore.stroke({ width: 1, color: 'black' });
+					markWrapper.add(newUnderscore);
+				}
+			} else if (layer.index !== 9 && markUnderscore) {
+				markUnderscore.remove();
+			}
 		}
 	});
 

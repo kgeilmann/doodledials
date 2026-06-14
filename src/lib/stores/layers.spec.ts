@@ -324,6 +324,73 @@ describe('LayerStore', () => {
 		});
 	});
 
+	describe('renumberLayersByAngle', () => {
+		it('sorts layers by rotation angle and reassigns indexes', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.addLayer('c', 3, 'C');
+			store.setLayerRotation('a', 180);
+			store.setLayerRotation('b', 0);
+			store.setLayerRotation('c', 90);
+			store.renumberLayersByAngle();
+			expect(store.getLayer('a')!.index).toBe(3);
+			expect(store.getLayer('b')!.index).toBe(1);
+			expect(store.getLayer('c')!.index).toBe(2);
+			expect(store.layers[0].id).toBe('b');
+			expect(store.layers[1].id).toBe('c');
+			expect(store.layers[2].id).toBe('a');
+		});
+
+		it('handles negative rotation values', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.setLayerRotation('a', -90);
+			store.setLayerRotation('b', 0);
+			store.renumberLayersByAngle();
+			expect(store.getLayer('a')!.index).toBe(2);
+			expect(store.getLayer('b')!.index).toBe(1);
+			expect(store.layers[0].id).toBe('b');
+			expect(store.layers[1].id).toBe('a');
+		});
+
+		it('handles angles > 360', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			store.setLayerRotation('a', 450);
+			store.setLayerRotation('b', 90);
+			store.renumberLayersByAngle();
+			expect(store.getLayer('a')!.index).toBe(1);
+			expect(store.getLayer('b')!.index).toBe(2);
+		});
+
+		it('tie-breaks equal angles by current index', () => {
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 3, 'B');
+			store.addLayer('c', 2, 'C');
+			store.renumberLayersByAngle();
+			expect(store.layers[0].id).toBe('a');
+			expect(store.layers[1].id).toBe('c');
+			expect(store.layers[2].id).toBe('b');
+		});
+
+		it('works with a single layer', () => {
+			store.addLayer('a', 5, 'A');
+			store.renumberLayersByAngle();
+			expect(store.layers).toHaveLength(1);
+			expect(store.getLayer('a')!.index).toBe(1);
+		});
+
+		it('calls onChange', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			store.addLayer('b', 2, 'B');
+			onChange.mockClear();
+			store.renumberLayersByAngle();
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+	});
+
 	describe('reset', () => {
 		it('clears all layers and selection', () => {
 			store.addLayer('a', 1, 'A');
