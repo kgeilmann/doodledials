@@ -1,3 +1,4 @@
+import type { CenterMarkType } from '$lib/types/doodledial';
 import type { ExportFormat } from '$lib/utils/export-formats';
 
 const STORAGE_KEY = 'doodledial:config';
@@ -11,6 +12,7 @@ interface PersistedConfig {
 	bruteforceTimeLimit: number;
 	defaultExportFormat: ExportFormat;
 	titleFontFamily: string;
+	centerMarkType: CenterMarkType;
 }
 
 export const DEFAULTS = {
@@ -21,7 +23,8 @@ export const DEFAULTS = {
 	optimizerGapDefault: 3,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
-	titleFontFamily: 'sans-serif'
+	titleFontFamily: 'sans-serif',
+	centerMarkType: 'hole' as CenterMarkType
 } as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
@@ -33,6 +36,7 @@ class GlobalConfigStore {
 	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
 	titleFontFamily: string = $state(DEFAULTS.titleFontFamily);
+	centerMarkType: CenterMarkType = $state(DEFAULTS.centerMarkType);
 	constructor() {
 		this._load();
 		$effect.root(() => {
@@ -45,6 +49,7 @@ class GlobalConfigStore {
 				void this.bruteforceTimeLimit;
 				void this.defaultExportFormat;
 				void this.titleFontFamily;
+				void this.centerMarkType;
 				this._save();
 			});
 		});
@@ -63,6 +68,7 @@ class GlobalConfigStore {
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
 		this.titleFontFamily = DEFAULTS.titleFontFamily;
+		this.centerMarkType = DEFAULTS.centerMarkType;
 	}
 
 	private _load(): void {
@@ -81,6 +87,7 @@ class GlobalConfigStore {
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
 				this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
+				this.centerMarkType = parsed.centerMarkType ?? DEFAULTS.centerMarkType;
 			}
 		} catch (e) {
 			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
@@ -99,7 +106,8 @@ class GlobalConfigStore {
 				optimizerGapDefault: this.optimizerGapDefault,
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
 				defaultExportFormat: this.defaultExportFormat,
-				titleFontFamily: this.titleFontFamily
+				titleFontFamily: this.titleFontFamily,
+				centerMarkType: this.centerMarkType
 			})
 		);
 	}
