@@ -186,4 +186,44 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.centerMarkType).toBe('hole');
 	});
+
+	it('has default pathLabelFontSize of 10', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.pathLabelFontSize).toBe(10);
+	});
+
+	it('persists and restores pathLabelFontSize', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.pathLabelFontSize = 14;
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.pathLabelFontSize).toBe(14);
+	});
+
+	it('resets pathLabelFontSize to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.pathLabelFontSize = 16;
+		globalConfig.reset();
+		expect(globalConfig.pathLabelFontSize).toBe(10);
+	});
+
+	it('has default discTitleFontSize of 12', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.discTitleFontSize).toBe(12);
+	});
+
+	it('persists and restores discTitleFontSize', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.discTitleFontSize = 16;
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.discTitleFontSize).toBe(16);
+	});
+
+	it('resets discTitleFontSize to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.discTitleFontSize = 20;
+		globalConfig.reset();
+		expect(globalConfig.discTitleFontSize).toBe(12);
+	});
 });

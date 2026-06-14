@@ -13,6 +13,8 @@ interface PersistedConfig {
 	defaultExportFormat: ExportFormat;
 	titleFontFamily: string;
 	centerMarkType: CenterMarkType;
+	pathLabelFontSize: number;
+	discTitleFontSize: number;
 }
 
 export const DEFAULTS = {
@@ -24,7 +26,9 @@ export const DEFAULTS = {
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
 	titleFontFamily: 'sans-serif',
-	centerMarkType: 'hole' as CenterMarkType
+	centerMarkType: 'hole' as CenterMarkType,
+	pathLabelFontSize: 10,
+	discTitleFontSize: 12
 } as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
@@ -37,6 +41,8 @@ class GlobalConfigStore {
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
 	titleFontFamily: string = $state(DEFAULTS.titleFontFamily);
 	centerMarkType: CenterMarkType = $state(DEFAULTS.centerMarkType);
+	pathLabelFontSize: number = $state(DEFAULTS.pathLabelFontSize);
+	discTitleFontSize: number = $state(DEFAULTS.discTitleFontSize);
 	constructor() {
 		this._load();
 		$effect.root(() => {
@@ -50,6 +56,8 @@ class GlobalConfigStore {
 				void this.defaultExportFormat;
 				void this.titleFontFamily;
 				void this.centerMarkType;
+				void this.pathLabelFontSize;
+				void this.discTitleFontSize;
 				this._save();
 			});
 		});
@@ -69,6 +77,8 @@ class GlobalConfigStore {
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
 		this.titleFontFamily = DEFAULTS.titleFontFamily;
 		this.centerMarkType = DEFAULTS.centerMarkType;
+		this.pathLabelFontSize = DEFAULTS.pathLabelFontSize;
+		this.discTitleFontSize = DEFAULTS.discTitleFontSize;
 	}
 
 	private _load(): void {
@@ -88,6 +98,8 @@ class GlobalConfigStore {
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
 				this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
 				this.centerMarkType = parsed.centerMarkType ?? DEFAULTS.centerMarkType;
+				this.pathLabelFontSize = parsed.pathLabelFontSize ?? DEFAULTS.pathLabelFontSize;
+				this.discTitleFontSize = parsed.discTitleFontSize ?? DEFAULTS.discTitleFontSize;
 			}
 		} catch (e) {
 			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
@@ -107,7 +119,9 @@ class GlobalConfigStore {
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
 				defaultExportFormat: this.defaultExportFormat,
 				titleFontFamily: this.titleFontFamily,
-				centerMarkType: this.centerMarkType
+				centerMarkType: this.centerMarkType,
+				pathLabelFontSize: this.pathLabelFontSize,
+				discTitleFontSize: this.discTitleFontSize
 			})
 		);
 	}
