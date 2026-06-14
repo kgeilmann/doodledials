@@ -10,6 +10,8 @@ interface GlobalConfigLike {
 	diameter: number;
 	pathLabelOptimizerEnabled: boolean;
 	titleFontFamily: string;
+	pathLabelFontSize: number;
+	discTitleFontSize: number;
 }
 
 function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
@@ -49,7 +51,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	let discTitle = $state<string>('');
 	let discTitleX = $state<number>(100);
 	let discTitleY = $state<number>(20);
-	let discTitleFontSize = $state<number>(12);
+	let discTitleFontSize = $state<number>(globalConfig.discTitleFontSize);
 
 	return {
 		get discTitle() {
@@ -287,7 +289,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			discTitle = '';
 			discTitleX = 100;
 			discTitleY = 20;
-			discTitleFontSize = 12;
+			discTitleFontSize = globalConfig.discTitleFontSize;
 		}
 	};
 }
