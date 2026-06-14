@@ -135,38 +135,35 @@
 	<div>
 		<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Typography</h3>
 
-		{#if doodledialStore.svgContent}
-			<div class="flex flex-col gap-3 mb-4">
-				<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
-					<span>Title</span>
-					<input
-						type="text"
-						placeholder="Optional disc title..."
-						value={doodledialStore.discTitle}
-						oninput={(e) => doodledialStore.setDiscTitle(e.currentTarget.value)}
-						disabled={optimizerStore.optimizerPending}
-						class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-					/>
-				</label>
-				<div class="flex items-center gap-3">
-					<span class="text-xs font-medium text-gray-600 shrink-0">Font size</span>
-					<input
-						type="range"
-						min="8"
-						max="36"
-						step="1"
-						value={doodledialStore.discTitleFontSize}
-						oninput={(e) => doodledialStore.setDiscTitleFontSize(Number(e.currentTarget.value))}
-						disabled={optimizerStore.optimizerPending}
-						class="flex-1 accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-					/>
-					<span class="text-xs text-gray-500 w-8 text-right"
-						>{doodledialStore.discTitleFontSize}</span
-					>
-				</div>
-				<p class="text-xs text-gray-400">Drag title text on the disc to reposition it.</p>
+		<div class="flex flex-col gap-3 mb-4">
+			<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
+				<span>Title</span>
+				<input
+					type="text"
+					placeholder="Optional disc title..."
+					value={doodledialStore.discTitle}
+					oninput={(e) => doodledialStore.setDiscTitle(e.currentTarget.value)}
+					disabled={optimizerStore.optimizerPending}
+					class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+				/>
+			</label>
+			<div class="flex items-center gap-3">
+				<span class="text-xs font-medium text-gray-600 shrink-0">Font size</span>
+				<input
+					type="range"
+					min="8"
+					max="36"
+					step="1"
+					value={doodledialStore.discTitleFontSize}
+					oninput={(e) => doodledialStore.setDiscTitleFontSize(Number(e.currentTarget.value))}
+					disabled={optimizerStore.optimizerPending}
+					class="flex-1 accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+				/>
+				<span class="text-xs text-gray-500 w-8 text-right">{doodledialStore.discTitleFontSize}</span
+				>
 			</div>
-		{/if}
+			<p class="text-xs text-gray-400">Drag title text on the disc to reposition it.</p>
+		</div>
 
 		<div class="flex items-center justify-between">
 			<label for="path-label-font-size-input" class="text-sm font-medium text-gray-700"
