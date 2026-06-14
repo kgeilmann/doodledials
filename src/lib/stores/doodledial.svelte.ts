@@ -19,6 +19,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	let config = $state<DialConfig>({
 		...DEFAULT_DIAL_CONFIG,
 		diameter: globalConfig.diameter,
+		pathLabelFontSize: globalConfig.pathLabelFontSize,
 		titleFontFamily: globalConfig.titleFontFamily
 	});
 	let svgContent = $state<SVGContent | null>(null);
@@ -277,6 +278,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = {
 				...DEFAULT_DIAL_CONFIG,
 				diameter: globalConfig.diameter,
+				pathLabelFontSize: globalConfig.pathLabelFontSize,
 				titleFontFamily: globalConfig.titleFontFamily
 			};
 			svgContent = null;
