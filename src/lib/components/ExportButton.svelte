@@ -3,6 +3,7 @@
 	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { exportLaserSvg, exportStl, exportPreviewSvg } from '$lib/utils/export-formats';
+	import type { CenterMarkType } from '$lib/types/doodledial';
 
 	let menuOpen = $state(false);
 	let discThicknessMm = $state('3');
@@ -49,14 +50,15 @@
 		}
 	}
 
-	function exportSvg() {
+	function exportSvg(centerMarkOverride?: CenterMarkType) {
 		if (!doodledialStore.svgContent) return;
 
 		try {
 			const svg = exportLaserSvg(
 				doodledialStore.svgContent,
 				doodledialStore.config,
-				getVisibleLayers()
+				getVisibleLayers(),
+				{ centerMarkType: centerMarkOverride }
 			);
 			createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
 			menuOpen = false;
@@ -182,6 +184,28 @@
 				role="menuitem"
 			>
 				<span>Laser SVG</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => {
+					exportSvg('crosshair');
+					menuOpen = false;
+				}}
+				class="flex w-full items-center justify-between border-t border-gray-100 px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
+				role="menuitem"
+			>
+				<span>Laser SVG (Crosshair)</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => {
+					exportSvg('none');
+					menuOpen = false;
+				}}
+				class="flex w-full items-center justify-between border-t border-gray-100 px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-indigo-50"
+				role="menuitem"
+			>
+				<span>Laser SVG (No Center)</span>
 			</button>
 			<button
 				type="button"

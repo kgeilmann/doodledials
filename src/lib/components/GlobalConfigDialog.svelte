@@ -2,6 +2,7 @@
 	import { DEFAULTS, globalConfig } from '$lib/stores/global-config.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import type { ExportFormat } from '$lib/utils/export-formats';
+	import type { CenterMarkType } from '$lib/types/doodledial';
 	import { FONT_FAMILIES } from '$lib/utils/constants';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -16,6 +17,7 @@
 	let draftOptimizerGapDefault = $state(globalConfig.optimizerGapDefault);
 	let draftBruteforceTimeLimit = $state(globalConfig.bruteforceTimeLimit);
 	let draftTitleFontFamily = $state(globalConfig.titleFontFamily);
+	let draftCenterMarkType = $state<CenterMarkType>(globalConfig.centerMarkType);
 
 	function handleDiameterInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
@@ -60,6 +62,7 @@
 		draftBruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		draftDefaultExportFormat = DEFAULTS.defaultExportFormat;
 		draftTitleFontFamily = DEFAULTS.titleFontFamily;
+		draftCenterMarkType = DEFAULTS.centerMarkType;
 	}
 
 	function handleOK() {
@@ -71,6 +74,7 @@
 		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
 		globalConfig.defaultExportFormat = draftDefaultExportFormat;
 		globalConfig.titleFontFamily = draftTitleFontFamily;
+		globalConfig.centerMarkType = draftCenterMarkType;
 		globalConfig.save();
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
 		open = false;
@@ -142,6 +146,63 @@
 						</div>
 					</div>
 					<p class="text-xs text-gray-500">for needle axle. Set to 0 for no hole.</p>
+				</div>
+
+				<div class="border-t border-gray-100 pt-6">
+					<div class="mb-3">
+						<span class="text-sm font-medium text-gray-700">Center Mark Type</span>
+						<p class="text-xs text-gray-500 mt-0.5">How the center is rendered in laser exports</p>
+					</div>
+					<fieldset class="flex gap-2">
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+							'hole'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="center-mark-type"
+								value="hole"
+								checked={draftCenterMarkType === 'hole'}
+								onchange={() => (draftCenterMarkType = 'hole')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>Hole</span>
+						</label>
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+							'crosshair'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="center-mark-type"
+								value="crosshair"
+								checked={draftCenterMarkType === 'crosshair'}
+								onchange={() => (draftCenterMarkType = 'crosshair')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>Crosshair</span>
+						</label>
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+							'none'
+								? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+								: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
+						>
+							<input
+								type="radio"
+								name="center-mark-type"
+								value="none"
+								checked={draftCenterMarkType === 'none'}
+								onchange={() => (draftCenterMarkType = 'none')}
+								class="h-4 w-4 accent-indigo-600"
+							/>
+							<span>None</span>
+						</label>
+					</fieldset>
 				</div>
 
 				<div class="border-t border-gray-100 pt-6">
