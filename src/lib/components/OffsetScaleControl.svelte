@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
-	import { FONT_FAMILIES } from '$lib/utils/constants';
-
 	function handleOffsetXInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
 		doodledialStore.setOffsetX(value);
@@ -25,16 +23,6 @@
 
 	function handleSizeToFitToggle() {
 		doodledialStore.setSizeToFit(!doodledialStore.config.sizeToFit);
-	}
-
-	function handlePathLabelFontSizeInput(e: Event) {
-		const value = parseInt((e.target as HTMLInputElement).value) || 10;
-		doodledialStore.setPathLabelFontSize(value);
-	}
-
-	function handleTitleFontFamilyChange(e: Event) {
-		const value = (e.target as HTMLSelectElement).value;
-		doodledialStore.setTitleFontFamily(value);
 	}
 </script>
 
@@ -131,13 +119,13 @@
 		</div>
 	</div>
 
-	<!-- Typography -->
+	<!-- Title -->
 	<div>
-		<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Typography</h3>
+		<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Title</h3>
 
-		<div class="flex flex-col gap-3 mb-4">
+		<div class="flex flex-col gap-3">
 			<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
-				<span>Title</span>
+				<span>Disc Title</span>
 				<input
 					type="text"
 					placeholder="Optional disc title..."
@@ -147,58 +135,7 @@
 					class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 			</label>
-			<div class="flex items-center gap-3">
-				<span class="text-xs font-medium text-gray-600 shrink-0">Font size</span>
-				<input
-					type="range"
-					min="8"
-					max="36"
-					step="1"
-					value={doodledialStore.discTitleFontSize}
-					oninput={(e) => doodledialStore.setDiscTitleFontSize(Number(e.currentTarget.value))}
-					disabled={optimizerStore.optimizerPending}
-					class="flex-1 accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-				/>
-				<span class="text-xs text-gray-500 w-8 text-right">{doodledialStore.discTitleFontSize}</span
-				>
-			</div>
 			<p class="text-xs text-gray-400">Drag title text on the disc to reposition it.</p>
-		</div>
-
-		<div class="flex items-center justify-between">
-			<label for="path-label-font-size-input" class="text-sm font-medium text-gray-700"
-				>Label Font Size</label
-			>
-			<div class="flex items-center gap-2">
-				<input
-					id="path-label-font-size-input"
-					type="number"
-					min="4"
-					max="40"
-					value={doodledialStore.config.pathLabelFontSize}
-					oninput={handlePathLabelFontSizeInput}
-					disabled={optimizerStore.optimizerPending}
-					class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-				/>
-				<span class="text-sm text-gray-500">px</span>
-			</div>
-		</div>
-
-		<div class="flex items-center justify-between mt-3">
-			<label for="title-font-family-select" class="text-sm font-medium text-gray-700"
-				>Title Font</label
-			>
-			<select
-				id="title-font-family-select"
-				value={doodledialStore.config.titleFontFamily}
-				onchange={handleTitleFontFamilyChange}
-				disabled={optimizerStore.optimizerPending}
-				class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-			>
-				{#each FONT_FAMILIES as font (font)}
-					<option value={font}>{font}</option>
-				{/each}
-			</select>
 		</div>
 	</div>
 </div>
