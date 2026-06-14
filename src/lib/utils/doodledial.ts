@@ -1,6 +1,7 @@
 import { SVG, Svg, G, Text } from '@svgdotjs/svg.js';
 import {
 	DEFAULT_DIAL_CONFIG,
+	type CenterMarkType,
 	type DialConfig,
 	type Layer,
 	type SVGContent
@@ -212,7 +213,7 @@ export interface CombineDoodledialOptions {
 	respectLayerVisibility?: boolean;
 	applyCutoutTransforms?: boolean;
 	applyDiameter?: boolean;
-	useCrosshair?: boolean;
+	centerMarkType?: CenterMarkType;
 	discTitle?: string;
 	discTitleX?: number;
 	discTitleY?: number;
@@ -348,7 +349,7 @@ export function combineDoodledial(
 	const respectLayerVisibility = options?.respectLayerVisibility ?? true;
 	const applyCutoutTransforms = options?.applyCutoutTransforms ?? true;
 	const applyDiameter = options?.applyDiameter ?? true;
-	const useCrosshair = options?.useCrosshair ?? true;
+	const centerMarkType = options?.centerMarkType ?? 'crosshair';
 
 	let highlighted: G | undefined;
 	let selected: G | undefined;
@@ -426,20 +427,18 @@ export function combineDoodledial(
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
 	if (centerHoleCircle) {
-		if (useCrosshair) {
+		if (centerMarkType === 'crosshair') {
 			centerHoleCircle.hide();
-			if (config.centerHoleDiameter > 0) {
-				const halfLen = 4;
-				doc
-					.line(cx - halfLen, cy, cx + halfLen, cy)
-					.stroke({ width: 1, color: 'black' })
-					.addClass('center-crosshair');
-				doc
-					.line(cx, cy - halfLen, cx, cy + halfLen)
-					.stroke({ width: 1, color: 'black' })
-					.addClass('center-crosshair');
-			}
-		} else {
+			const halfLen = 4;
+			doc
+				.line(cx - halfLen, cy, cx + halfLen, cy)
+				.stroke({ width: 1, color: 'black' })
+				.addClass('center-crosshair');
+			doc
+				.line(cx, cy - halfLen, cx, cy + halfLen)
+				.stroke({ width: 1, color: 'black' })
+				.addClass('center-crosshair');
+		} else if (centerMarkType === 'hole') {
 			if (config.centerHoleDiameter > 0) {
 				const holeRadiusPx = (config.centerHoleDiameter * MM_TO_PX) / 2;
 				centerHoleCircle.radius(holeRadiusPx);
@@ -447,6 +446,9 @@ export function combineDoodledial(
 			} else {
 				centerHoleCircle.hide();
 			}
+		} else {
+			// 'none'
+			centerHoleCircle.hide();
 		}
 	}
 

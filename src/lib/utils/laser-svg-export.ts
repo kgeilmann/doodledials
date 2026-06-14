@@ -28,7 +28,7 @@ export function exportLaserSvg(
 		respectLayerVisibility: true,
 		applyCutoutTransforms: true,
 		applyDiameter: true,
-		useCrosshair: false
+		centerMarkType: 'hole'
 	});
 
 	const doc = SVG(combinedSvg) as Svg;

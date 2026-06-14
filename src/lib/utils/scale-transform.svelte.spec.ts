@@ -86,7 +86,7 @@ describe('scale transform center', () => {
 			includeHighlighting: false,
 			respectLayerVisibility: false,
 			applyDiameter: false,
-			useCrosshair: false
+			centerMarkType: 'none'
 		});
 		const doc = SVG(svg) as Svg;
 		const cutout = doc.findOne('.cutout')!;
@@ -137,7 +137,7 @@ describe('scale transform center', () => {
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				useCrosshair: false
+				centerMarkType: 'none'
 			})
 		);
 
@@ -147,7 +147,7 @@ describe('scale transform center', () => {
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				useCrosshair: false
+				centerMarkType: 'none'
 			})
 		);
 
@@ -181,7 +181,7 @@ describe('scale transform center', () => {
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				useCrosshair: false
+				centerMarkType: 'none'
 			})
 		);
 
@@ -191,7 +191,7 @@ describe('scale transform center', () => {
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				useCrosshair: false
+				centerMarkType: 'none'
 			})
 		);
 
