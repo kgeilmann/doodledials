@@ -1,4 +1,4 @@
-import { SVG, Svg, G, Text } from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Text, Matrix } from '@svgdotjs/svg.js';
 import {
 	DEFAULT_DIAL_CONFIG,
 	type CenterMarkType,
@@ -13,6 +13,38 @@ const DISC_PADDING_PX = 10;
 const MARK_LENGTH_PX = 3 * MM_TO_PX;
 const NORMALIZED_IMAGE_DIMENSION = DEFAULT_DIAL_CONFIG.maxDiameter;
 
+function removeNestedGroups(container: G): void {
+	for (const child of [...container.children()]) {
+		if (child.type === 'g') {
+			const group = child as unknown as G;
+			removeNestedGroups(group);
+
+			const groupMatrix = new Matrix(group.transform());
+			for (const grandChild of [...group.children()]) {
+				grandChild.remove();
+				grandChild.transform(groupMatrix.multiply(grandChild.transform()));
+				container.add(grandChild);
+			}
+			group.remove();
+		}
+	}
+}
+
+function flattenSvg(doc: Svg): void {
+	for (const child of [...doc.children()]) {
+		if (child.type === 'g') {
+			const group = child as unknown as G;
+			removeNestedGroups(group);
+
+			const groupMatrix = new Matrix(group.transform());
+			for (const gc of [...group.children()]) {
+				gc.transform(groupMatrix.multiply(gc.transform()));
+			}
+			group.transform(new Matrix());
+		}
+	}
+}
+
 export function parseSvgPaths(
 	svgContent: string,
 	sizeToFit: boolean = true
@@ -21,6 +53,7 @@ export function parseSvgPaths(
 	updatedSvg: string;
 } {
 	const doc = SVG(svgContent) as Svg;
+	flattenSvg(doc);
 	if ('width' in doc.css()) {
 		// @ts-expect-error - css() signature expects string but null clears the property
 		doc.css('width', null);
