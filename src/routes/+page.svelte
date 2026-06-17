@@ -8,11 +8,15 @@
 	import OptimizerProgressOverlay from '$lib/components/OptimizerProgressOverlay.svelte';
 	import OptimizerConfigDialog from '$lib/components/OptimizerConfigDialog.svelte';
 	import BruteforceResultDialog from '$lib/components/BruteforceResultDialog.svelte';
+	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 
 	let globalConfigDialogOpen = $state(false);
+	let uploadOpen = $state(true);
+	let settingsOpen = $state(true);
+	let layersOpen = $state(true);
 </script>
 
 <svelte:head>
@@ -28,8 +32,8 @@
 			<p class="text-sm text-gray-500">Upload an SVG and create a dial to print</p>
 		</header>
 
-		<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
-			<div class="flex items-center gap-3 mb-4">
+		<CollapsibleCard title="Upload SVG" bind:open={uploadOpen}>
+			{#snippet icon()}
 				<div class="p-2 bg-indigo-100 rounded-lg">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -46,8 +50,7 @@
 						/>
 					</svg>
 				</div>
-				<h2 class="text-lg font-semibold text-gray-800">Upload SVG</h2>
-			</div>
+			{/snippet}
 			<FileUpload />
 			{#if doodledialStore.error}
 				<p class="mt-3 text-sm text-red-600 flex items-center gap-1">
@@ -68,10 +71,10 @@
 					{doodledialStore.error}
 				</p>
 			{/if}
-		</section>
+		</CollapsibleCard>
 
-		<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
-			<div class="flex items-center gap-3 mb-4">
+		<CollapsibleCard title="Disc Settings" bind:open={settingsOpen}>
+			{#snippet icon()}
 				<div class="p-2 bg-indigo-100 rounded-lg">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -88,14 +91,13 @@
 						/>
 					</svg>
 				</div>
-				<h2 class="text-lg font-semibold text-gray-800">Disc Settings</h2>
-			</div>
+			{/snippet}
 			<OffsetScaleControl />
-		</section>
+		</CollapsibleCard>
 
 		{#if doodledialStore.svgContent}
-			<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
-				<div class="flex items-center gap-3 mb-4">
+			<CollapsibleCard title="Layer Management" bind:open={layersOpen}>
+				{#snippet icon()}
 					<div class="p-2 bg-indigo-100 rounded-lg">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -112,10 +114,9 @@
 							/>
 						</svg>
 					</div>
-					<h2 class="text-lg font-semibold text-gray-800">Layer Management</h2>
-				</div>
+				{/snippet}
 				<LayerList />
-			</section>
+			</CollapsibleCard>
 		{/if}
 	</div>
 
