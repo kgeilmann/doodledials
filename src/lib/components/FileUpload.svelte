@@ -2,8 +2,6 @@
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { optimizerStore } from '$lib/stores/optimizer.svelte';
 	import { parseSvgPaths } from '$lib/utils/doodledial';
-	import { extractMetadata } from '$lib/utils/doodledial-save';
-	import type { LabelPlacementStatus } from '$lib/types/doodledial';
 
 	let isDragging = $state(false);
 	let fileInput: HTMLInputElement;
@@ -50,11 +48,6 @@
 		try {
 			const raw = await file.text();
 
-			if (restoreFromMetadata(raw)) {
-				doodledialStore.setLoading(false);
-				return;
-			}
-
 			doodledialStore.setOriginalRawSvg(raw);
 			const parsed = parseSvgPaths(raw, doodledialStore.config.sizeToFit);
 
@@ -76,51 +69,6 @@
 		} finally {
 			doodledialStore.setLoading(false);
 		}
-	}
-
-	function restoreFromMetadata(raw: string) {
-		const metadata = extractMetadata(raw);
-		if (!metadata) return false;
-
-		doodledialStore.setCombinedSvg(null);
-		doodledialStore.clearLayers();
-		for (const layer of metadata.layers) {
-			doodledialStore.addLayer(layer.id, layer.index, layer.name);
-			doodledialStore.setLayerRotation(layer.id, layer.rotation);
-			if (!layer.visible) {
-				doodledialStore.toggleVisibility(layer.id);
-			}
-			if (layer.labelOffsetX !== undefined && layer.labelOffsetY !== undefined) {
-				doodledialStore.setLayerLabelOffsetAuto(layer.id, layer.labelOffsetX, layer.labelOffsetY);
-			}
-			if (layer.labelPlacementStatus) {
-				doodledialStore.setLayerLabelPlacementStatus(
-					layer.id,
-					layer.labelPlacementStatus as LabelPlacementStatus
-				);
-			}
-		}
-
-		doodledialStore.setOriginalRawSvg(metadata.svgContent.originalRaw ?? null);
-		doodledialStore.setDiameter(metadata.config.diameter);
-		doodledialStore.setOffsetX(metadata.config.offsetX);
-		doodledialStore.setOffsetY(metadata.config.offsetY);
-		doodledialStore.setScale(metadata.config.scale);
-		doodledialStore.setSizeToFit(metadata.config.sizeToFit ?? true);
-		doodledialStore.setCenterHoleDiameter(metadata.config.centerHoleDiameter);
-		doodledialStore.setOptimizerGapMm(metadata.config.optimizerGapMm);
-		doodledialStore.setPathLabelFontSize(metadata.config.pathLabelFontSize);
-
-		doodledialStore.setDiscTitle(metadata.discTitle);
-		doodledialStore.setDiscTitlePosition(metadata.discTitleX, metadata.discTitleY);
-		doodledialStore.setDiscTitleFontSize(metadata.discTitleFontSize);
-
-		doodledialStore.setSvgContent({
-			raw: metadata.svgContent.raw,
-			filename: metadata.svgContent.filename
-		});
-
-		return true;
 	}
 
 	function openFilePicker() {
