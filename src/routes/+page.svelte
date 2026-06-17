@@ -96,7 +96,7 @@
 		</CollapsibleCard>
 
 		{#if doodledialStore.svgContent}
-			<CollapsibleCard title="Layer Management" bind:open={layersOpen} expand>
+			<CollapsibleCard title="Layer Management" bind:open={layersOpen}>
 				{#snippet icon()}
 					<div class="p-2 bg-indigo-100 rounded-lg">
 						<svg
