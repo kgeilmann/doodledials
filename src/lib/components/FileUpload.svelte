@@ -52,8 +52,13 @@
 			const parsed = parseSvgPaths(raw, doodledialStore.config.sizeToFit);
 
 			doodledialStore.clearLayers();
+			if (parsed.groups) {
+				for (const group of parsed.groups) {
+					doodledialStore.addGroup(group.id, group.name);
+				}
+			}
 			parsed.layers.forEach((layer) => {
-				doodledialStore.addLayer(layer.id, layer.index, layer.name);
+				doodledialStore.addLayer(layer.id, layer.index, layer.name, layer.groupId);
 			});
 
 			doodledialStore.setSvgContent({

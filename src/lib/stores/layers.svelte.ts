@@ -1,4 +1,4 @@
-import type { LabelPlacementStatus, Layer } from '$lib/types/doodledial';
+import type { LabelPlacementStatus, Layer, LayerGroup } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 
 export interface LayerStoreOptions {
@@ -9,6 +9,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 	const { onChange } = options ?? {};
 
 	const layers: SvelteMap<string, Layer> = new SvelteMap();
+	const groups: SvelteMap<string, LayerGroup> = new SvelteMap();
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
 
@@ -23,11 +24,12 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		return layers.get(id);
 	}
 
-	function addLayer(layerId: string, index: number, name: string) {
+	function addLayer(layerId: string, index: number, name: string, groupId: string = '') {
 		const newLayer: Layer = {
 			id: layerId,
 			name,
 			index,
+			groupId,
 			visible: true,
 			rotation: 0,
 			labelPlacementMode: 'auto',
@@ -39,6 +41,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 
 	function clearLayers() {
 		layers.clear();
+		clearGroups();
 		selectedLayer = null;
 		highlightedLayer = null;
 		notifyChange();
@@ -162,8 +165,21 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		notifyChange();
 	}
 
+	function addGroup(id: string, name: string) {
+		groups.set(id, { id, name });
+	}
+
+	function clearGroups() {
+		groups.clear();
+	}
+
+	function getGroup(id: string): LayerGroup | undefined {
+		return groups.get(id);
+	}
+
 	function reset() {
 		layers.clear();
+		clearGroups();
 		selectedLayer = null;
 		highlightedLayer = null;
 	}
@@ -171,6 +187,9 @@ export function createLayerStore(options?: LayerStoreOptions) {
 	return {
 		get layers() {
 			return layerArray;
+		},
+		get groups() {
+			return Array.from(groups.values());
 		},
 		get hiddenLayerCount() {
 			return hiddenLayerCount;
@@ -184,6 +203,9 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		getLayer,
 		addLayer,
 		clearLayers,
+		addGroup,
+		clearGroups,
+		getGroup,
 		showAllLayers,
 		hideAllLayers,
 		toggleVisibility,

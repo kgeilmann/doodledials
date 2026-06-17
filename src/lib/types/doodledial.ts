@@ -6,10 +6,16 @@ export type LabelPlacementStatus =
 	| { status: 'placed' }
 	| { status: 'error'; reason: 'no-valid-position-within-radius' };
 
+export interface LayerGroup {
+	id: string;
+	name: string;
+}
+
 export interface Layer {
 	id: string;
 	name: string;
 	index: number;
+	groupId: string;
 	visible: boolean;
 	rotation: number;
 	labelOffsetX?: number;

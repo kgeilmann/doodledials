@@ -27,7 +27,8 @@ function buildExportFixture(): { content: SVGContent; layers: Layer[] } {
 			name: layer.name,
 			index: layer.index,
 			visible: true,
-			rotation: 0
+			rotation: 0,
+			groupId: ''
 		}))
 	};
 }

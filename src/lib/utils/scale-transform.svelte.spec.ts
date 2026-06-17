@@ -16,7 +16,8 @@ function buildFixture(): { content: SVGContent; layers: Layer[] } {
 			name: l.name,
 			index: l.index,
 			visible: true,
-			rotation: 0
+			rotation: 0,
+			groupId: ''
 		}))
 	};
 }

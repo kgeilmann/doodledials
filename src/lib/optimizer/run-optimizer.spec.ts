@@ -209,8 +209,8 @@ describe('runOptimizer', () => {
 
 	test('rerenders updated svg snapshots and moves layers', async () => {
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' }
 		];
 
 		const result = await runOptimizer({
@@ -251,8 +251,8 @@ describe('runOptimizer', () => {
 
 	test('creates optimizer svg template once and combines via template replacement', async () => {
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' }
 		];
 
 		await runOptimizer({
@@ -292,9 +292,9 @@ describe('runOptimizer', () => {
 		});
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true, groupId: '' }
 		];
 
 		try {
@@ -346,8 +346,8 @@ describe('runOptimizer', () => {
 		controller.abort();
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' }
 		];
 
 		await expect(
@@ -385,9 +385,9 @@ describe('runOptimizer', () => {
 		detectOverlapsMock.mockImplementation(async () => new Map());
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 120, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 120, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true, groupId: '' }
 		];
 
 		const input = {
@@ -445,8 +445,8 @@ describe('runOptimizer', () => {
 
 	test('returns integer angles by default', async () => {
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0.4, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0.6, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0.4, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0.6, visible: true, groupId: '' }
 		];
 
 		const result = await runOptimizer({
@@ -484,9 +484,9 @@ describe('runOptimizer', () => {
 		detectOverlapsMock.mockImplementation(async () => new Map());
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 10, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 10, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true, groupId: '' }
 		];
 
 		const input = {
@@ -539,9 +539,9 @@ describe('runOptimizer', () => {
 		detectOverlapsMock.mockImplementation(async () => new Map());
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 220, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 220, visible: true, groupId: '' }
 		];
 
 		const input = {
@@ -590,9 +590,9 @@ describe('runOptimizer', () => {
 		detectOverlapsMock.mockImplementation(async () => new Map());
 
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 1, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true, groupId: '' }
 		];
 
 		const snapshots: OptimizerIterationSnapshot[] = [];
@@ -652,9 +652,9 @@ describe('runOptimizer', () => {
 
 	test('scenario matrix: overlap-heavy layout does not worsen overlap aggregate by end', async () => {
 		const layers: Layer[] = [
-			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true },
-			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true }
+			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' },
+			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true, groupId: '' }
 		];
 
 		const snapshots: OptimizerIterationSnapshot[] = [];

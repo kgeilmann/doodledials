@@ -88,6 +88,9 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		get layers() {
 			return layerStore.layers;
 		},
+		get groups() {
+			return layerStore.groups;
+		},
 		get hiddenLayerCount() {
 			return layerStore.hiddenLayerCount;
 		},
@@ -157,8 +160,12 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			if (originalRawSvg) {
 				const parsed = parseSvgPaths(originalRawSvg, sizeToFit);
 				layerStore.clearLayers();
+				layerStore.clearGroups();
+				for (const group of parsed.groups ?? []) {
+					layerStore.addGroup(group.id, group.name);
+				}
 				for (const layer of parsed.layers) {
-					layerStore.addLayer(layer.id, layer.index, layer.name);
+					layerStore.addLayer(layer.id, layer.index, layer.name, layer.groupId);
 				}
 				svgContent = {
 					raw: parsed.updatedSvg,
@@ -222,8 +229,11 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		clearCutoutGaps() {
 			detectionStore.clearCutoutGaps();
 		},
-		addLayer(layerId: string, index: number, name: string) {
-			layerStore.addLayer(layerId, index, name);
+		addGroup(id: string, name: string) {
+			layerStore.addGroup(id, name);
+		},
+		addLayer(layerId: string, index: number, name: string, groupId?: string) {
+			layerStore.addLayer(layerId, index, name, groupId ?? '');
 		},
 		toggleVisibility(id: string) {
 			layerStore.toggleVisibility(id);

@@ -1,4 +1,4 @@
-import { SVG, Svg, G, Text, Matrix } from '@svgdotjs/svg.js';
+import { SVG, Svg, G, Text, Matrix, Element as SvgElement } from '@svgdotjs/svg.js';
 import {
 	DEFAULT_DIAL_CONFIG,
 	type CenterMarkType,
@@ -49,7 +49,8 @@ export function parseSvgPaths(
 	svgContent: string,
 	sizeToFit: boolean = true
 ): {
-	layers: { id: string; name: string; index: number }[];
+	layers: { id: string; name: string; index: number; groupId: string }[];
+	groups: { id: string; name: string }[];
 	updatedSvg: string;
 } {
 	const doc = SVG(svgContent) as Svg;
@@ -125,46 +126,107 @@ export function parseSvgPaths(
 		'stroke-dasharray': '1 1'
 	});
 
-	const layers: { id: string; name: string; index: number }[] = [];
+	interface WorkGroup {
+		element: G;
+		paths: SvgElement[];
+	}
 
-	const paths = doc.find('path');
-	paths.forEach((path, index) => {
-		const sourcePathBox = path.bbox();
-		path.addClass('cutout');
-		path.scale(sourceScale, 0, 0).translate(normalizedTranslateX, normalizedTranslateY);
+	const workGroups: WorkGroup[] = [];
+	const loosePaths: SvgElement[] = [];
 
-		// @ts-expect-error - css() signature expects string but null clears the property
-		path.css('stroke', null);
-		// @ts-expect-error - css() signature expects string but null clears the property
-		path.css('stroke-width', null);
-		// @ts-expect-error - css() signature expects string but null clears the property
-		path.css('fill', null);
-		// @ts-expect-error - css() signature expects string but null clears the property
-		path.css('fill-opacity', null);
+	for (const child of [...all.children()]) {
+		if (child.type === 'g') {
+			const g = child as unknown as G;
+			const groupPaths = [...g.find('path')] as SvgElement[];
+			if (groupPaths.length > 0) {
+				workGroups.push({ element: g, paths: groupPaths });
+			}
+		} else if (child.type === 'path') {
+			loosePaths.push(child);
+		}
+	}
 
-		const layerId = `layer-${index}`;
-
-		const layer = SVG().group().attr('id', layerId);
-		layer.addClass('layer');
-		path.remove();
-		layer.add(path);
-		const mark = createMark(layerId, maxImageDimension, maxImageDimension * Math.SQRT2, index + 1);
-		const markWrapper = SVG().group().addClass('mark-wrapper');
-		markWrapper.add(mark);
-		layer.add(markWrapper);
-		const pathLabel = createPathLabel(layerId, index + 1, {
-			x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
-			cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
+	if (loosePaths.length > 0) {
+		const autoGroup = SVG().group();
+		for (const path of loosePaths) {
+			path.remove();
+			autoGroup.add(path);
+		}
+		all.add(autoGroup);
+		workGroups.push({
+			element: autoGroup,
+			paths: loosePaths
 		});
-		layer.add(pathLabel);
-		all.add(layer);
+	}
 
-		layers.push({
-			id: layerId,
-			name: `Layer ${index + 1}`,
-			index: index + 1
-		});
-	});
+	const layers: { id: string; name: string; index: number; groupId: string }[] = [];
+	const parsedGroups: { id: string; name: string }[] = [];
+	let globalIndex = 0;
+
+	for (const [groupIdx, { element: groupEl, paths: groupPaths }] of workGroups.entries()) {
+		const inkscapeLabel = groupEl.attr('inkscape:label');
+		const elId = groupEl.attr('id');
+		let groupName: string;
+		let groupId: string;
+
+		if (inkscapeLabel) {
+			groupName = String(inkscapeLabel);
+			groupId = elId ? String(elId) : `group-${groupIdx}`;
+		} else if (elId) {
+			groupName = String(elId);
+			groupId = String(elId);
+		} else {
+			groupName = `Disc ${groupIdx + 1}`;
+			groupId = `group-${groupIdx}`;
+		}
+
+		parsedGroups.push({ id: groupId, name: groupName });
+
+		for (const path of groupPaths) {
+			globalIndex++;
+			const sourcePathBox = path.bbox();
+			path.addClass('cutout');
+			path.scale(sourceScale, 0, 0).translate(normalizedTranslateX, normalizedTranslateY);
+
+			// @ts-expect-error - css() signature expects string but null clears the property
+			path.css('stroke', null);
+			// @ts-expect-error - css() signature expects string but null clears the property
+			path.css('stroke-width', null);
+			// @ts-expect-error - css() signature expects string but null clears the property
+			path.css('fill', null);
+			// @ts-expect-error - css() signature expects string but null clears the property
+			path.css('fill-opacity', null);
+
+			const layerId = `layer-${globalIndex}`;
+
+			const layer = SVG().group().attr('id', layerId);
+			layer.addClass('layer');
+			path.remove();
+			layer.add(path);
+			const mark = createMark(
+				layerId,
+				maxImageDimension,
+				maxImageDimension * Math.SQRT2,
+				globalIndex
+			);
+			const markWrapper = SVG().group().addClass('mark-wrapper');
+			markWrapper.add(mark);
+			layer.add(markWrapper);
+			const pathLabel = createPathLabel(layerId, globalIndex, {
+				x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
+				cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
+			});
+			layer.add(pathLabel);
+			groupEl.add(layer);
+
+			layers.push({
+				id: layerId,
+				name: `Layer ${globalIndex}`,
+				index: globalIndex,
+				groupId
+			});
+		}
+	}
 
 	all.add(discElements);
 
@@ -183,7 +245,7 @@ export function parseSvgPaths(
 
 	const updatedSvg = doc.svg();
 
-	return { layers, updatedSvg };
+	return { layers, groups: parsedGroups, updatedSvg };
 }
 
 function createMark(

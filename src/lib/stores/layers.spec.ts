@@ -402,4 +402,50 @@ describe('LayerStore', () => {
 			expect(store.hiddenLayerCount).toBe(0);
 		});
 	});
+
+	describe('groups', () => {
+		it('starts with empty groups', () => {
+			expect(store.groups).toEqual([]);
+		});
+
+		it('addGroup adds a group', () => {
+			store.addGroup('group-1', 'Disc 1');
+			expect(store.groups).toHaveLength(1);
+			expect(store.groups[0]).toEqual({ id: 'group-1', name: 'Disc 1' });
+		});
+
+		it('getGroup returns a group by id', () => {
+			store.addGroup('g1', 'G1');
+			expect(store.getGroup('g1')).toEqual({ id: 'g1', name: 'G1' });
+		});
+
+		it('getGroup returns undefined for non-existent group', () => {
+			expect(store.getGroup('ghost')).toBeUndefined();
+		});
+
+		it('clearGroups removes all groups', () => {
+			store.addGroup('g1', 'G1');
+			store.addGroup('g2', 'G2');
+			store.clearGroups();
+			expect(store.groups).toEqual([]);
+		});
+
+		it('clearLayers also clears groups', () => {
+			store.addGroup('g1', 'G1');
+			store.clearLayers();
+			expect(store.groups).toEqual([]);
+		});
+
+		it('reset also clears groups', () => {
+			store.addGroup('g1', 'G1');
+			store.reset();
+			expect(store.groups).toEqual([]);
+		});
+
+		it('addLayer stores groupId on the layer', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('layer-1', 1, 'Layer 1', 'g1');
+			expect(store.getLayer('layer-1')!.groupId).toBe('g1');
+		});
+	});
 });

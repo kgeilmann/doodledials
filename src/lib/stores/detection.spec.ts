@@ -5,8 +5,8 @@ const { mockOverlapResult, mockGapResult, testLayers } = vi.hoisted(() => {
 	const mockOverlapResult = new Map<string, Map<string, number>>();
 	const mockGapResult = new Map<string, Set<string>>();
 	const testLayers = [
-		{ id: 'a', name: 'A', index: 1, visible: true, rotation: 0 },
-		{ id: 'b', name: 'B', index: 2, visible: true, rotation: 0 }
+		{ id: 'a', name: 'A', index: 1, visible: true, rotation: 0, groupId: '' },
+		{ id: 'b', name: 'B', index: 2, visible: true, rotation: 0, groupId: '' }
 	];
 	return { mockOverlapResult, mockGapResult, testLayers };
 });
@@ -278,9 +278,9 @@ describe('DetectionStore', () => {
 			const { detectOverlaps } = await import('$lib/utils/overlap-detection');
 			store = createDetectionStore({
 				getLayers: () => [
-					{ id: 'a', name: 'A', index: 1, visible: true, rotation: 0 },
-					{ id: 'b', name: 'B', index: 2, visible: true, rotation: 0 },
-					{ id: 'c', name: 'C', index: 3, visible: false, rotation: 0 }
+					{ id: 'a', name: 'A', index: 1, visible: true, rotation: 0, groupId: '' },
+					{ id: 'b', name: 'B', index: 2, visible: true, rotation: 0, groupId: '' },
+					{ id: 'c', name: 'C', index: 3, visible: false, rotation: 0, groupId: '' }
 				],
 				getCombinedSvg,
 				getConfig,

@@ -82,16 +82,16 @@ function buildInput(layers: Layer[]) {
 
 function twoLayers(): Layer[] {
 	return [
-		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true },
-		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 45, visible: true }
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 45, visible: true, groupId: '' }
 	];
 }
 
 function threeLayers(): Layer[] {
 	return [
-		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 10, visible: true },
-		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 120, visible: true },
-		{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true }
+		{ id: 'layerA', index: 0, name: 'Layer A', rotation: 10, visible: true, groupId: '' },
+		{ id: 'layerB', index: 1, name: 'Layer B', rotation: 120, visible: true, groupId: '' },
+		{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true, groupId: '' }
 	];
 }
 
