@@ -7,6 +7,7 @@ export interface OptimizerInput {
 	layers: Layer[];
 	svgContent: SVGContent;
 	groups?: { id: string; color: string }[];
+	hiddenLayerIds?: string[];
 }
 
 export interface OptimizerProgress {

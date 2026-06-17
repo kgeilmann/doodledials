@@ -332,7 +332,8 @@ export function createOptimizerSvgTemplate(
 	content: SVGContent,
 	config: DialConfig,
 	layers: { id: string; groupId: string }[],
-	groups?: { id: string; color: string }[]
+	groups?: { id: string; color: string }[],
+	hiddenLayerIds?: string[]
 ): OptimizerSvgTemplate {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
@@ -371,13 +372,15 @@ export function createOptimizerSvgTemplate(
 		}
 	}
 
-	const visibleLayerIds = new Set(layers.map((l) => l.id));
-	doc.node.querySelectorAll(':scope > g').forEach((g) => {
-		const id = g.getAttribute('id');
-		if (id && !visibleLayerIds.has(id)) {
-			g.setAttribute('visibility', 'hidden');
-		}
-	});
+	if (hiddenLayerIds && hiddenLayerIds.length > 0) {
+		const hiddenSet = new Set(hiddenLayerIds);
+		doc.node.querySelectorAll(':scope > g').forEach((g) => {
+			const id = g.getAttribute('id');
+			if (id && hiddenSet.has(id)) {
+				g.setAttribute('visibility', 'hidden');
+			}
+		});
+	}
 
 	applyDiscScaling(doc, config);
 	const scaleFactor = config.diameter / config.maxDiameter;

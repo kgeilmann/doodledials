@@ -265,12 +265,14 @@ export function createOptimizerStore(options?: {
 			ddStore.setOptimizerGapMm(gapMm);
 			optimizerGapMmInput = String(gapMm);
 
+			const visibleLayers = ddStore.layers.filter((l) => l.visible);
 			const optimizerInput = {
 				diameter: ddStore.config.diameter,
 				config: ddStore.config,
-				layers: ddStore.layers.filter((l) => l.visible),
+				layers: visibleLayers,
 				svgContent: ddStore.svgContent,
-				groups: ddStore.groups
+				groups: ddStore.groups,
+				hiddenLayerIds: ddStore.layers.filter((l) => !l.visible).map((l) => l.id)
 			};
 			const parsedSeed = Number(optimizerRandomSeedInput);
 			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;

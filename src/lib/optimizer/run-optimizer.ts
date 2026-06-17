@@ -533,7 +533,8 @@ export async function runOptimizer(
 			diameter: input.diameter
 		},
 		input.layers,
-		input.groups
+		input.groups,
+		input.hiddenLayerIds
 	);
 
 	let state = shouldInitializeRandomly
