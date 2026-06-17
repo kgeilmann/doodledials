@@ -57,9 +57,9 @@ export const DEFAULT_DIAL_CONFIG = {
 	offsetY: 0,
 	scale: 1,
 	sizeToFit: false,
-	centerHoleDiameter: 0.5,
+	centerHoleDiameter: 0.1,
 	centerMarkType: 'hole',
-	optimizerGapMm: 3,
+	optimizerGapMm: 2,
 	pathLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'
 } as const satisfies DialConfig;
