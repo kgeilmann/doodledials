@@ -109,6 +109,9 @@ export function parseSvgPaths(
 	const normalizedTranslateY =
 		(NORMALIZED_IMAGE_DIMENSION - normalizedHeight) / 2 - sourceViewBox.y * sourceScale;
 	const maxImageDimension = NORMALIZED_IMAGE_DIMENSION;
+	const viewBoxOrigin = -(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX;
+	const viewBoxExtent = maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX;
+
 	discElements
 		.circle(maxImageDimension * Math.SQRT2)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
@@ -184,7 +187,6 @@ export function parseSvgPaths(
 
 		for (const path of groupPaths) {
 			globalIndex++;
-			const sourcePathBox = path.bbox();
 			path.addClass('cutout');
 			path.scale(sourceScale, 0, 0).translate(normalizedTranslateX, normalizedTranslateY);
 
@@ -213,8 +215,8 @@ export function parseSvgPaths(
 			markWrapper.add(mark);
 			layer.add(markWrapper);
 			const pathLabel = createPathLabel(layerId, globalIndex, {
-				x2: sourcePathBox.x2 * sourceScale + normalizedTranslateX,
-				cy: sourcePathBox.cy * sourceScale + normalizedTranslateY
+				x2: viewBoxOrigin + viewBoxExtent - 6,
+				cy: viewBoxOrigin + 6 + (globalIndex - 1) * 14
 			});
 			layer.add(pathLabel);
 			groupEl.add(layer);
@@ -230,12 +232,7 @@ export function parseSvgPaths(
 
 	all.add(discElements);
 
-	doc.viewbox(
-		-(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX,
-		-(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX,
-		maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX,
-		maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX
-	);
+	doc.viewbox(viewBoxOrigin, viewBoxOrigin, viewBoxExtent, viewBoxExtent);
 
 	if (layers.length === 0) {
 		throw new Error(
