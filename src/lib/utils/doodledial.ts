@@ -374,12 +374,12 @@ export function createOptimizerSvgTemplate(
 
 	if (hiddenLayerIds && hiddenLayerIds.length > 0) {
 		const hiddenSet = new Set(hiddenLayerIds);
-		doc.node.querySelectorAll(':scope > g').forEach((g) => {
-			const id = g.getAttribute('id');
-			if (id && hiddenSet.has(id)) {
-				g.setAttribute('visibility', 'hidden');
+		for (const id of hiddenSet) {
+			const el = doc.findOne('#' + id) as G | null;
+			if (el) {
+				el.remove();
 			}
-		});
+		}
 	}
 
 	applyDiscScaling(doc, config);
