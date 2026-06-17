@@ -448,4 +448,79 @@ describe('LayerStore', () => {
 			expect(store.getLayer('layer-1')!.groupId).toBe('g1');
 		});
 	});
+
+	describe('toggleGroupVisibility', () => {
+		it('hides all layers in a group when any are visible', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('a', 1, 'A', 'g1');
+			store.addLayer('b', 2, 'B', 'g1');
+			store.toggleGroupVisibility('g1');
+			expect(store.getLayer('a')!.visible).toBe(false);
+			expect(store.getLayer('b')!.visible).toBe(false);
+		});
+
+		it('shows all layers in a group when all are hidden', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('a', 1, 'A', 'g1');
+			store.addLayer('b', 2, 'B', 'g1');
+			store.toggleVisibility('a');
+			store.toggleVisibility('b');
+			store.toggleGroupVisibility('g1');
+			expect(store.getLayer('a')!.visible).toBe(true);
+			expect(store.getLayer('b')!.visible).toBe(true);
+		});
+
+		it('does not affect layers in other groups', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g2', 'Disc 2');
+			store.addLayer('a', 1, 'A', 'g1');
+			store.addLayer('b', 2, 'B', 'g2');
+			store.toggleGroupVisibility('g1');
+			expect(store.getLayer('b')!.visible).toBe(true);
+		});
+
+		it('calls onChange', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('a', 1, 'A', 'g1');
+			onChange.mockClear();
+			store.toggleGroupVisibility('g1');
+			expect(onChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('does nothing for non-existent group', () => {
+			const onChange = vi.fn();
+			store = createLayerStore({ onChange });
+			store.addLayer('a', 1, 'A');
+			onChange.mockClear();
+			store.toggleGroupVisibility('ghost');
+			expect(store.getLayer('a')!.visible).toBe(true);
+			expect(onChange).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('isGroupVisible', () => {
+		it('returns true when at least one layer in group is visible', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('a', 1, 'A', 'g1');
+			store.addLayer('b', 2, 'B', 'g1');
+			store.toggleVisibility('a');
+			expect(store.isGroupVisible('g1')).toBe(true);
+		});
+
+		it('returns false when all layers in group are hidden', () => {
+			store.addGroup('g1', 'Disc 1');
+			store.addLayer('a', 1, 'A', 'g1');
+			store.addLayer('b', 2, 'B', 'g1');
+			store.toggleVisibility('a');
+			store.toggleVisibility('b');
+			expect(store.isGroupVisible('g1')).toBe(false);
+		});
+
+		it('returns false for empty group', () => {
+			store.addGroup('g1', 'Disc 1');
+			expect(store.isGroupVisible('g1')).toBe(false);
+		});
+	});
 });

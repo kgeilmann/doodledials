@@ -93,6 +93,20 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		}
 	}
 
+	function toggleGroupVisibility(groupId: string) {
+		const groupLayers = Array.from(layers.values()).filter((l) => l.groupId === groupId);
+		if (groupLayers.length === 0) return;
+		const anyVisible = groupLayers.some((l) => l.visible);
+		for (const layer of groupLayers) {
+			layers.set(layer.id, { ...layer, visible: !anyVisible });
+		}
+		notifyChange();
+	}
+
+	function isGroupVisible(groupId: string): boolean {
+		return Array.from(layers.values()).some((l) => l.groupId === groupId && l.visible);
+	}
+
 	function setLayerRotation(id: string, rotation: number) {
 		const layer = layers.get(id);
 		if (layer) {
@@ -236,6 +250,8 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		showAllLayers,
 		hideAllLayers,
 		toggleVisibility,
+		toggleGroupVisibility,
+		isGroupVisible,
 		setLayerRotation,
 		applyLayerRotations,
 		setLayerLabelOffsetManual,
