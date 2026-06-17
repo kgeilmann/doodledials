@@ -371,6 +371,14 @@ export function createOptimizerSvgTemplate(
 		}
 	}
 
+	const visibleLayerIds = new Set(layers.map((l) => l.id));
+	doc.node.querySelectorAll(':scope > g').forEach((g) => {
+		const id = g.getAttribute('id');
+		if (id && !visibleLayerIds.has(id)) {
+			g.setAttribute('visibility', 'hidden');
+		}
+	});
+
 	applyDiscScaling(doc, config);
 	const scaleFactor = config.diameter / config.maxDiameter;
 	doc.find('.mark-wrapper').forEach((wrapper) => {
