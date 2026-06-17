@@ -16,6 +16,11 @@
 
 <section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
 	<div class="flex items-center gap-3 mb-4">
+		{#if icon}
+			{@render icon()}
+		{/if}
+		<h2 class="text-lg font-semibold text-gray-800">{title}</h2>
+		<div class="flex-1"></div>
 		<button
 			onclick={() => (open = !open)}
 			class="p-2 rounded-lg transition-colors duration-150 shrink-0 cursor-pointer"
@@ -38,10 +43,6 @@
 				<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
 			</svg>
 		</button>
-		{#if icon}
-			{@render icon()}
-		{/if}
-		<h2 class="text-lg font-semibold text-gray-800">{title}</h2>
 	</div>
 	<div
 		class="grid transition-[grid-template-rows] duration-200 ease-out"
