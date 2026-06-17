@@ -273,7 +273,13 @@
 						<summary
 							class="flex items-center justify-between px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 list-none select-none"
 						>
-							<span class="text-sm font-semibold text-gray-700">{group.name}</span>
+							<span class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+								<span
+									class="inline-block w-3 h-3 rounded-full shrink-0"
+									style="background: {group.color}"
+								></span>
+								{group.name}
+							</span>
 							<svg
 								class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90"
 								fill="none"

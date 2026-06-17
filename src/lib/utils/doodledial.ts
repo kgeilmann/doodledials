@@ -313,6 +313,7 @@ export interface CombineDoodledialOptions {
 	discTitleX?: number;
 	discTitleY?: number;
 	discTitleFontSize?: number;
+	groups?: { id: string; color: string }[];
 }
 
 export interface OptimizerSvgTemplate {
@@ -468,6 +469,18 @@ export function combineDoodledial(
 
 		if (applyCutoutTransforms) {
 			applyCutoutTransformsForGroup(svgLayer, config, cx, cy);
+		}
+
+		const isHighlighted =
+			includeHighlighting && (layer.id === highlightedLayerId || layer.id === selectedLayerId);
+		if (!isHighlighted && options?.groups && options.groups.length > 0) {
+			const groupColor = options.groups.find((g) => g.id === layer.groupId)?.color;
+			if (groupColor) {
+				svgLayer.find('.cutout').forEach((cutout) => {
+					cutout.css('fill', groupColor);
+					cutout.css('fill-opacity', '0.6');
+				});
+			}
 		}
 
 		svgLayer.find('.layer-label').forEach((el) => {

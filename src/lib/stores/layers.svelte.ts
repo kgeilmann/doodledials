@@ -1,6 +1,29 @@
 import type { LabelPlacementStatus, Layer, LayerGroup } from '$lib/types/doodledial';
 import { SvelteMap } from 'svelte/reactivity';
 
+const GROUP_COLORS = [
+	'#e6194b',
+	'#3cb44b',
+	'#4363d8',
+	'#f58231',
+	'#911eb4',
+	'#42d4f4',
+	'#f032e6',
+	'#bfef45',
+	'#fabed4',
+	'#469990',
+	'#dcbeff',
+	'#9a6324',
+	'#800000',
+	'#aaffc3',
+	'#808000',
+	'#ffd8b1',
+	'#000075',
+	'#a9a9a9',
+	'#e6beff',
+	'#ffc107'
+];
+
 export interface LayerStoreOptions {
 	onChange?: () => void;
 }
@@ -10,6 +33,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 
 	const layers: SvelteMap<string, Layer> = new SvelteMap();
 	const groups: SvelteMap<string, LayerGroup> = new SvelteMap();
+	let groupColorIndex = $state(0);
 	let highlightedLayer = $state<string | null>(null);
 	let selectedLayer = $state<string | null>(null);
 
@@ -166,11 +190,14 @@ export function createLayerStore(options?: LayerStoreOptions) {
 	}
 
 	function addGroup(id: string, name: string) {
-		groups.set(id, { id, name });
+		const color = GROUP_COLORS[groupColorIndex % GROUP_COLORS.length];
+		groupColorIndex++;
+		groups.set(id, { id, name, color });
 	}
 
 	function clearGroups() {
 		groups.clear();
+		groupColorIndex = 0;
 	}
 
 	function getGroup(id: string): LayerGroup | undefined {

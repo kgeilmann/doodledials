@@ -9,6 +9,7 @@ export type LabelPlacementStatus =
 export interface LayerGroup {
 	id: string;
 	name: string;
+	color: string;
 }
 
 export interface Layer {

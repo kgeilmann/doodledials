@@ -411,12 +411,12 @@ describe('LayerStore', () => {
 		it('addGroup adds a group', () => {
 			store.addGroup('group-1', 'Disc 1');
 			expect(store.groups).toHaveLength(1);
-			expect(store.groups[0]).toEqual({ id: 'group-1', name: 'Disc 1' });
+			expect(store.groups[0]).toEqual({ id: 'group-1', name: 'Disc 1', color: '#e6194b' });
 		});
 
 		it('getGroup returns a group by id', () => {
 			store.addGroup('g1', 'G1');
-			expect(store.getGroup('g1')).toEqual({ id: 'g1', name: 'G1' });
+			expect(store.getGroup('g1')).toEqual({ id: 'g1', name: 'G1', color: '#e6194b' });
 		});
 
 		it('getGroup returns undefined for non-existent group', () => {

@@ -267,7 +267,8 @@
 					discTitle: doodledialStore.discTitle,
 					discTitleX: doodledialStore.discTitleX,
 					discTitleY: doodledialStore.discTitleY,
-					discTitleFontSize: doodledialStore.discTitleFontSize
+					discTitleFontSize: doodledialStore.discTitleFontSize,
+					groups: doodledialStore.groups
 				}
 			);
 		} catch {
