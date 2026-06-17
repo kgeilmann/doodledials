@@ -18,10 +18,10 @@
 
 <section
 	class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100"
-	class:flex={expand}
-	class:flex-col={expand}
-	class:flex-1={expand}
-	class:min-h-0={expand}
+	class:flex={expand && open}
+	class:flex-col={expand && open}
+	class:flex-1={expand && open}
+	class:min-h-0={expand && open}
 >
 	<div class="flex items-center gap-3 mb-4">
 		{#if icon}
@@ -61,7 +61,7 @@
 		<div
 			class="overflow-hidden min-h-0"
 			class:overflow-y-auto={expand}
-			class:min-h-[192px]={expand}
+			class:min-h-[192px]={expand && open}
 		>
 			{@render children()}
 		</div>
