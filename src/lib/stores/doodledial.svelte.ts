@@ -277,6 +277,12 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		hideAllLayers() {
 			layerStore.hideAllLayers();
 		},
+		toggleGroupVisibility(groupId: string) {
+			layerStore.toggleGroupVisibility(groupId);
+		},
+		isGroupVisible(groupId: string): boolean {
+			return layerStore.isGroupVisible(groupId);
+		},
 		clearLayers() {
 			layerStore.clearLayers();
 		},
