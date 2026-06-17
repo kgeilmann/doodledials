@@ -51,6 +51,7 @@ export function exportLaserSvg(
 
 	doc.find('.cutout').forEach((cutout) => {
 		cutout.addClass(cutClassName);
+		cutout.css('vector-effect', 'non-scaling-stroke');
 		cutout.css('stroke', cutColor);
 		cutout.css('fill', 'none');
 		cutout.css('stroke-width', String(cutStrokeWidth));
