@@ -127,7 +127,7 @@
 			</div>
 		</div>
 
-		<div class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+		<div class="border border-gray-200 rounded-lg">
 			<ul class="divide-y divide-gray-100">
 				{#each doodledialStore.layers as layer (layer.id)}
 					<li

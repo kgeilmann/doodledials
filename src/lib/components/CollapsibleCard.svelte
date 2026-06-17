@@ -5,16 +5,24 @@
 		title,
 		icon,
 		children,
-		open = $bindable(true)
+		open = $bindable(true),
+		expand = false
 	}: {
 		title: string;
 		icon?: Snippet;
 		children: Snippet;
 		open?: boolean;
+		expand?: boolean;
 	} = $props();
 </script>
 
-<section class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100">
+<section
+	class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-5 border border-gray-100"
+	class:flex={expand}
+	class:flex-col={expand}
+	class:flex-1={expand}
+	class:min-h-0={expand}
+>
 	<div class="flex items-center gap-3 mb-4">
 		{#if icon}
 			{@render icon()}
@@ -46,9 +54,15 @@
 	</div>
 	<div
 		class="grid transition-[grid-template-rows] duration-200 ease-out"
+		class:flex-1={expand && open}
+		class:min-h-0={expand && open}
 		style={open ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'}
 	>
-		<div class="overflow-hidden min-h-0">
+		<div
+			class="overflow-hidden min-h-0"
+			class:overflow-y-auto={expand}
+			class:min-h-[192px]={expand}
+		>
 			{@render children()}
 		</div>
 	</div>
