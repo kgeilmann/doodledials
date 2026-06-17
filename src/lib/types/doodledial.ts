@@ -56,7 +56,7 @@ export const DEFAULT_DIAL_CONFIG = {
 	offsetX: 0,
 	offsetY: 0,
 	scale: 1,
-	sizeToFit: true,
+	sizeToFit: false,
 	centerHoleDiameter: 0.5,
 	centerMarkType: 'hole',
 	optimizerGapMm: 3,
