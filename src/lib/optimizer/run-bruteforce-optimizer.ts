@@ -439,7 +439,8 @@ export async function runBruteforceOptimizer(
 				optimizerSvgTemplate: createOptimizerSvgTemplate(
 					input.svgContent,
 					{ ...input.config, diameter: input.diameter },
-					[]
+					[],
+					input.groups
 				),
 				bestLayout: null,
 				topLayouts: [],
@@ -464,7 +465,8 @@ export async function runBruteforceOptimizer(
 				optimizerSvgTemplate: createOptimizerSvgTemplate(
 					input.svgContent,
 					{ ...input.config, diameter: input.diameter },
-					layerIds
+					input.layers,
+					input.groups
 				),
 				bestLayout: null,
 				topLayouts: [],
@@ -492,7 +494,8 @@ export async function runBruteforceOptimizer(
 				...input.config,
 				diameter: input.diameter
 			},
-			input.layers.map((layer) => layer.id)
+			input.layers,
+			input.groups
 		);
 	const optimizerRotationsByLayerId = Object.fromEntries(
 		input.layers.map((layer) => [layer.id, 0])

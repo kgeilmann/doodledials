@@ -38,6 +38,7 @@ export interface DoodledialStoreLike {
 	svgContent: SVGContent | null;
 	config: DialConfig;
 	layers: Layer[];
+	groups: { id: string; color: string }[];
 	applyLayerRotations(rotations: Record<string, number>): void;
 	setOptimizerGapMm(gapMm: number): void;
 }
@@ -268,7 +269,8 @@ export function createOptimizerStore(options?: {
 				diameter: ddStore.config.diameter,
 				config: ddStore.config,
 				layers: ddStore.layers.filter((l) => l.visible),
-				svgContent: ddStore.svgContent
+				svgContent: ddStore.svgContent,
+				groups: ddStore.groups
 			};
 			const parsedSeed = Number(optimizerRandomSeedInput);
 			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;

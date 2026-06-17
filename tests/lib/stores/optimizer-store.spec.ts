@@ -7,6 +7,7 @@ interface MockDoodledialStore {
 	svgContent: SVGContent | null;
 	config: DialConfig;
 	layers: Layer[];
+	groups: { id: string; color: string }[];
 	applyLayerRotations(rotations: Record<string, number>): void;
 	setOptimizerGapMm(gapMm: number): void;
 }
@@ -16,6 +17,7 @@ function createMockDoodledialStore(overrides?: Partial<MockDoodledialStore>): Mo
 		svgContent: null,
 		config: { ...DEFAULT_DIAL_CONFIG },
 		layers: [],
+		groups: [],
 		applyLayerRotations(_rotations: Record<string, number>) {
 			_rotations satisfies Record<string, number>;
 		},

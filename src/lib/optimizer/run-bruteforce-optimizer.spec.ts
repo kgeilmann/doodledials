@@ -7,9 +7,9 @@ const {
 	detectPairOverlapPixelsMock
 } = vi.hoisted(() => ({
 	createOptimizerSvgTemplateMock: vi.fn(
-		(_content: SVGContent, _config: DialConfig, layerIds: string[]) => ({
+		(_content: SVGContent, _config: DialConfig, layers: { id: string; groupId: string }[]) => ({
 			rawTemplate: 'template',
-			layerIds
+			layerIds: layers.map((l) => l.id)
 		})
 	),
 	combineOptimizerSvgTemplateMock: vi.fn(

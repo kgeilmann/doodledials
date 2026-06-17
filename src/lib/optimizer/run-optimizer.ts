@@ -532,7 +532,8 @@ export async function runOptimizer(
 			...input.config,
 			diameter: input.diameter
 		},
-		input.layers.map((layer) => layer.id)
+		input.layers,
+		input.groups
 	);
 
 	let state = shouldInitializeRandomly

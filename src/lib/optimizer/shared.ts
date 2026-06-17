@@ -6,6 +6,7 @@ export interface OptimizerInput {
 	config: DialConfig;
 	layers: Layer[];
 	svgContent: SVGContent;
+	groups?: { id: string; color: string }[];
 }
 
 export interface OptimizerProgress {

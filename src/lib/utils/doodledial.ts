@@ -331,7 +331,8 @@ function toOptimizerRotationPlaceholder(index: number, cx: number, cy: number): 
 export function createOptimizerSvgTemplate(
 	content: SVGContent,
 	config: DialConfig,
-	layerIds: string[]
+	layers: { id: string; groupId: string }[],
+	groups?: { id: string; color: string }[]
 ): OptimizerSvgTemplate {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
@@ -341,18 +342,33 @@ export function createOptimizerSvgTemplate(
 	applyCutoutTransforms(doc, config, cx, cy);
 	removePathLabels(doc);
 
-	for (const [index, layerId] of layerIds.entries()) {
-		const svgLayer = doc.findOne('#' + layerId) as G | null;
+	for (const [index, layer] of layers.entries()) {
+		const svgLayer = doc.findOne('#' + layer.id) as G | null;
 		if (!svgLayer) {
 			continue;
 		}
 
 		const rotationPlaceholder = toOptimizerRotationPlaceholder(index, cx, cy);
-		rotationPlaceholderByLayerId[layerId] = rotationPlaceholder;
+		rotationPlaceholderByLayerId[layer.id] = rotationPlaceholder;
 
 		svgLayer.attr('visibility', 'visible');
 		svgLayer.attr('highlighted', null);
 		svgLayer.attr('transform', rotationPlaceholder);
+	}
+
+	if (groups && groups.length > 0) {
+		for (const layer of layers) {
+			const groupColor = groups.find((g) => g.id === layer.groupId)?.color;
+			if (groupColor) {
+				const svgLayer = doc.findOne('#' + layer.id) as G | null;
+				if (svgLayer) {
+					svgLayer.find('.cutout').forEach((cutout) => {
+						cutout.css('fill', groupColor);
+						cutout.css('fill-opacity', '0.6');
+					});
+				}
+			}
+		}
 	}
 
 	applyDiscScaling(doc, config);
@@ -371,7 +387,7 @@ export function createOptimizerSvgTemplate(
 
 	return {
 		rawTemplate: doc.svg(),
-		layerIds,
+		layerIds: layers.map((l) => l.id),
 		rotationPlaceholderByLayerId
 	};
 }
