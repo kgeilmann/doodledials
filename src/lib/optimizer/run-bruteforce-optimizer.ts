@@ -484,7 +484,10 @@ export async function runBruteforceOptimizer(
 		(requestedAnchorLayerId && layerIds.includes(requestedAnchorLayerId)
 			? requestedAnchorLayerId
 			: layerIds[0]) ?? layerIds[0];
-	const remainingLayerIds = layerIds.filter((layerId) => layerId !== anchorLayerId).sort();
+	let remainingLayerIds = layerIds.filter((layerId) => layerId !== anchorLayerId).sort();
+	if (options?.searchSeed !== undefined) {
+		remainingLayerIds = seededShuffle(remainingLayerIds, options.searchSeed);
+	}
 	const totalIterations = computeTotalIterations(remainingLayerIds.length);
 
 	const overlapCache = options?.resumeContext?.overlapCache ?? createOverlapDetectionCache();
