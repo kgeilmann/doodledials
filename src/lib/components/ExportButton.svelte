@@ -58,7 +58,13 @@
 				doodledialStore.svgContent,
 				doodledialStore.config,
 				getVisibleLayers(),
-				{ centerMarkType: centerMarkOverride }
+				{
+					centerMarkType: centerMarkOverride,
+					discTitle: doodledialStore.discTitle || undefined,
+					discTitleX: doodledialStore.discTitleX,
+					discTitleY: doodledialStore.discTitleY,
+					discTitleFontSize: doodledialStore.discTitleFontSize
+				}
 			);
 			createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
 			menuOpen = false;

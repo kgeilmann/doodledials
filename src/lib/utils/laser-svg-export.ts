@@ -9,6 +9,10 @@ export interface LaserExportOptions {
 	engraveColor?: string;
 	cutStrokeWidth?: number;
 	centerMarkType?: CenterMarkType;
+	discTitle?: string;
+	discTitleX?: number;
+	discTitleY?: number;
+	discTitleFontSize?: number;
 }
 
 export function exportLaserSvg(
@@ -30,7 +34,11 @@ export function exportLaserSvg(
 		respectLayerVisibility: true,
 		applyCutoutTransforms: true,
 		applyDiameter: true,
-		centerMarkType
+		centerMarkType,
+		discTitle: options?.discTitle,
+		discTitleX: options?.discTitleX,
+		discTitleY: options?.discTitleY,
+		discTitleFontSize: options?.discTitleFontSize
 	});
 
 	const doc = SVG(combinedSvg) as Svg;
