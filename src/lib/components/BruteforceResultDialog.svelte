@@ -55,8 +55,7 @@
 					{/if}
 				</h2>
 				<p class="text-sm text-gray-500 mt-0.5">
-					{summary.feasibleSolutionsFound} feasible layouts found. Click a thumbnail to preview, then
-					accept.
+					Click a thumbnail to preview, then accept.
 				</p>
 			</div>
 
@@ -91,28 +90,6 @@
 									</div>
 								</button>
 							{/each}
-						</div>
-
-						<div class="mt-4 text-xs text-gray-500 space-y-1 border-t border-gray-100 pt-3">
-							<div class="flex justify-between">
-								<span>Combinations searched</span>
-								<span class="text-gray-900 font-medium">
-									{summary.combinationsSearched.toLocaleString()} /
-									{summary.totalCombinations >= Number.MAX_SAFE_INTEGER
-										? '∞'
-										: summary.totalCombinations.toLocaleString()}
-								</span>
-							</div>
-							<div class="flex justify-between">
-								<span>Elapsed</span>
-								<span class="text-gray-900 font-medium"
-									>{optimizerStore.formatDurationMs(summary.elapsedMs)}</span
-								>
-							</div>
-							<div class="flex justify-between">
-								<span>Stop reason</span>
-								<span class="text-gray-900 font-medium">{summary.stopReason}</span>
-							</div>
 						</div>
 					</div>
 
