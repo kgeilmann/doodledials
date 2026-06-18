@@ -14,7 +14,11 @@
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"build:sea:blob": "node --experimental-sea-config server/sea-config.json",
+		"build:sea:linux": "cp $(which node) doodledials-server && npx postject doodledials-server NODE_SEA_BLOB server/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+		"build:sea:win": "echo 'Requires Windows node.exe. See server/README.md'",
+		"build:sea": "pnpm build && pnpm build:sea:blob && pnpm build:sea:linux"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.3",
@@ -35,6 +39,7 @@
 		"jsdom": "^29.1.1",
 		"playwright": "^1.58.2",
 		"postcss": "^8.4.49",
+		"postject": "1.0.0-alpha.6",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
 		"svelte": "^5.54.0",

@@ -18,6 +18,11 @@ Thumbs.db
 !.env.example
 !.env.test
 
+# SEA
+doodledials-server
+doodledials-server.exe
+server/sea.blob
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
