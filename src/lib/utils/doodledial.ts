@@ -215,8 +215,8 @@ export function parseSvgPaths(
 			markWrapper.add(mark);
 			layer.add(markWrapper);
 			const pathLabel = createPathLabel(layerId, globalIndex, {
-				x2: viewBoxOrigin + viewBoxExtent - 6,
-				cy: viewBoxOrigin + 6 + (globalIndex - 1) * 14
+				x2: viewBoxOrigin + viewBoxExtent - 6 + 15 * globalIndex/14,
+				cy: viewBoxOrigin + 6 + ((globalIndex - 1) * 14) % 200
 			});
 			layer.add(pathLabel);
 			groupEl.add(layer);
