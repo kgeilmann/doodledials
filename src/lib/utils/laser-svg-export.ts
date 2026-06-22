@@ -96,6 +96,11 @@ export function exportLaserSvg(
 		el.css('stroke', engraveColor);
 	});
 
+	doc.find('.home-notch').forEach((el) => {
+		el.addClass(engraveClassName);
+		el.css('fill', engraveColor);
+	});
+
 	doc.find('.disc-title').forEach((el) => {
 		el.addClass(engraveClassName);
 		el.css('fill', engraveColor);
