@@ -122,19 +122,6 @@ export function parseSvgPaths(
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('center-hole');
 
-	const cx = maxImageDimension / 2;
-	const cy = maxImageDimension / 2;
-	const r = (maxImageDimension * Math.SQRT2) / 2;
-
-	discElements
-		.polygon([
-			[cx, cy - r + 4],
-			[cx - 3, cy - r + 10],
-			[cx + 3, cy - r + 10]
-		])
-		.fill('black')
-		.addClass('home-notch');
-
 	style.rule('.home-notch', {
 		'pointer-events': 'none'
 	});
@@ -231,6 +218,19 @@ export function parseSvgPaths(
 			const markWrapper = SVG().group().addClass('mark-wrapper');
 			markWrapper.add(mark);
 			layer.add(markWrapper);
+			if (path === groupPaths[0]) {
+				const cx = maxImageDimension / 2;
+				const cy = maxImageDimension / 2;
+				const r = (maxImageDimension * Math.SQRT2) / 2;
+				markWrapper
+					.polygon([
+						[cx, cy - r],
+						[cx - 3, cy - r + 5],
+						[cx + 3, cy - r + 5]
+					])
+					.fill('black')
+					.addClass('home-notch');
+			}
 			const pathLabel = createPathLabel(layerId, globalIndex, {
 				x2: viewBoxOrigin + viewBoxExtent - 6 + (15 * globalIndex) / 14,
 				cy: viewBoxOrigin + 6 + (((globalIndex - 1) * 14) % 200)
