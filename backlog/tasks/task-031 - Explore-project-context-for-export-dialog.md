@@ -1,9 +1,10 @@
 ---
 id: TASK-031
 title: Explore project context for export dialog
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-06-22 21:14'
+updated_date: '2026-06-22 21:15'
 labels: []
 dependencies: []
 priority: high
