@@ -56,3 +56,16 @@ Preview the production build:
 ```sh
 pnpm preview
 ```
+
+## Standalone Executable (SEA)
+
+The server can be built as a standalone executable using Node's Single Executable Application feature. See [server/README.md](server/README.md) for platform-specific instructions.
+
+### Quick start (Linux)
+
+```sh
+pnpm build:sea
+./doodledials-server
+```
+
+The `build/` directory must be in the same folder as the binary.
