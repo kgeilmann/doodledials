@@ -1,3 +1,11 @@
+# Disclaimer
+
+This repo is 98% AI generated using a weird mix of models, skills, and tools. 
+
+It's just a fun little educational project I worked on, to get my hands dirty with AI and Vibe Coding. Therfor, don't judge the code or expect it to be "good" in any sense. 
+
+It works for me and hopefully it works for you.
+
 # Doodle Dials
 
 This project is a specialized SVG editor for creating doodle dials: circular drawing templates with numbered cutouts.
@@ -16,7 +24,7 @@ The final image appears from the combined strokes across all rotation positions.
 
 ## Historical Note
 
-This editor is inspired by the British Rotadraw toy from 1969 (not the later American release). The tool focuses on the same core idea: sequential rotational alignment and layered cutout drawing to reveal a complete picture.
+This editor is inspired by the British Rotodraw toy from 1969. The tool focuses on the same core idea: sequential rotational alignment and layered cutout drawing to reveal a complete picture.
 
 ## Development
 
