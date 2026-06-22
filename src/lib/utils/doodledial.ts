@@ -122,6 +122,23 @@ export function parseSvgPaths(
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('center-hole');
 
+	const cx = maxImageDimension / 2;
+	const cy = maxImageDimension / 2;
+	const r = (maxImageDimension * Math.SQRT2) / 2;
+
+	discElements
+		.polygon([
+			[cx, cy - r + 4],
+			[cx - 3, cy - r + 10],
+			[cx + 3, cy - r + 10]
+		])
+		.fill('black')
+		.addClass('home-notch');
+
+	style.rule('.home-notch', {
+		'pointer-events': 'none'
+	});
+
 	style.rule('#center-hole', {
 		fill: 'none',
 		stroke: 'black',
@@ -215,8 +232,8 @@ export function parseSvgPaths(
 			markWrapper.add(mark);
 			layer.add(markWrapper);
 			const pathLabel = createPathLabel(layerId, globalIndex, {
-				x2: viewBoxOrigin + viewBoxExtent - 6 + 15 * globalIndex/14,
-				cy: viewBoxOrigin + 6 + ((globalIndex - 1) * 14) % 200
+				x2: viewBoxOrigin + viewBoxExtent - 6 + (15 * globalIndex) / 14,
+				cy: viewBoxOrigin + 6 + (((globalIndex - 1) * 14) % 200)
 			});
 			layer.add(pathLabel);
 			groupEl.add(layer);
