@@ -6,70 +6,68 @@ test.describe('Export', () => {
 		await page.goto('/');
 	});
 
-	test('main button exports laser SVG directly when default is laser-svg', async ({ page }) => {
+	test('opens export dialog on button click', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
 
 		await fileInput.setInputFiles(sampleSvg);
 		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
 
+		await page.locator('button:has-text("Export")').click();
+		await expect(page.getByRole('dialog', { name: 'Export dial' })).toBeVisible();
+	});
+
+	test('exports Laser SVG by default with segment selection', async ({ page }) => {
+		const fileInput = page.locator('input[type="file"]');
+		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
+
+		await fileInput.setInputFiles(sampleSvg);
+		await page.locator('button:has-text("Export")').click();
+		await expect(page.getByRole('dialog', { name: 'Export dial' })).toBeVisible();
+
+		await page.locator('button:has-text("Laser SVG")').click();
+
 		const [download] = await Promise.all([
 			page.waitForEvent('download'),
-			page.locator('button:has-text("Export")').click()
+			page.locator('button:has-text("Export")').last().click()
 		]);
 		expect(download.suggestedFilename()).toContain('.svg');
 	});
 
-	test('chevron opens format picker and can select STL', async ({ page }) => {
+	test('can select and export Preview SVG', async ({ page }) => {
 		const fileInput = page.locator('input[type="file"]');
 		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
 
 		await fileInput.setInputFiles(sampleSvg);
-		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
+		await page.locator('button:has-text("Export")').click();
+		await expect(page.getByRole('dialog', { name: 'Export dial' })).toBeVisible();
 
-		await page.locator('[aria-haspopup="menu"]').click();
+		await page.locator('button:has-text("Preview SVG")').click();
+
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			page.locator('button:has-text("Export")').last().click()
+		]);
+		expect(download.suggestedFilename()).toContain('.svg');
+	});
+
+	test('can select and export 3D STL with custom options', async ({ page }) => {
+		const fileInput = page.locator('input[type="file"]');
+		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
+
+		await fileInput.setInputFiles(sampleSvg);
+		await page.locator('button:has-text("Export")').click();
+		await expect(page.getByRole('dialog', { name: 'Export dial' })).toBeVisible();
+
 		await page.locator('button:has-text("3D STL")').click();
-
-		await expect(page.locator('text=STL Export Options')).toBeVisible();
 
 		await page.getByLabel('Disc thickness (mm)').fill('4');
 		await page.getByLabel('Mark thickness (mm)').fill('1');
 
-		const exportButton = page.locator('button:has-text("Download STL")');
-		await expect(exportButton).toBeEnabled();
-
-		const [download] = await Promise.all([page.waitForEvent('download'), exportButton.click()]);
-
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			page.locator('button:has-text("Export")').last().click()
+		]);
 		expect(download.suggestedFilename()).toContain('.stl');
-	});
-
-	test('can select Laser SVG from chevron dropdown', async ({ page }) => {
-		const fileInput = page.locator('input[type="file"]');
-		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
-
-		await fileInput.setInputFiles(sampleSvg);
-		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
-
-		await page.locator('[aria-haspopup="menu"]').click();
-		const svgMenuItem = page.getByRole('menuitem', { name: 'Laser SVG', exact: true });
-		await expect(svgMenuItem).toBeVisible();
-
-		const [download] = await Promise.all([page.waitForEvent('download'), svgMenuItem.click()]);
-		expect(download.suggestedFilename()).toContain('.svg');
-	});
-
-	test('can select Preview SVG from chevron dropdown', async ({ page }) => {
-		const fileInput = page.locator('input[type="file"]');
-		const sampleSvg = path.resolve(process.cwd(), 'tests/fixtures/three-paths.svg');
-
-		await fileInput.setInputFiles(sampleSvg);
-		await expect(page.locator('button:has-text("Export")')).toBeEnabled();
-
-		await page.locator('[aria-haspopup="menu"]').click();
-		const previewMenuItem = page.locator('button:has-text("Preview SVG")');
-		await expect(previewMenuItem).toBeVisible();
-
-		const [download] = await Promise.all([page.waitForEvent('download'), previewMenuItem.click()]);
-		expect(download.suggestedFilename()).toContain('.svg');
 	});
 });
