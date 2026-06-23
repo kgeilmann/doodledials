@@ -1,8 +1,8 @@
 # Disclaimer
 
-This repo is 98% AI generated using a weird mix of models, skills, and tools. 
+This repo is 98% AI generated using a weird mix of models, skills, and tools.
 
-It's just a fun little educational project I worked on, to get my hands dirty with AI and Vibe Coding. Therfor, don't judge the code or expect it to be "good" in any sense. 
+It's just a fun little educational project I worked on, to get my hands dirty with AI and Vibe Coding. Therfor, don't judge the code or expect it to be "good" in any sense.
 
 It works for me and hopefully it works for you.
 

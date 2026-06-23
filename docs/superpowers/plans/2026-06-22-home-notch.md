@@ -13,6 +13,7 @@
 ### Task 1: Add home notch to disc elements
 
 **Files:**
+
 - Modify: `src/lib/utils/doodledial.ts:93-130`
 
 - [ ] **Step 1: Add the home-notch polygon after the center-hole circle**
@@ -26,9 +27,9 @@ const r = (maxImageDimension * Math.SQRT2) / 2;
 
 discElements
 	.polygon([
-		[cx, cy - r + 4],        // tip — just inside disc edge
-		[cx - 3, cy - r + 10],   // bottom-left
-		[cx + 3, cy - r + 10]    // bottom-right
+		[cx, cy - r + 4], // tip — just inside disc edge
+		[cx - 3, cy - r + 10], // bottom-left
+		[cx + 3, cy - r + 10] // bottom-right
 	])
 	.fill('black')
 	.addClass('home-notch');
@@ -64,6 +65,7 @@ git commit -m "feat: add home-notch triangle to disc elements"
 ### Task 2: Add home-notch engrave class in laser export
 
 **Files:**
+
 - Modify: `src/lib/utils/laser-svg-export.ts:94-97` (after the `.nine-underscore` block)
 
 - [ ] **Step 1: Add `.home-notch` engrave mapping**

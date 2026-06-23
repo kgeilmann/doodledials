@@ -44,7 +44,8 @@ Added to the `disc-elements` group (same level as `#disc`, `#center-hole`, `.cen
 ```
 
 The three points of the triangle, in viewBox coordinates relative to disc center (cx, cy) and radius r:
-- Top point: (cx, cy - r + 4px)  — just inside the outer disc edge
+
+- Top point: (cx, cy - r + 4px) — just inside the outer disc edge
 - Bottom-left: (cx - 3, cy - r + 10px)
 - Bottom-right: (cx + 3, cy - r + 10px)
 
@@ -53,7 +54,9 @@ These absolute viewBox coordinates are the canonical size at max diameter. The n
 ### CSS class
 
 ```css
-.home-notch { pointer-events: none; }
+.home-notch {
+	pointer-events: none;
+}
 ```
 
 No interaction — purely visual.

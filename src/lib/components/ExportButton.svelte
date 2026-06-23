@@ -157,7 +157,7 @@
 			<p class="mt-1 text-sm text-gray-500">Choose format and options, then export.</p>
 
 			<div class="mt-4 flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
-				{#each formats as fmt}
+				{#each formats as fmt (fmt.value)}
 					<button
 						type="button"
 						onclick={() => (selectedFormat = fmt.value)}

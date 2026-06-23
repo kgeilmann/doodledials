@@ -13,6 +13,7 @@
 ### Task 1: Add `toggleGroupVisibility` and `isGroupVisible` to layer store
 
 **Files:**
+
 - Modify: `src/lib/stores/layers.svelte.ts` (after `toggleVisibility`)
 - Test: `src/lib/stores/layers.spec.ts` (after `toggleVisibility` tests)
 
@@ -118,7 +119,7 @@ return {
 	// ... existing exports ...
 	toggleVisibility,
 	toggleGroupVisibility,
-	isGroupVisible,
+	isGroupVisible
 	// ...
 };
 ```
@@ -140,6 +141,7 @@ git commit -m "feat: add toggleGroupVisibility and isGroupVisible to layer store
 ### Task 2: Proxy new functions through doodledial store
 
 **Files:**
+
 - Modify: `src/lib/stores/doodledial.svelte.ts`
 
 - [ ] **Step 1: Add proxy methods to `doodledialStore`**
@@ -172,6 +174,7 @@ git commit -m "feat: proxy toggleGroupVisibility through doodledial store"
 ### Task 3: Add eye icon to group headers in LayerList
 
 **Files:**
+
 - Modify: `src/lib/components/LayerList.svelte`
 
 - [ ] **Step 1: Add the eye icon to each group `<summary>`**
@@ -185,9 +188,7 @@ Replace the summary block from:
 	class="flex items-center justify-between px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 list-none select-none"
 >
 	<span class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-		<span
-			class="inline-block w-3 h-3 rounded-full shrink-0"
-			style="background: {group.color}"
+		<span class="inline-block w-3 h-3 rounded-full shrink-0" style="background: {group.color}"
 		></span>
 		{group.name}
 	</span>
@@ -202,9 +203,7 @@ To:
 	class="flex items-center justify-between px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 list-none select-none"
 >
 	<span class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-		<span
-			class="inline-block w-3 h-3 rounded-full shrink-0"
-			style="background: {group.color}"
+		<span class="inline-block w-3 h-3 rounded-full shrink-0" style="background: {group.color}"
 		></span>
 		{group.name}
 	</span>
@@ -263,12 +262,7 @@ To:
 			viewBox="0 0 24 24"
 			stroke="currentColor"
 		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M9 5l7 7-7 7"
-			/>
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 		</svg>
 	</span>
 </summary>

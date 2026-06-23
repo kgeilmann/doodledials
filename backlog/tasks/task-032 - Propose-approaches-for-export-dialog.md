@@ -12,5 +12,7 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
 Propose 2-3 approaches with trade-offs and recommendation for the export dialog design
+
 <!-- SECTION:DESCRIPTION:END -->

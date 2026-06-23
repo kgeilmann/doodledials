@@ -42,5 +42,11 @@ export default defineConfig(
 		rules: {
 			'svelte/no-at-html-tags': 'off'
 		}
+	},
+	{
+		files: ['**/*.cjs'],
+		rules: {
+			'@typescript-eslint/no-require-imports': 'off'
+		}
 	}
 );
