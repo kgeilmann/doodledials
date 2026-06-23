@@ -147,6 +147,37 @@ describe('export formats', () => {
 		expect(result).toBe(combined);
 	});
 
+	it('preview export produces multiple sub-dials when groups > 1', () => {
+		const { content } = buildExportFixture();
+		const layers = [
+			{ id: 'layer-1', name: 'Layer 1', index: 1, visible: true, rotation: 0, groupId: 'g1' },
+			{ id: 'layer-2', name: 'Layer 2', index: 2, visible: true, rotation: 0, groupId: 'g2' }
+		];
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+		const result = exportPreviewSvg('<svg xmlns="http://www.w3.org/2000/svg"></svg>', {
+			groups,
+			content,
+			config: SAMPLE_CONFIG,
+			layers
+		});
+
+		// Should contain two translate groups for two sub-dials
+		const translateMatches = result.match(/transform="translate\(/g);
+		expect(translateMatches).toHaveLength(2);
+
+		// Each sub-dial needs a dial circle
+		expect(result.match(/id="dial"/g)).toHaveLength(2);
+	});
+
+	it('preview export single group returns combined SVG as-is', () => {
+		const combined = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>';
+		const result = exportPreviewSvg(combined);
+		expect(result).toBe(combined);
+	});
+
 	it('STL export returns ASCII facets and changes with thickness', () => {
 		const { content, layers } = buildExportFixture();
 		const stlShort = exportStl(content, SAMPLE_CONFIG, layers, {
