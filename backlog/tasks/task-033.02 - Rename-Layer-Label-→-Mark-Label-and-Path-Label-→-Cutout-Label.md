@@ -1,9 +1,10 @@
 ---
 id: TASK-033.02
 title: Rename Layer Label → Mark Label and Path Label → Cutout Label
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-06-23 21:00'
+updated_date: '2026-06-23 21:19'
 labels: []
 dependencies: []
 parent_task_id: TASK-033
