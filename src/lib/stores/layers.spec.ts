@@ -153,60 +153,60 @@ describe('LayerStore', () => {
 	});
 
 	describe('label placement methods', () => {
-		it('setLayerLabelOffsetManual sets offset and mode to manual', () => {
+		it('setMarkLabelOffsetManual sets offset and mode to manual', () => {
 			store.addLayer('a', 1, 'A');
-			store.setLayerLabelOffsetManual('a', 10, 20);
-			const offset = store.getLayerLabelOffset('a');
+			store.setMarkLabelOffsetManual('a', 10, 20);
+			const offset = store.getMarkLabelOffset('a');
 			expect(offset).toEqual({ labelOffsetX: 10, labelOffsetY: 20 });
-			expect(store.getLayerLabelPlacementMode('a')).toBe('manual');
+			expect(store.getMarkLabelPlacementMode('a')).toBe('manual');
 		});
 
-		it('setLayerLabelOffsetAuto sets offset and mode to auto', () => {
+		it('setMarkLabelOffsetAuto sets offset and mode to auto', () => {
 			store.addLayer('a', 1, 'A');
-			store.setLayerLabelOffsetManual('a', 10, 20);
-			store.setLayerLabelOffsetAuto('a', 5, 5);
-			const offset = store.getLayerLabelOffset('a');
+			store.setMarkLabelOffsetManual('a', 10, 20);
+			store.setMarkLabelOffsetAuto('a', 5, 5);
+			const offset = store.getMarkLabelOffset('a');
 			expect(offset).toEqual({ labelOffsetX: 5, labelOffsetY: 5 });
-			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+			expect(store.getMarkLabelPlacementMode('a')).toBe('auto');
 		});
 
-		it('getLayerLabelOffset returns undefined for non-existent layer', () => {
-			expect(store.getLayerLabelOffset('ghost')).toBeUndefined();
+		it('getMarkLabelOffset returns undefined for non-existent layer', () => {
+			expect(store.getMarkLabelOffset('ghost')).toBeUndefined();
 		});
 
-		it('getLayerLabelOffset returns zeros when no offset set', () => {
+		it('getMarkLabelOffset returns zeros when no offset set', () => {
 			store.addLayer('a', 1, 'A');
-			expect(store.getLayerLabelOffset('a')).toEqual({ labelOffsetX: 0, labelOffsetY: 0 });
+			expect(store.getMarkLabelOffset('a')).toEqual({ labelOffsetX: 0, labelOffsetY: 0 });
 		});
 
-		it('getLayerLabelPlacementStatus returns placed as default', () => {
+		it('getMarkLabelPlacementStatus returns placed as default', () => {
 			store.addLayer('a', 1, 'A');
-			expect(store.getLayerLabelPlacementStatus('a')).toEqual({ status: 'placed' });
+			expect(store.getMarkLabelPlacementStatus('a')).toEqual({ status: 'placed' });
 		});
 
-		it('setLayerLabelPlacementStatus updates status', () => {
+		it('setMarkLabelPlacementStatus updates status', () => {
 			store.addLayer('a', 1, 'A');
-			store.setLayerLabelPlacementStatus('a', {
+			store.setMarkLabelPlacementStatus('a', {
 				status: 'error',
 				reason: 'no-valid-position-within-radius'
 			});
-			expect(store.getLayerLabelPlacementStatus('a')).toEqual({
+			expect(store.getMarkLabelPlacementStatus('a')).toEqual({
 				status: 'error',
 				reason: 'no-valid-position-within-radius'
 			});
 		});
 
-		it('resetLayerLabelPlacementMode resets mode to auto', () => {
+		it('resetMarkLabelPlacementMode resets mode to auto', () => {
 			store.addLayer('a', 1, 'A');
-			store.setLayerLabelOffsetManual('a', 10, 20);
-			expect(store.getLayerLabelPlacementMode('a')).toBe('manual');
-			store.resetLayerLabelPlacementMode('a');
-			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+			store.setMarkLabelOffsetManual('a', 10, 20);
+			expect(store.getMarkLabelPlacementMode('a')).toBe('manual');
+			store.resetMarkLabelPlacementMode('a');
+			expect(store.getMarkLabelPlacementMode('a')).toBe('auto');
 		});
 
-		it('getLayerLabelPlacementMode returns auto as default', () => {
+		it('getMarkLabelPlacementMode returns auto as default', () => {
 			store.addLayer('a', 1, 'A');
-			expect(store.getLayerLabelPlacementMode('a')).toBe('auto');
+			expect(store.getMarkLabelPlacementMode('a')).toBe('auto');
 		});
 	});
 
@@ -245,12 +245,12 @@ describe('LayerStore', () => {
 			expect(onChange).toHaveBeenCalledTimes(1);
 		});
 
-		it('calls onChange on setLayerLabelOffsetManual', () => {
+		it('calls onChange on setMarkLabelOffsetManual', () => {
 			const onChange = vi.fn();
 			store = createLayerStore({ onChange });
 			store.addLayer('a', 1, 'A');
 			onChange.mockClear();
-			store.setLayerLabelOffsetManual('a', 10, 20);
+			store.setMarkLabelOffsetManual('a', 10, 20);
 			expect(onChange).toHaveBeenCalledTimes(1);
 		});
 
@@ -307,9 +307,9 @@ describe('LayerStore', () => {
 			store.addLayer('b', 2, 'B');
 			onChange.mockClear();
 			store.getLayer('a');
-			store.getLayerLabelOffset('a');
-			store.getLayerLabelPlacementMode('a');
-			store.getLayerLabelPlacementStatus('a');
+			store.getMarkLabelOffset('a');
+			store.getMarkLabelPlacementMode('a');
+			store.getMarkLabelPlacementStatus('a');
 			expect(onChange).not.toHaveBeenCalled();
 		});
 
@@ -409,9 +409,9 @@ describe('LayerStore', () => {
 		});
 
 		it('addGroup adds a group', () => {
-			store.addGroup('group-1', 'Disc 1');
+			store.addGroup('group-1', 'Dial 1');
 			expect(store.groups).toHaveLength(1);
-			expect(store.groups[0]).toEqual({ id: 'group-1', name: 'Disc 1', color: '#e6194b' });
+			expect(store.groups[0]).toEqual({ id: 'group-1', name: 'Dial 1', color: '#e6194b' });
 		});
 
 		it('getGroup returns a group by id', () => {
@@ -443,7 +443,7 @@ describe('LayerStore', () => {
 		});
 
 		it('addLayer stores groupId on the layer', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('layer-1', 1, 'Layer 1', 'g1');
 			expect(store.getLayer('layer-1')!.groupId).toBe('g1');
 		});
@@ -451,7 +451,7 @@ describe('LayerStore', () => {
 
 	describe('toggleGroupVisibility', () => {
 		it('hides all layers in a group when any are visible', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('a', 1, 'A', 'g1');
 			store.addLayer('b', 2, 'B', 'g1');
 			store.toggleGroupVisibility('g1');
@@ -460,7 +460,7 @@ describe('LayerStore', () => {
 		});
 
 		it('shows all layers in a group when all are hidden', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('a', 1, 'A', 'g1');
 			store.addLayer('b', 2, 'B', 'g1');
 			store.toggleVisibility('a');
@@ -471,8 +471,8 @@ describe('LayerStore', () => {
 		});
 
 		it('does not affect layers in other groups', () => {
-			store.addGroup('g1', 'Disc 1');
-			store.addGroup('g2', 'Disc 2');
+			store.addGroup('g1', 'Dial 1');
+			store.addGroup('g2', 'Dial 2');
 			store.addLayer('a', 1, 'A', 'g1');
 			store.addLayer('b', 2, 'B', 'g2');
 			store.toggleGroupVisibility('g1');
@@ -482,7 +482,7 @@ describe('LayerStore', () => {
 		it('calls onChange', () => {
 			const onChange = vi.fn();
 			store = createLayerStore({ onChange });
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('a', 1, 'A', 'g1');
 			onChange.mockClear();
 			store.toggleGroupVisibility('g1');
@@ -502,7 +502,7 @@ describe('LayerStore', () => {
 
 	describe('isGroupVisible', () => {
 		it('returns true when at least one layer in group is visible', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('a', 1, 'A', 'g1');
 			store.addLayer('b', 2, 'B', 'g1');
 			store.toggleVisibility('a');
@@ -510,7 +510,7 @@ describe('LayerStore', () => {
 		});
 
 		it('returns false when all layers in group are hidden', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			store.addLayer('a', 1, 'A', 'g1');
 			store.addLayer('b', 2, 'B', 'g1');
 			store.toggleVisibility('a');
@@ -519,7 +519,7 @@ describe('LayerStore', () => {
 		});
 
 		it('returns false for empty group', () => {
-			store.addGroup('g1', 'Disc 1');
+			store.addGroup('g1', 'Dial 1');
 			expect(store.isGroupVisible('g1')).toBe(false);
 		});
 	});

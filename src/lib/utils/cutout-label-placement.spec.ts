@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Obb, Segment } from './label-geometry';
-import { solvePathLabelPlacements } from './path-label-placement';
+import { solveCutoutLabelPlacements } from './cutout-label-placement';
 import { detectCutoutLabelOverlapPixels } from './overlap-detection';
 
 vi.mock('./overlap-detection', () => ({
 	detectCutoutLabelOverlapPixels: vi.fn(async () => 0)
 }));
 
-type SolveInput = Parameters<typeof solvePathLabelPlacements>[0];
+type SolveInput = Parameters<typeof solveCutoutLabelPlacements>[0];
 
 const baseInput: SolveInput = {
 	combinedSvg:
@@ -60,14 +60,14 @@ function createAxisAlignedObb(cx: number, cy: number, width: number, height: num
 	};
 }
 
-describe('solvePathLabelPlacements', () => {
+describe('solveCutoutLabelPlacements', () => {
 	beforeEach(() => {
 		vi.mocked(detectCutoutLabelOverlapPixels).mockClear();
 		vi.mocked(detectCutoutLabelOverlapPixels).mockResolvedValue(0);
 	});
 
 	it('places auto labels in deterministic layer order', async () => {
-		const result = await solvePathLabelPlacements(baseInput);
+		const result = await solveCutoutLabelPlacements(baseInput);
 
 		expect(Object.keys(result.byLayerId)).toEqual(['layer-1', 'layer-2', 'layer-3']);
 		expect(result.byLayerId['layer-1'].status).toEqual({ status: 'placed' });
@@ -78,7 +78,7 @@ describe('solvePathLabelPlacements', () => {
 	it('uses ring-based candidates and finds the next ring when center candidate is blocked', async () => {
 		const markLines: Segment[] = [{ x1: 19, y1: 19, x2: 21, y2: 21 }];
 
-		const result = await solvePathLabelPlacements({
+		const result = await solveCutoutLabelPlacements({
 			...baseInput,
 			layers: [baseInput.layers[0]],
 			pathAnchors: { 'layer-1': { x: 20, y: 20 } },
@@ -95,7 +95,7 @@ describe('solvePathLabelPlacements', () => {
 	});
 
 	it('short-circuits before raster check when candidate fails an earlier check', async () => {
-		const result = await solvePathLabelPlacements({
+		const result = await solveCutoutLabelPlacements({
 			...baseInput,
 			layers: [baseInput.layers[0]],
 			pathAnchors: { 'layer-1': { x: 20, y: 20 } },
@@ -113,7 +113,7 @@ describe('solvePathLabelPlacements', () => {
 	it('returns error when no candidate exists within max radius', async () => {
 		vi.mocked(detectCutoutLabelOverlapPixels).mockResolvedValue(1);
 
-		const result = await solvePathLabelPlacements({
+		const result = await solveCutoutLabelPlacements({
 			...baseInput,
 			layers: [baseInput.layers[0]],
 			pathAnchors: { 'layer-1': { x: 100, y: 100 } },

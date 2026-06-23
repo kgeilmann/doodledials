@@ -5,13 +5,13 @@
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import LayerList from '$lib/components/LayerList.svelte';
 	import GlobalConfigDialog from '$lib/components/GlobalConfigDialog.svelte';
-	import OptimizerProgressOverlay from '$lib/components/OptimizerProgressOverlay.svelte';
-	import OptimizerConfigDialog from '$lib/components/OptimizerConfigDialog.svelte';
+	import SolverProgressOverlay from '$lib/components/SolverProgressOverlay.svelte';
+	import SolverConfigDialog from '$lib/components/SolverConfigDialog.svelte';
 	import BruteforceResultDialog from '$lib/components/BruteforceResultDialog.svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 
 	let globalConfigDialogOpen = $state(false);
 	let uploadOpen = $state(true);
@@ -73,7 +73,7 @@
 			{/if}
 		</CollapsibleCard>
 
-		<CollapsibleCard title="Disc Settings" bind:open={settingsOpen}>
+		<CollapsibleCard title="Dial Settings" bind:open={settingsOpen}>
 			{#snippet icon()}
 				<div class="p-2 bg-indigo-100 rounded-lg">
 					<svg
@@ -124,10 +124,10 @@
 		<div class="flex justify-end p-4 gap-3">
 			<button
 				onclick={() =>
-					optimizerStore.handleOpenOptimizerDialog(
-						globalConfig.forceDirectedOptimizerEnabled ? 'force-directed' : 'bruteforce'
+					solverStore.handleOpenSolverDialog(
+						globalConfig.forceDirectedSolverEnabled ? 'force-directed' : 'bruteforce'
 					)}
-				disabled={!doodledialStore.svgContent || optimizerStore.optimizerPending}
+				disabled={!doodledialStore.svgContent || solverStore.solverPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>
 				<svg
@@ -140,12 +140,12 @@
 				>
 					<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
 				</svg>
-				<span>{optimizerStore.optimizerPending ? 'Running Optimizer...' : 'Run Optimizer'}</span>
+				<span>{solverStore.solverPending ? 'Running Solver...' : 'Run Solver'}</span>
 			</button>
 
 			<button
 				onclick={() => (globalConfigDialogOpen = true)}
-				disabled={optimizerStore.optimizerPending}
+				disabled={solverStore.solverPending}
 				class="px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
 				aria-label="Open global settings"
 				data-testid="global-config-gear-button"
@@ -178,11 +178,11 @@
 				<div class="h-full flex items-center justify-center">
 					<DialPreview />
 				</div>
-				<OptimizerProgressOverlay />
+				<SolverProgressOverlay />
 			</div>
 		</div>
 	</div>
-	<OptimizerConfigDialog />
+	<SolverConfigDialog />
 	<BruteforceResultDialog />
 	<GlobalConfigDialog bind:open={globalConfigDialogOpen} />
 </main>

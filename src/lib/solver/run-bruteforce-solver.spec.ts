@@ -1,40 +1,37 @@
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const {
-	createOptimizerSvgTemplateMock,
-	combineOptimizerSvgTemplateMock,
-	detectPairOverlapPixelsMock
-} = vi.hoisted(() => ({
-	createOptimizerSvgTemplateMock: vi.fn(
-		(_content: SVGContent, _config: DialConfig, layers: { id: string; groupId: string }[]) => ({
-			rawTemplate: 'template',
-			layerIds: layers.map((l) => l.id)
-		})
-	),
-	combineOptimizerSvgTemplateMock: vi.fn(
-		(
-			_template: { rawTemplate: string; layerIds: string[] },
-			rotationsByLayerId: Record<string, number>
-		) => JSON.stringify(rotationsByLayerId)
-	),
-	detectPairOverlapPixelsMock: vi.fn(
-		async ({
-			firstLayer,
-			secondLayer
-		}: {
-			firstLayer: Layer;
-			secondLayer: Layer;
-			pairCacheMode?: 'relative';
-			cache?: unknown;
-			combinedSvg: string;
-		}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
-	)
-}));
+const { createSolverSvgTemplateMock, combineSolverSvgTemplateMock, detectPairOverlapPixelsMock } =
+	vi.hoisted(() => ({
+		createSolverSvgTemplateMock: vi.fn(
+			(_content: SVGContent, _config: DialConfig, layers: { id: string; groupId: string }[]) => ({
+				rawTemplate: 'template',
+				layerIds: layers.map((l) => l.id)
+			})
+		),
+		combineSolverSvgTemplateMock: vi.fn(
+			(
+				_template: { rawTemplate: string; layerIds: string[] },
+				rotationsByLayerId: Record<string, number>
+			) => JSON.stringify(rotationsByLayerId)
+		),
+		detectPairOverlapPixelsMock: vi.fn(
+			async ({
+				firstLayer,
+				secondLayer
+			}: {
+				firstLayer: Layer;
+				secondLayer: Layer;
+				pairCacheMode?: 'relative';
+				cache?: unknown;
+				combinedSvg: string;
+			}): Promise<number> => (firstLayer.rotation === secondLayer.rotation ? 3 : 0)
+		)
+	}));
 
 vi.mock('$lib/utils/doodledial', () => ({
-	createOptimizerSvgTemplate: createOptimizerSvgTemplateMock,
-	combineOptimizerSvgTemplate: combineOptimizerSvgTemplateMock
+	createSolverSvgTemplate: createSolverSvgTemplateMock,
+	combineSolverSvgTemplate: combineSolverSvgTemplateMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
@@ -46,13 +43,13 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 }));
 
 import {
-	BruteforceOptimizerCancelledError,
+	BruteforceSolverCancelledError,
 	addToTopLayouts,
 	calculateAssignedMinGapUpperBound,
 	layoutDistance,
-	runBruteforceOptimizer,
+	runBruteforceSolver,
 	seededShuffle
-} from './run-bruteforce-optimizer';
+} from './run-bruteforce-solver';
 
 function buildInput(layers: Layer[]) {
 	return {
@@ -68,8 +65,8 @@ function buildInput(layers: Layer[]) {
 			scale: 1,
 			sizeToFit: true,
 			centerHoleDiameter: 2,
-			centerMarkType: 'hole',
-			pathLabelFontSize: 10,
+			centerStyle: 'hole',
+			cutoutLabelFontSize: 10,
 			titleFontFamily: 'sans-serif'
 		} as const,
 		layers,
@@ -157,7 +154,7 @@ describe('seededShuffle', () => {
 	});
 });
 
-describe('runBruteforceOptimizer', () => {
+describe('runBruteforceSolver', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		detectPairOverlapPixelsMock.mockImplementation(
@@ -169,8 +166,8 @@ describe('runBruteforceOptimizer', () => {
 	test('returns deterministic layout for the same input', async () => {
 		const input = buildInput(twoLayers());
 
-		const first = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
-		const second = await runBruteforceOptimizer(input, undefined, { roundOutputAngles: false });
+		const first = await runBruteforceSolver(input, undefined, { roundOutputAngles: false });
+		const second = await runBruteforceSolver(input, undefined, { roundOutputAngles: false });
 
 		expect(second.layout).toEqual(first.layout);
 	});
@@ -180,14 +177,14 @@ describe('runBruteforceOptimizer', () => {
 		controller.abort();
 
 		await expect(
-			runBruteforceOptimizer(buildInput(twoLayers()), undefined, { signal: controller.signal })
-		).rejects.toBeInstanceOf(BruteforceOptimizerCancelledError);
+			runBruteforceSolver(buildInput(twoLayers()), undefined, { signal: controller.signal })
+		).rejects.toBeInstanceOf(BruteforceSolverCancelledError);
 	});
 
 	test('reports time_limit through search snapshot callback', async () => {
 		const snapshots: Array<string | undefined> = [];
 
-		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		const result = await runBruteforceSolver(buildInput(threeLayers()), undefined, {
 			maxRuntimeMs: 0,
 			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
 		});
@@ -199,7 +196,7 @@ describe('runBruteforceOptimizer', () => {
 	test('reports exact_complete through search snapshot callback on successful search', async () => {
 		const snapshots: Array<string | undefined> = [];
 
-		const result = await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
+		const result = await runBruteforceSolver(buildInput(twoLayers()), undefined, {
 			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
 		});
 
@@ -210,7 +207,7 @@ describe('runBruteforceOptimizer', () => {
 	test('emits progress messages containing Solutions found', async () => {
 		const progressMessages: string[] = [];
 
-		await runBruteforceOptimizer(
+		await runBruteforceSolver(
 			buildInput(twoLayers()),
 			(progress) => {
 				progressMessages.push(progress.message);
@@ -222,7 +219,7 @@ describe('runBruteforceOptimizer', () => {
 	});
 
 	test('returns integer angles by default', async () => {
-		const result = await runBruteforceOptimizer(buildInput(twoLayers()));
+		const result = await runBruteforceSolver(buildInput(twoLayers()));
 
 		for (const angle of Object.values(result.layout)) {
 			expect(Number.isInteger(angle)).toBe(true);
@@ -232,7 +229,7 @@ describe('runBruteforceOptimizer', () => {
 	});
 
 	test('keeps custom anchorLayerId fixed at zero in output layout', async () => {
-		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		const result = await runBruteforceSolver(buildInput(threeLayers()), undefined, {
 			anchorLayerId: 'layerB',
 			roundOutputAngles: false
 		});
@@ -242,11 +239,11 @@ describe('runBruteforceOptimizer', () => {
 
 	test('produces different results with different search seeds', async () => {
 		const input = buildInput(threeLayers());
-		const first = await runBruteforceOptimizer(input, undefined, {
+		const first = await runBruteforceSolver(input, undefined, {
 			roundOutputAngles: false,
 			maxRuntimeMs: 100
 		});
-		const second = await runBruteforceOptimizer(input, undefined, {
+		const second = await runBruteforceSolver(input, undefined, {
 			roundOutputAngles: false,
 			maxRuntimeMs: 100,
 			searchSeed: 99999
@@ -257,7 +254,7 @@ describe('runBruteforceOptimizer', () => {
 	});
 
 	test('returns a feasible layout with unique angles across all layers', async () => {
-		const result = await runBruteforceOptimizer(buildInput(threeLayers()), undefined, {
+		const result = await runBruteforceSolver(buildInput(threeLayers()), undefined, {
 			roundOutputAngles: false
 		});
 
@@ -265,18 +262,18 @@ describe('runBruteforceOptimizer', () => {
 		expect(new Set(layoutAngles).size).toBe(layoutAngles.length);
 	});
 
-	test('creates optimizer svg template once and combines via template replacement', async () => {
-		await runBruteforceOptimizer(buildInput(twoLayers()));
+	test('creates solver svg template once and combines via template replacement', async () => {
+		await runBruteforceSolver(buildInput(twoLayers()));
 
-		expect(createOptimizerSvgTemplateMock).toHaveBeenCalledTimes(1);
-		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
+		expect(createSolverSvgTemplateMock).toHaveBeenCalledTimes(1);
+		expect(combineSolverSvgTemplateMock).toHaveBeenCalled();
 	});
 
 	test('reports no_feasible_solution when threshold cannot be satisfied', async () => {
 		detectPairOverlapPixelsMock.mockImplementation(async () => 5);
 
 		const snapshots: Array<string | undefined> = [];
-		const result = await runBruteforceOptimizer(buildInput(twoLayers()), undefined, {
+		const result = await runBruteforceSolver(buildInput(twoLayers()), undefined, {
 			onSearchSnapshot: (snapshot) => snapshots.push(snapshot.stopReason)
 		});
 

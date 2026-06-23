@@ -4,21 +4,21 @@ import { createDoodledialStore, doodledialStore } from './doodledial.svelte';
 describe('doodledial store auto-placement trigger scheduler', () => {
 	function createStoreWithMockConfig() {
 		const mockConfig = {
-			pathLabelOptimizerEnabled: true,
+			autoLabelPlacementEnabled: true,
 			diameter: 100,
 			save: vi.fn(),
 			open: vi.fn(),
 			close: vi.fn(),
 			reset: vi.fn(),
 			centerHoleDiameter: 0.5,
-			forceDirectedOptimizerEnabled: false,
-			optimizerGapDefault: 3,
+			forceDirectedSolverEnabled: false,
+			solverGapDefault: 3,
 			bruteforceTimeLimit: 120,
 			defaultExportFormat: 'laser-svg' as const,
 			dialogOpen: false,
 			titleFontFamily: 'sans-serif',
-			pathLabelFontSize: 10,
-			discTitleFontSize: 12
+			cutoutLabelFontSize: 10,
+			dialTitleFontSize: 12
 		};
 		const store = createDoodledialStore({ globalConfig: mockConfig });
 		store.addLayer('layer-1', 1, 'Layer 1');
@@ -93,42 +93,42 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 	});
 });
 
-describe('disc title', () => {
+describe('dial title', () => {
 	beforeEach(() => {
 		doodledialStore.reset();
 	});
 
 	it('defaults to empty title', () => {
-		expect(doodledialStore.discTitle).toBe('');
-		expect(doodledialStore.discTitleX).toBe(100);
-		expect(doodledialStore.discTitleY).toBe(20);
-		expect(doodledialStore.discTitleFontSize).toBe(12);
+		expect(doodledialStore.dialTitle).toBe('');
+		expect(doodledialStore.dialTitleX).toBe(100);
+		expect(doodledialStore.dialTitleY).toBe(20);
+		expect(doodledialStore.dialTitleFontSize).toBe(12);
 	});
 
-	it('setDiscTitle updates title text', () => {
-		doodledialStore.setDiscTitle('My Dial');
-		expect(doodledialStore.discTitle).toBe('My Dial');
+	it('setDialTitle updates title text', () => {
+		doodledialStore.setDialTitle('My Dial');
+		expect(doodledialStore.dialTitle).toBe('My Dial');
 	});
 
-	it('setDiscTitlePosition updates coordinates', () => {
-		doodledialStore.setDiscTitlePosition(150, 50);
-		expect(doodledialStore.discTitleX).toBe(150);
-		expect(doodledialStore.discTitleY).toBe(50);
+	it('setDialTitlePosition updates coordinates', () => {
+		doodledialStore.setDialTitlePosition(150, 50);
+		expect(doodledialStore.dialTitleX).toBe(150);
+		expect(doodledialStore.dialTitleY).toBe(50);
 	});
 
-	it('setDiscTitleFontSize updates font size', () => {
-		doodledialStore.setDiscTitleFontSize(18);
-		expect(doodledialStore.discTitleFontSize).toBe(18);
+	it('setDialTitleFontSize updates font size', () => {
+		doodledialStore.setDialTitleFontSize(18);
+		expect(doodledialStore.dialTitleFontSize).toBe(18);
 	});
 
 	it('reset clears title to defaults', () => {
-		doodledialStore.setDiscTitle('My Dial');
-		doodledialStore.setDiscTitlePosition(150, 50);
-		doodledialStore.setDiscTitleFontSize(18);
+		doodledialStore.setDialTitle('My Dial');
+		doodledialStore.setDialTitlePosition(150, 50);
+		doodledialStore.setDialTitleFontSize(18);
 		doodledialStore.reset();
-		expect(doodledialStore.discTitle).toBe('');
-		expect(doodledialStore.discTitleX).toBe(100);
-		expect(doodledialStore.discTitleY).toBe(20);
-		expect(doodledialStore.discTitleFontSize).toBe(12);
+		expect(doodledialStore.dialTitle).toBe('');
+		expect(doodledialStore.dialTitleX).toBe(100);
+		expect(doodledialStore.dialTitleY).toBe(20);
+		expect(doodledialStore.dialTitleFontSize).toBe(12);
 	});
 });

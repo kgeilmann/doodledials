@@ -1,25 +1,25 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 	import RotationKnob from './RotationKnob.svelte';
 
 	function handleToggle(layerId: string) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		doodledialStore.toggleVisibility(layerId);
 	}
 
 	function handleShowAll() {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		doodledialStore.showAllLayers();
 	}
 
 	function handleHideAll() {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		doodledialStore.hideAllLayers();
 	}
 
 	function handleSelect(layerId: string) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		if (currentSelected === layerId) {
 			doodledialStore.setSelectedLayer(null);
@@ -29,18 +29,18 @@
 	}
 
 	function handleMouseEnter(layerId: string) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		doodledialStore.setHighlightedLayer(layerId);
 	}
 
 	function handleMouseLeave() {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		const currentSelected = doodledialStore.selectedLayer;
 		doodledialStore.setHighlightedLayer(currentSelected || null);
 	}
 
 	function handleRotationChange(layerId: string, rotation: number) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		doodledialStore.setLayerRotation(layerId, rotation);
 	}
 
@@ -94,8 +94,8 @@
 				<button
 					type="button"
 					onclick={() => doodledialStore.renumberLayersByAngle()}
-					disabled={optimizerStore.optimizerPending}
-					class="text-xs font-medium {optimizerStore.optimizerPending
+					disabled={solverStore.solverPending}
+					class="text-xs font-medium {solverStore.solverPending
 						? 'text-gray-400 cursor-not-allowed'
 						: 'text-indigo-600 hover:text-indigo-800'}"
 					title="Reorder layers by their rotation angle"
@@ -106,8 +106,8 @@
 				<button
 					type="button"
 					onclick={handleShowAll}
-					disabled={optimizerStore.optimizerPending}
-					class="text-xs font-medium {optimizerStore.optimizerPending
+					disabled={solverStore.solverPending}
+					class="text-xs font-medium {solverStore.solverPending
 						? 'text-gray-400 cursor-not-allowed'
 						: 'text-indigo-600 hover:text-indigo-800'}"
 				>
@@ -117,8 +117,8 @@
 				<button
 					type="button"
 					onclick={handleHideAll}
-					disabled={optimizerStore.optimizerPending}
-					class="text-xs font-medium {optimizerStore.optimizerPending
+					disabled={solverStore.solverPending}
+					class="text-xs font-medium {solverStore.solverPending
 						? 'text-gray-400 cursor-not-allowed'
 						: 'text-indigo-600 hover:text-indigo-800'}"
 				>
@@ -132,13 +132,13 @@
 				<ul class="divide-y divide-gray-100">
 					{#each doodledialStore.layers as layer (layer.id)}
 						<li
-							class="flex items-center justify-between px-3 py-2.5 transition-colors list-none {optimizerStore.optimizerPending
+							class="flex items-center justify-between px-3 py-2.5 transition-colors list-none {solverStore.solverPending
 								? 'opacity-60'
 								: 'cursor-pointer hover:bg-gray-50'} {doodledialStore.selectedLayer === layer.id
 								? 'bg-indigo-50 border-l-2 border-indigo-500'
 								: ''}"
 							role="menuitem"
-							tabindex={optimizerStore.optimizerPending ? -1 : 0}
+							tabindex={solverStore.solverPending ? -1 : 0}
 							onclick={() => handleSelect(layer.id)}
 							onkeydown={(e) => e.key === 'Enter' && handleSelect(layer.id)}
 							onmouseenter={() => handleMouseEnter(layer.id)}
@@ -165,7 +165,7 @@
 											{@html warningTriangleSvg}
 										</span>
 									{/if}
-									{#if doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+									{#if doodledialStore.getMarkLabelPlacementStatus(layer.id).status === 'error'}
 										<span
 											class="inline-flex items-center gap-1 text-xs text-rose-600 ml-1"
 											data-label-placement-error={layer.id}
@@ -187,18 +187,18 @@
 									{/if}
 								</span>
 								<div class="flex items-center gap-2 shrink-0">
-									{#if doodledialStore.autoPathLabelPlacementEnabled && doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+									{#if doodledialStore.autoLabelPlacementEnabled && doodledialStore.getMarkLabelPlacementStatus(layer.id).status === 'error'}
 										<button
 											type="button"
 											data-reset-label-auto={layer.id}
 											onclick={(e) => {
-												if (optimizerStore.optimizerPending) return;
+												if (solverStore.solverPending) return;
 												e.stopPropagation();
-												doodledialStore.resetLayerLabelPlacementMode(layer.id);
-												void doodledialStore.requestLayerLabelAutoPlacement(layer.id);
+												doodledialStore.resetMarkLabelPlacementMode(layer.id);
+												void doodledialStore.requestMarkLabelAutoPlacement(layer.id);
 											}}
-											disabled={optimizerStore.optimizerPending}
-											class="text-xs px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed {optimizerStore.optimizerPending
+											disabled={solverStore.solverPending}
+											class="text-xs px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed {solverStore.solverPending
 												? 'bg-rose-50 text-rose-400'
 												: 'bg-rose-50 text-rose-700 hover:bg-rose-100'}"
 											title="Retry automatic label placement"
@@ -210,7 +210,7 @@
 										value={layer.rotation}
 										onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 										label="Rotate {layer.name}"
-										disabled={!layer.visible || optimizerStore.optimizerPending}
+										disabled={!layer.visible || solverStore.solverPending}
 									/>
 								</div>
 							</div>
@@ -220,8 +220,8 @@
 									e.stopPropagation();
 									handleToggle(layer.id);
 								}}
-								disabled={optimizerStore.optimizerPending}
-								class="p-1 rounded transition-colors {optimizerStore.optimizerPending
+								disabled={solverStore.solverPending}
+								class="p-1 rounded transition-colors {solverStore.solverPending
 									? 'cursor-not-allowed opacity-50'
 									: 'hover:bg-gray-200'}"
 							>
@@ -290,8 +290,8 @@
 									type="button"
 									data-group-vis-toggle
 									onclick={() => doodledialStore.toggleGroupVisibility(group.id)}
-									disabled={optimizerStore.optimizerPending}
-									class="p-1 rounded transition-colors {optimizerStore.optimizerPending
+									disabled={solverStore.solverPending}
+									class="p-1 rounded transition-colors {solverStore.solverPending
 										? 'cursor-not-allowed opacity-50'
 										: 'hover:bg-gray-200'}"
 								>
@@ -350,13 +350,13 @@
 						<ul class="divide-y divide-gray-100">
 							{#each doodledialStore.layers.filter((l) => l.groupId === group.id) as layer (layer.id)}
 								<li
-									class="flex items-center justify-between pl-8 py-2.5 transition-colors list-none {optimizerStore.optimizerPending
+									class="flex items-center justify-between pl-8 py-2.5 transition-colors list-none {solverStore.solverPending
 										? 'opacity-60'
 										: 'cursor-pointer hover:bg-gray-50'} {doodledialStore.selectedLayer === layer.id
 										? 'bg-indigo-50 border-l-2 border-indigo-500'
 										: ''}"
 									role="menuitem"
-									tabindex={optimizerStore.optimizerPending ? -1 : 0}
+									tabindex={solverStore.solverPending ? -1 : 0}
 									onclick={() => handleSelect(layer.id)}
 									onkeydown={(e) => e.key === 'Enter' && handleSelect(layer.id)}
 									onmouseenter={() => handleMouseEnter(layer.id)}
@@ -383,7 +383,7 @@
 													{@html warningTriangleSvg}
 												</span>
 											{/if}
-											{#if doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+											{#if doodledialStore.getMarkLabelPlacementStatus(layer.id).status === 'error'}
 												<span
 													class="inline-flex items-center gap-1 text-xs text-rose-600 ml-1"
 													data-label-placement-error={layer.id}
@@ -405,18 +405,18 @@
 											{/if}
 										</span>
 										<div class="flex items-center gap-2 shrink-0">
-											{#if doodledialStore.autoPathLabelPlacementEnabled && doodledialStore.getLayerLabelPlacementStatus(layer.id).status === 'error'}
+											{#if doodledialStore.autoLabelPlacementEnabled && doodledialStore.getMarkLabelPlacementStatus(layer.id).status === 'error'}
 												<button
 													type="button"
 													data-reset-label-auto={layer.id}
 													onclick={(e) => {
-														if (optimizerStore.optimizerPending) return;
+														if (solverStore.solverPending) return;
 														e.stopPropagation();
-														doodledialStore.resetLayerLabelPlacementMode(layer.id);
-														void doodledialStore.requestLayerLabelAutoPlacement(layer.id);
+														doodledialStore.resetMarkLabelPlacementMode(layer.id);
+														void doodledialStore.requestMarkLabelAutoPlacement(layer.id);
 													}}
-													disabled={optimizerStore.optimizerPending}
-													class="text-xs px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed {optimizerStore.optimizerPending
+													disabled={solverStore.solverPending}
+													class="text-xs px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed {solverStore.solverPending
 														? 'bg-rose-50 text-rose-400'
 														: 'bg-rose-50 text-rose-700 hover:bg-rose-100'}"
 													title="Retry automatic label placement"
@@ -428,7 +428,7 @@
 												value={layer.rotation}
 												onchange={(rotation) => handleRotationChange(layer.id, rotation)}
 												label="Rotate {layer.name}"
-												disabled={!layer.visible || optimizerStore.optimizerPending}
+												disabled={!layer.visible || solverStore.solverPending}
 											/>
 										</div>
 									</div>
@@ -438,8 +438,8 @@
 											e.stopPropagation();
 											handleToggle(layer.id);
 										}}
-										disabled={optimizerStore.optimizerPending}
-										class="p-1 rounded transition-colors {optimizerStore.optimizerPending
+										disabled={solverStore.solverPending}
+										class="p-1 rounded transition-colors {solverStore.solverPending
 											? 'cursor-not-allowed opacity-50'
 											: 'hover:bg-gray-200'}"
 									>

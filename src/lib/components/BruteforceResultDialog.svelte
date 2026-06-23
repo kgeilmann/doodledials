@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
-	import { scoreCircularGaps } from '$lib/optimizer/run-bruteforce-optimizer';
-	import { combineOptimizerSvgTemplate } from '$lib/utils/doodledial';
+	import { solverStore } from '$lib/stores/solver.svelte';
+	import { scoreCircularGaps } from '$lib/solver/run-bruteforce-solver';
+	import { combineSolverSvgTemplate } from '$lib/utils/doodledial';
 
 	function handleBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) {
-			optimizerStore.handleCloseBruteforceResultDialog();
+			solverStore.handleCloseBruteforceResultDialog();
 		}
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			optimizerStore.handleCloseBruteforceResultDialog();
+			solverStore.handleCloseBruteforceResultDialog();
 		}
 	}
 </script>
 
-{#if optimizerStore.bruteforceResultDialogOpen && optimizerStore.bruteforceRunSummary}
-	{@const summary = optimizerStore.bruteforceRunSummary}
+{#if solverStore.bruteforceResultDialogOpen && solverStore.bruteforceRunSummary}
+	{@const summary = solverStore.bruteforceRunSummary}
 	{@const hasLayouts = summary.feasibleSolutionsFound > 0}
 	{@const selectedLayout = hasLayouts
-		? optimizerStore.optimizerTopLayouts[optimizerStore.optimizerResultSelectedIndex]
+		? solverStore.solverTopLayouts[solverStore.solverResultSelectedIndex]
 		: null}
 	{@const scores = selectedLayout ? scoreCircularGaps(selectedLayout) : null}
 
@@ -61,12 +61,12 @@
 				<div class="flex flex-1 min-h-0">
 					<div class="w-64 shrink-0 p-4 border-r border-gray-100 overflow-y-auto">
 						<div class="grid grid-cols-2 gap-2">
-							{#each optimizerStore.optimizerThumbnailSvgs as thumbSvg, index (index)}
-								{@const isSelected = optimizerStore.optimizerResultSelectedIndex === index}
+							{#each solverStore.solverThumbnailSvgs as thumbSvg, index (index)}
+								{@const isSelected = solverStore.solverResultSelectedIndex === index}
 								<button
 									type="button"
 									onclick={() => {
-										optimizerStore.optimizerResultSelectedIndex = index;
+										solverStore.solverResultSelectedIndex = index;
 									}}
 									class="relative aspect-square rounded-lg border-2 overflow-hidden p-0.5 flex items-center justify-center transition-all duration-150 {isSelected
 										? 'border-indigo-500 ring-2 ring-indigo-200'
@@ -94,7 +94,7 @@
 					<div class="flex-1 flex flex-col p-4 min-w-0">
 						<div class="flex items-center justify-between mb-3">
 							<span class="text-sm font-medium text-gray-700">
-								Layout #{optimizerStore.optimizerResultSelectedIndex + 1}
+								Layout #{solverStore.solverResultSelectedIndex + 1}
 							</span>
 							{#if scores}
 								<div class="flex gap-3 text-xs text-gray-500">
@@ -115,9 +115,9 @@
 						<div
 							class="flex-1 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center min-h-[300px] overflow-hidden p-4"
 						>
-							{#if selectedLayout && optimizerStore.optimizerSvgTemplate}
-								{@const previewSvg = optimizerStore.fitSvg(
-									combineOptimizerSvgTemplate(optimizerStore.optimizerSvgTemplate, selectedLayout)
+							{#if selectedLayout && solverStore.solverSvgTemplate}
+								{@const previewSvg = solverStore.fitSvg(
+									combineSolverSvgTemplate(solverStore.solverSvgTemplate, selectedLayout)
 								)}
 								<div class="w-full h-full flex items-center justify-center">
 									{@html previewSvg}
@@ -142,7 +142,7 @@
 					<div class="flex items-center gap-3">
 						<button
 							type="button"
-							onclick={() => optimizerStore.handleContinueBruteforce()}
+							onclick={() => solverStore.handleContinueBruteforce()}
 							class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
 							data-testid="bruteforce-result-continue-button"
 						>
@@ -154,7 +154,7 @@
 								type="number"
 								min="1"
 								step="1"
-								bind:value={optimizerStore.bruteforceExtendRuntimeSInput}
+								bind:value={solverStore.bruteforceExtendRuntimeSInput}
 								class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
 							/>
 							<span>s</span>
@@ -166,7 +166,7 @@
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
-						onclick={() => optimizerStore.handleCloseBruteforceResultDialog()}
+						onclick={() => solverStore.handleCloseBruteforceResultDialog()}
 						class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
 					>
 						Cancel
@@ -174,7 +174,7 @@
 					{#if hasLayouts}
 						<button
 							type="button"
-							onclick={() => optimizerStore.handleApplyBruteforceLayout()}
+							onclick={() => solverStore.handleApplyBruteforceLayout()}
 							class="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-medium"
 							data-testid="bruteforce-result-accept-button"
 						>

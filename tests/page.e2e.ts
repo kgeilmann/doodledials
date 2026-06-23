@@ -34,7 +34,7 @@ test.describe('Doodle Dials', () => {
 		await expect(page.locator('text=Preview')).toBeVisible();
 	});
 
-	test('can select different disc sizes', async ({ page }) => {
+	test('can select different dial sizes', async ({ page }) => {
 		await page.locator('button:has-text("Small")').click();
 		await expect(page.locator('button:has-text("Small")')).toHaveClass(/active/);
 

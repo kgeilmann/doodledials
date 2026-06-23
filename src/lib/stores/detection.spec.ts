@@ -20,14 +20,14 @@ describe('DetectionStore', () => {
 	let store: ReturnType<typeof createDetectionStore>;
 	let getLayers: () => typeof testLayers;
 	let getCombinedSvg: () => string;
-	let getConfig: () => { optimizerGapMm: number; diameter: number };
+	let getConfig: () => { solverGapMm: number; diameter: number };
 	let onError: (error: string) => void;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		getLayers = () => testLayers;
 		getCombinedSvg = () => '<svg></svg>';
-		getConfig = () => ({ optimizerGapMm: 2, diameter: 200 });
+		getConfig = () => ({ solverGapMm: 2, diameter: 200 });
 		onError = vi.fn<(error: string) => void>();
 
 		store = createDetectionStore({
@@ -42,7 +42,7 @@ describe('DetectionStore', () => {
 		it('starts with empty overlap and gap maps', () => {
 			expect(store.overlaps.size).toBe(0);
 			expect(store.cutoutGaps.size).toBe(0);
-			expect(store.checkingOverlaps).toBe(false);
+			expect(store.isDetecting).toBe(false);
 		});
 	});
 
@@ -191,7 +191,7 @@ describe('DetectionStore', () => {
 		});
 	});
 
-	describe('checkingOverlaps state', () => {
+	describe('isDetecting state', () => {
 		it('is true during detection', async () => {
 			const { detectOverlaps } = await import('$lib/utils/overlap-detection');
 			let resolveOverlap: (v: Map<string, Map<string, number>>) => void;
@@ -203,11 +203,11 @@ describe('DetectionStore', () => {
 
 			const runPromise = store.runDetectionNow();
 
-			expect(store.checkingOverlaps).toBe(true);
+			expect(store.isDetecting).toBe(true);
 
 			resolveOverlap!(mockOverlapResult);
 			await runPromise;
-			expect(store.checkingOverlaps).toBe(false);
+			expect(store.isDetecting).toBe(false);
 		});
 	});
 
@@ -264,12 +264,12 @@ describe('DetectionStore', () => {
 			expect(onError).toHaveBeenCalledWith('Gap detection failed: Gap failed');
 		});
 
-		it('still clears checkingOverlaps on error', async () => {
+		it('still clears isDetecting on error', async () => {
 			const { detectOverlaps } = await import('$lib/utils/overlap-detection');
 			vi.mocked(detectOverlaps).mockRejectedValue(new Error('fail'));
 
 			await store.runDetectionNow();
-			expect(store.checkingOverlaps).toBe(false);
+			expect(store.isDetecting).toBe(false);
 		});
 	});
 

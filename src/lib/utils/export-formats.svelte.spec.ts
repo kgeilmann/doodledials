@@ -44,21 +44,21 @@ const SAMPLE_CONFIG: DialConfig = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 0.5,
-	centerMarkType: 'hole',
-	pathLabelFontSize: 10,
+	centerStyle: 'hole',
+	cutoutLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'
 };
 
 function getParsedGeometry(svg: string): {
 	viewBox: string;
-	discDiameter: number;
+	dialDiameter: number;
 	cutoutBox: { x: number; y: number; width: number; height: number };
 } {
 	const doc = SVG(svg) as Svg;
-	const disc = doc.findOne('#disc');
+	const dial = doc.findOne('#dial');
 	const cutout = doc.findOne('.cutout');
-	if (!disc || !cutout) {
-		throw new Error('Expected parsed SVG to contain disc and cutout');
+	if (!dial || !cutout) {
+		throw new Error('Expected parsed SVG to contain dial and cutout');
 	}
 
 	const transform = String(cutout.attr('transform') || '');
@@ -72,7 +72,7 @@ function getParsedGeometry(svg: string): {
 
 	return {
 		viewBox: doc.attr('viewBox') as string,
-		discDiameter: Number(disc.attr('r')) * 2,
+		dialDiameter: Number(dial.attr('r')) * 2,
 		cutoutBox: {
 			x: cutoutBox.x * a + e,
 			y: cutoutBox.y * d + f,
@@ -95,7 +95,7 @@ describe('export formats', () => {
 		const largeGeometry = getParsedGeometry(parseSvgPaths(largeSource).updatedSvg);
 
 		expect(smallGeometry.viewBox).toBe(largeGeometry.viewBox);
-		expect(smallGeometry.discDiameter).toBeCloseTo(largeGeometry.discDiameter, 6);
+		expect(smallGeometry.dialDiameter).toBeCloseTo(largeGeometry.dialDiameter, 6);
 		expect(smallGeometry.cutoutBox.x).toBeCloseTo(largeGeometry.cutoutBox.x, 6);
 		expect(smallGeometry.cutoutBox.y).toBeCloseTo(largeGeometry.cutoutBox.y, 6);
 		expect(smallGeometry.cutoutBox.width).toBeCloseTo(largeGeometry.cutoutBox.width, 6);
@@ -113,16 +113,16 @@ describe('export formats', () => {
 		expect(shapes.length).toBeGreaterThan(0);
 	});
 
-	it('laser export includes disc title when set', () => {
+	it('laser export includes dial title when set', () => {
 		const { content, layers } = buildExportFixture();
 		const combined = combineDoodledial(content, SAMPLE_CONFIG, layers, null, null, {
-			discTitle: 'Test Disc',
-			discTitleX: 100,
-			discTitleY: 30,
-			discTitleFontSize: 14
+			dialTitle: 'Test Dial',
+			dialTitleX: 100,
+			dialTitleY: 30,
+			dialTitleFontSize: 14
 		});
-		expect(combined).toContain('Test Disc');
-		expect(combined).toContain('disc-title');
+		expect(combined).toContain('Test Dial');
+		expect(combined).toContain('dial-title');
 	});
 
 	it('laser export keeps text and marks operations', () => {
@@ -149,11 +149,11 @@ describe('export formats', () => {
 	it('STL export returns ASCII facets and changes with thickness', () => {
 		const { content, layers } = buildExportFixture();
 		const stlShort = exportStl(content, SAMPLE_CONFIG, layers, {
-			discThicknessMm: 2,
+			dialThicknessMm: 2,
 			markThicknessMm: 0.5
 		});
 		const stlTall = exportStl(content, SAMPLE_CONFIG, layers, {
-			discThicknessMm: 4,
+			dialThicknessMm: 4,
 			markThicknessMm: 1
 		});
 

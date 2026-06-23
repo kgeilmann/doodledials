@@ -7,13 +7,13 @@ import { MM_TO_PX } from './constants';
 import { labelToThreeShapes } from './export-label-glyphs';
 
 export interface StlExportOptions {
-	discThicknessMm?: number;
+	dialThicknessMm?: number;
 	markThicknessMm?: number;
 	sampleStepPx?: number;
-	discTitle?: string;
-	discTitleX?: number;
-	discTitleY?: number;
-	discTitleFontSize?: number;
+	dialTitle?: string;
+	dialTitleX?: number;
+	dialTitleY?: number;
+	dialTitleFontSize?: number;
 	raised?: boolean;
 }
 
@@ -217,7 +217,7 @@ function getLineAttribute(element: Path | Text, attributeName: 'x1' | 'y1' | 'x2
 	return typeof value === 'number' ? value : Number.parseFloat(String(value ?? 0));
 }
 
-function createDiscShape(
+function createDialShape(
 	radiusMm: number,
 	holePolygons: THREE.Vector2[][],
 	circularHolesMm: number[] = []
@@ -279,7 +279,7 @@ function labelShapesToExtrudedMeshes(
 	return meshes;
 }
 
-function clampToDisc(points: THREE.Vector2[], maxRadiusMm: number): THREE.Vector2[] {
+function clampToDial(points: THREE.Vector2[], maxRadiusMm: number): THREE.Vector2[] {
 	const maxR = Math.max(maxRadiusMm, 0);
 	return points.map((p) => {
 		const dist = Math.hypot(p.x, p.y);
@@ -296,7 +296,7 @@ function polygonToHolePath(points: THREE.Vector2[], maxRadiusMm?: number): THREE
 
 	let pts = points.slice();
 	if (maxRadiusMm !== undefined) {
-		pts = clampToDisc(pts, maxRadiusMm);
+		pts = clampToDial(pts, maxRadiusMm);
 	}
 	const first = pts[0];
 	const last = pts[pts.length - 1];
@@ -338,7 +338,7 @@ export function exportStl(
 	layers?: Layer[],
 	options?: StlExportOptions
 ): string {
-	const discThicknessMm = options?.discThicknessMm ?? 3;
+	const dialThicknessMm = options?.dialThicknessMm ?? 3;
 	const markThicknessMm = options?.markThicknessMm ?? 0.5;
 	const sampleStepPx = options?.sampleStepPx ?? 2;
 	const raised = options?.raised ?? true;
@@ -348,11 +348,11 @@ export function exportStl(
 	const cx = viewbox.cx;
 	const cy = viewbox.cy;
 
-	const discCircle = doc.findOne('#disc');
-	const discCircleRadius = discCircle ? Number(discCircle.attr('r')) : 0;
-	const discRadiusMm = config.diameter / 2;
+	const dialCircle = doc.findOne('#dial');
+	const dialCircleRadius = dialCircle ? Number(dialCircle.attr('r')) : 0;
+	const dialRadiusMm = config.diameter / 2;
 	const viewboxToMmScale =
-		discCircleRadius > 0 ? (discRadiusMm * Math.SQRT2) / discCircleRadius : 1 / MM_TO_PX;
+		dialCircleRadius > 0 ? (dialRadiusMm * Math.SQRT2) / dialCircleRadius : 1 / MM_TO_PX;
 
 	const offsetViewboxX = config.offsetX / viewboxToMmScale;
 	const offsetViewboxY = config.offsetY / viewboxToMmScale;
@@ -427,17 +427,17 @@ export function exportStl(
 			if (raised) {
 				const shape = pathPolygonToShape(polygon);
 				if (shape) {
-					topMeshes.push(extrudeShape(shape, markThicknessMm, discThicknessMm));
+					topMeshes.push(extrudeShape(shape, markThicknessMm, dialThicknessMm));
 				}
 			} else {
-				const holePath = polygonToHolePath(polygon, discRadiusMm - 0.1);
+				const holePath = polygonToHolePath(polygon, dialRadiusMm - 0.1);
 				if (holePath) {
 					recessPaths.push(holePath);
 				}
 			}
 		});
 
-		layerGroup.find('.layer-label').forEach((labelElement) => {
+		layerGroup.find('.mark-label').forEach((labelElement) => {
 			const text = labelElement as Text;
 			const label = text.text().trim();
 			const bbox = text.bbox();
@@ -459,14 +459,14 @@ export function exportStl(
 
 			if (raised) {
 				topMeshes.push(
-					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, discThicknessMm)
+					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, dialThicknessMm)
 				);
 			} else {
-				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, discRadiusMm - 0.1));
+				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, dialRadiusMm - 0.1));
 			}
 		});
 
-		layerGroup.find('.path-label').forEach((labelElement) => {
+		layerGroup.find('.cutout-label').forEach((labelElement) => {
 			const text = labelElement as Text;
 			const label = text.text().trim();
 			const bbox = text.bbox();
@@ -491,22 +491,22 @@ export function exportStl(
 
 			if (raised) {
 				topMeshes.push(
-					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, discThicknessMm)
+					...labelShapesToExtrudedMeshes(shapes, mapPoint, markThicknessMm, dialThicknessMm)
 				);
 			} else {
-				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, discRadiusMm - 0.1));
+				recessPaths.push(...labelShapesToHolePaths(shapes, mapPoint, dialRadiusMm - 0.1));
 			}
 		});
 	}
 
-	if (options?.discTitle) {
-		const titleShapes = labelToThreeShapes(options.discTitle, {
-			width: options.discTitle.length * (options.discTitleFontSize ?? 12) * 0.6,
-			height: (options.discTitleFontSize ?? 12) * 1.2
+	if (options?.dialTitle) {
+		const titleShapes = labelToThreeShapes(options.dialTitle, {
+			width: options.dialTitle.length * (options.dialTitleFontSize ?? 12) * 0.6,
+			height: (options.dialTitleFontSize ?? 12) * 1.2
 		});
 
-		const titleCenterX = (options.discTitleX ?? 100) - cx;
-		const titleCenterY = (options.discTitleY ?? 20) - cy;
+		const titleCenterX = (options.dialTitleX ?? 100) - cx;
+		const titleCenterY = (options.dialTitleY ?? 20) - cy;
 
 		const mapPoint = (point: THREE.Vector2) =>
 			new THREE.Vector2(
@@ -516,15 +516,15 @@ export function exportStl(
 
 		if (raised) {
 			topMeshes.push(
-				...labelShapesToExtrudedMeshes(titleShapes, mapPoint, markThicknessMm, discThicknessMm)
+				...labelShapesToExtrudedMeshes(titleShapes, mapPoint, markThicknessMm, dialThicknessMm)
 			);
 		} else {
-			recessPaths.push(...labelShapesToHolePaths(titleShapes, mapPoint, discRadiusMm - 0.1));
+			recessPaths.push(...labelShapesToHolePaths(titleShapes, mapPoint, dialRadiusMm - 0.1));
 		}
 	}
 
-	const discShape = createDiscShape(
-		discRadiusMm,
+	const dialShape = createDialShape(
+		dialRadiusMm,
 		holePolygons,
 		centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
 	);
@@ -532,31 +532,31 @@ export function exportStl(
 	const scene = new THREE.Scene();
 
 	if (raised) {
-		const discMesh = extrudeShape(discShape, discThicknessMm, 0);
-		scene.add(discMesh);
+		const dialMesh = extrudeShape(dialShape, dialThicknessMm, 0);
+		scene.add(dialMesh);
 		for (const mesh of topMeshes) {
 			scene.add(mesh);
 		}
 	} else {
-		const bottomThickness = Math.max(discThicknessMm - markThicknessMm, 0);
+		const bottomThickness = Math.max(dialThicknessMm - markThicknessMm, 0);
 		if (bottomThickness > 0) {
-			const bottomShape = createDiscShape(
-				discRadiusMm,
+			const bottomShape = createDialShape(
+				dialRadiusMm,
 				holePolygons,
 				centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
 			);
 			scene.add(extrudeShape(bottomShape, bottomThickness, 0));
 		}
 
-		const topShape = createDiscShape(
-			discRadiusMm,
+		const topShape = createDialShape(
+			dialRadiusMm,
 			holePolygons,
 			centerHoleRadiusMm > 0 ? [centerHoleRadiusMm] : []
 		);
 		for (const path of recessPaths) {
 			topShape.holes.push(path);
 		}
-		scene.add(extrudeShape(topShape, Math.min(markThicknessMm, discThicknessMm), bottomThickness));
+		scene.add(extrudeShape(topShape, Math.min(markThicknessMm, dialThicknessMm), bottomThickness));
 	}
 
 	const exporter = new STLExporter();

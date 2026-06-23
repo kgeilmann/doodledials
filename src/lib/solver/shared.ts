@@ -1,7 +1,7 @@
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
-import type { OptimizerSvgTemplate } from '$lib/utils/doodledial';
+import type { SolverSvgTemplate } from '$lib/utils/doodledial';
 
-export interface OptimizerInput {
+export interface SolverInput {
 	diameter: number;
 	config: DialConfig;
 	layers: Layer[];
@@ -10,12 +10,12 @@ export interface OptimizerInput {
 	hiddenLayerIds?: string[];
 }
 
-export interface OptimizerProgress {
+export interface SolverProgress {
 	percent: number;
 	message: string;
 	iteration: number;
 	totalIterations: number;
 	feasibleSolutionsFound?: number;
 	topLayouts?: Record<string, number>[];
-	optimizerSvgTemplate?: OptimizerSvgTemplate;
+	solverSvgTemplate?: SolverSvgTemplate;
 }

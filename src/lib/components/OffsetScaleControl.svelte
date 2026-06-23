@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 	function handleOffsetXInput(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value) || 0;
 		doodledialStore.setOffsetX(value);
@@ -40,7 +40,7 @@
 					max={doodledialStore.config.maxDiameter}
 					value={doodledialStore.config.diameter}
 					oninput={handleDiameterInput}
-					disabled={optimizerStore.optimizerPending}
+					disabled={solverStore.solverPending}
 					class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 				<span class="text-sm text-gray-500">mm</span>
@@ -59,7 +59,7 @@
 					type="number"
 					value={doodledialStore.config.offsetX}
 					oninput={handleOffsetXInput}
-					disabled={optimizerStore.optimizerPending}
+					disabled={solverStore.solverPending}
 					class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 				<span class="text-sm text-gray-500">mm</span>
@@ -74,7 +74,7 @@
 					type="number"
 					value={doodledialStore.config.offsetY}
 					oninput={handleOffsetYInput}
-					disabled={optimizerStore.optimizerPending}
+					disabled={solverStore.solverPending}
 					class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 				<span class="text-sm text-gray-500">mm</span>
@@ -89,7 +89,7 @@
 				step="0.05"
 				value={doodledialStore.config.scale}
 				oninput={handleScaleInput}
-				disabled={optimizerStore.optimizerPending}
+				disabled={solverStore.solverPending}
 				class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 			/>
 		</div>
@@ -103,7 +103,7 @@
 				aria-checked={doodledialStore.config.sizeToFit}
 				aria-label="Toggle size to fit"
 				onclick={handleSizeToFitToggle}
-				disabled={!doodledialStore.originalRawSvg || optimizerStore.optimizerPending}
+				disabled={!doodledialStore.originalRawSvg || solverStore.solverPending}
 				class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {doodledialStore
 					.config.sizeToFit
 					? 'bg-indigo-600'
@@ -125,17 +125,17 @@
 
 		<div class="flex flex-col gap-3">
 			<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
-				<span>Disc Title</span>
+				<span>Dial Title</span>
 				<input
 					type="text"
-					placeholder="Optional disc title..."
-					value={doodledialStore.discTitle}
-					oninput={(e) => doodledialStore.setDiscTitle(e.currentTarget.value)}
-					disabled={optimizerStore.optimizerPending}
+					placeholder="Optional dial title..."
+					value={doodledialStore.dialTitle}
+					oninput={(e) => doodledialStore.setDialTitle(e.currentTarget.value)}
+					disabled={solverStore.solverPending}
 					class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
 				/>
 			</label>
-			<p class="text-xs text-gray-400">Drag title text on the disc to reposition it.</p>
+			<p class="text-xs text-gray-400">Drag title text on the dial to reposition it.</p>
 		</div>
 	</div>
 </div>

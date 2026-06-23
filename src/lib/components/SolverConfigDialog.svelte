@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 
 	function handleBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) {
-			optimizerStore.handleCloseOptimizerDialog();
+			solverStore.handleCloseSolverDialog();
 		}
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			optimizerStore.handleCloseOptimizerDialog();
+			solverStore.handleCloseSolverDialog();
 		}
 	}
 </script>
 
-{#if optimizerStore.optimizerRunDialogOpen}
+{#if solverStore.solverRunDialogOpen}
 	<div
 		class="fixed inset-0 z-30 flex items-center justify-center p-4"
-		data-testid="optimizer-config-dialog"
+		data-testid="solver-config-dialog"
 		role="dialog"
 		aria-modal="true"
-		aria-label="Optimizer configuration"
+		aria-label="Solver configuration"
 		tabindex="-1"
 		onkeydown={handleKeydown}
 	>
@@ -34,22 +34,20 @@
 			class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl p-6"
 		>
 			<div>
-				<h2 id="optimizer-config-title" class="text-xl font-semibold text-gray-900">
-					{optimizerStore.optimizerMode === 'bruteforce'
-						? 'Run Brute Force Optimizer'
-						: 'Run Optimizer'}
+				<h2 id="solver-config-title" class="text-xl font-semibold text-gray-900">
+					{solverStore.solverMode === 'bruteforce' ? 'Run Brute Force Solver' : 'Run Solver'}
 				</h2>
 				<p class="text-sm text-gray-600 mt-1">Configure options, then start optimization.</p>
 			</div>
 
 			<div class="grid grid-cols-2 gap-3 text-sm">
-				{#if optimizerStore.optimizerMode === 'force-directed'}
+				{#if solverStore.solverMode === 'force-directed'}
 					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={optimizerStore.optimizerRoundOutputAngles} />
+						<input type="checkbox" bind:checked={solverStore.solverRoundOutputAngles} />
 						<span>Round Output Angles</span>
 					</label>
 					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={optimizerStore.optimizerInitializeRandomly} />
+						<input type="checkbox" bind:checked={solverStore.solverInitializeRandomly} />
 						<span>Initialize Randomly</span>
 					</label>
 					<label class="col-span-2">
@@ -58,7 +56,7 @@
 							type="number"
 							min="0.1"
 							step="0.1"
-							bind:value={optimizerStore.optimizerGapMmInput}
+							bind:value={solverStore.solverGapMmInput}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -66,19 +64,19 @@
 						<span class="block text-gray-600 mb-1">Random Seed</span>
 						<input
 							type="text"
-							bind:value={optimizerStore.optimizerRandomSeedInput}
+							bind:value={solverStore.solverRandomSeedInput}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
 				{/if}
-				{#if optimizerStore.optimizerMode === 'bruteforce'}
+				{#if solverStore.solverMode === 'bruteforce'}
 					<label class="col-span-2">
 						<span class="block text-gray-600 mb-1">Gap (mm)</span>
 						<input
 							type="number"
 							min="0.1"
 							step="0.1"
-							bind:value={optimizerStore.optimizerGapMmInput}
+							bind:value={solverStore.solverGapMmInput}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -88,18 +86,18 @@
 							type="number"
 							min="0"
 							step="1"
-							bind:value={optimizerStore.optimizerMaxRuntimeSInput}
+							bind:value={solverStore.solverMaxRuntimeSInput}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
 				{/if}
-				{#if optimizerStore.optimizerMode === 'force-directed'}
+				{#if solverStore.solverMode === 'force-directed'}
 					<label>
 						<span class="block text-gray-600 mb-1">Overlap Weight</span>
 						<input
 							type="number"
 							step="0.01"
-							bind:value={optimizerStore.optimizerTuning.overlapMagnitudeWeight}
+							bind:value={solverStore.solverTuning.overlapMagnitudeWeight}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -108,7 +106,7 @@
 						<input
 							type="number"
 							step="0.1"
-							bind:value={optimizerStore.optimizerTuning.overlapMagnitudePower}
+							bind:value={solverStore.solverTuning.overlapMagnitudePower}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -117,7 +115,7 @@
 						<input
 							type="number"
 							step="0.1"
-							bind:value={optimizerStore.optimizerTuning.maxOverlapForceMagnitude}
+							bind:value={solverStore.solverTuning.maxOverlapForceMagnitude}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -126,7 +124,7 @@
 						<input
 							type="number"
 							step="0.05"
-							bind:value={optimizerStore.optimizerTuning.timeStepDt}
+							bind:value={solverStore.solverTuning.timeStepDt}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -135,7 +133,7 @@
 						<input
 							type="number"
 							step="0.01"
-							bind:value={optimizerStore.optimizerTuning.restoringForceWeight}
+							bind:value={solverStore.solverTuning.restoringForceWeight}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -144,7 +142,7 @@
 						<input
 							type="number"
 							step="0.1"
-							bind:value={optimizerStore.optimizerTuning.maxRestoringForce}
+							bind:value={solverStore.solverTuning.maxRestoringForce}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -153,7 +151,7 @@
 						<input
 							type="number"
 							step="0.01"
-							bind:value={optimizerStore.optimizerTuning.uniqueForceWeight}
+							bind:value={solverStore.solverTuning.uniqueForceWeight}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -162,7 +160,7 @@
 						<input
 							type="number"
 							step="0.5"
-							bind:value={optimizerStore.optimizerTuning.minUniqueAngleSeparation}
+							bind:value={solverStore.solverTuning.minUniqueAngleSeparation}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -171,7 +169,7 @@
 						<input
 							type="number"
 							step="0.1"
-							bind:value={optimizerStore.optimizerTuning.maxUniqueForce}
+							bind:value={solverStore.solverTuning.maxUniqueForce}
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
@@ -181,7 +179,7 @@
 			<div class="mt-5 flex items-center justify-between gap-3">
 				<button
 					type="button"
-					onclick={() => optimizerStore.resetOptimizerTuning()}
+					onclick={() => solverStore.resetSolverTuning()}
 					class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
 				>
 					Reset Defaults
@@ -189,17 +187,17 @@
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
-						onclick={() => optimizerStore.handleCloseOptimizerDialog()}
+						onclick={() => solverStore.handleCloseSolverDialog()}
 						class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-						data-testid="optimizer-dialog-cancel-button"
+						data-testid="solver-dialog-cancel-button"
 					>
 						Cancel
 					</button>
 					<button
 						type="button"
-						onclick={() => optimizerStore.handleConfirmOptimizerDialogRun()}
+						onclick={() => solverStore.handleConfirmSolverDialogRun()}
 						class="px-4 py-2 rounded-lg border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700 hover:border-indigo-700"
-						data-testid="optimizer-dialog-run-button"
+						data-testid="solver-dialog-run-button"
 					>
 						Start Optimization
 					</button>

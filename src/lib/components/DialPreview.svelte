@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 	import { combineDoodledial } from '$lib/utils/doodledial';
 	import { getAngleFromCenter } from '$lib/utils/rotation';
 	import { DPI, MM_PER_INCH } from '$lib/utils/constants';
@@ -46,7 +46,7 @@
 		((doodledialStore.config.maxDiameter * DPI) / MM_PER_INCH) * VIEWBOX_PADDING
 	);
 
-	function getDiscCenter(): { cx: number; cy: number } {
+	function getDialCenter(): { cx: number; cy: number } {
 		if (!svgContainer) return { cx: 0, cy: 0 };
 		const svgEl = svgContainer.querySelector('svg');
 		if (!svgEl) return { cx: 0, cy: 0 };
@@ -74,15 +74,15 @@
 	}
 
 	function handlePointerDown(e: PointerEvent) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		didDrag = false;
 		const target = e.target as HTMLElement;
 
-		const isDiscTitle = target.closest('[data-disc-title]') !== null;
-		if (isDiscTitle) {
+		const isDialTitle = target.closest('[data-dial-title]') !== null;
+		if (isDialTitle) {
 			isDraggingTitle = true;
-			titleInitialX = doodledialStore.discTitleX;
-			titleInitialY = doodledialStore.discTitleY;
+			titleInitialX = doodledialStore.dialTitleX;
+			titleInitialY = doodledialStore.dialTitleY;
 
 			const startPoint = getSvgPoint(e.clientX, e.clientY);
 			if (!startPoint) {
@@ -97,7 +97,7 @@
 			return;
 		}
 
-		const { layerId, isPathLabel } = getLayerIdFromEvent(target);
+		const { layerId, isCutoutLabel } = getLayerIdFromEvent(target);
 		if (!layerId) {
 			// Background click — start pan mode
 			if (!scrollContainer || !svgContainer) return;
@@ -112,7 +112,7 @@
 
 		doodledialStore.setHighlightedLayer(layerId!);
 
-		if (isPathLabel) {
+		if (isCutoutLabel) {
 			isDraggingLabel = true;
 			dragLabelLayerId = layerId;
 
@@ -132,7 +132,7 @@
 			labelDragStartSvgY = startPoint.y;
 
 			(target as HTMLElement).setPointerCapture(e.pointerId);
-		} else if (!isPathLabel) {
+		} else if (!isCutoutLabel) {
 			isDragging = true;
 			dragLayerId = layerId;
 			(target as HTMLElement).setPointerCapture(e.pointerId);
@@ -167,7 +167,7 @@
 			const newOffsetX = labelInitialOffsetX + localDeltaX;
 			const newOffsetY = labelInitialOffsetY + localDeltaY;
 
-			doodledialStore.setLayerLabelOffsetManual(dragLabelLayerId, newOffsetX, newOffsetY);
+			doodledialStore.setMarkLabelOffsetManual(dragLabelLayerId, newOffsetX, newOffsetY);
 		} else if (isDraggingTitle) {
 			const currentPoint = getSvgPoint(e.clientX, e.clientY);
 			if (!currentPoint) return;
@@ -175,11 +175,11 @@
 			const deltaX = currentPoint.x - titleDragStartSvgX;
 			const deltaY = currentPoint.y - titleDragStartSvgY;
 
-			doodledialStore.setDiscTitlePosition(titleInitialX + deltaX, titleInitialY + deltaY);
+			doodledialStore.setDialTitlePosition(titleInitialX + deltaX, titleInitialY + deltaY);
 			return;
 		} else if (isDragging && dragLayerId) {
 			didDrag = true;
-			const { cx, cy } = getDiscCenter();
+			const { cx, cy } = getDialCenter();
 			const currentAngle = getAngleFromCenter(cx, cy, e.clientX, e.clientY);
 			doodledialStore.setLayerRotation(dragLayerId, currentAngle + 90);
 		}
@@ -207,22 +207,22 @@
 
 	function getLayerIdFromEvent(target: HTMLElement): {
 		layerId: string | null;
-		isPathLabel: boolean;
+		isCutoutLabel: boolean;
 	} {
 		let current: HTMLElement | null = target;
 		while (current) {
 			const layerId = current.getAttribute('data-layer-id');
 			if (layerId) {
-				const isPathLabel = current.classList.contains('path-label');
-				return { layerId, isPathLabel };
+				const isCutoutLabel = current.classList.contains('cutout-label');
+				return { layerId, isCutoutLabel };
 			}
 			current = current.parentElement;
 		}
-		return { layerId: null, isPathLabel: false };
+		return { layerId: null, isCutoutLabel: false };
 	}
 
 	function handleClick(e: MouseEvent) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		if (didDrag) return;
 		const target = e.target as HTMLElement;
 		const { layerId } = getLayerIdFromEvent(target);
@@ -236,7 +236,7 @@
 	}
 
 	function handleWheel(e: WheelEvent) {
-		if (optimizerStore.optimizerPending) return;
+		if (solverStore.solverPending) return;
 		e.preventDefault();
 		const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
 		zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomLevel + delta));
@@ -264,10 +264,10 @@
 				doodledialStore.highlightedLayer,
 				doodledialStore.selectedLayer,
 				{
-					discTitle: doodledialStore.discTitle,
-					discTitleX: doodledialStore.discTitleX,
-					discTitleY: doodledialStore.discTitleY,
-					discTitleFontSize: doodledialStore.discTitleFontSize,
+					dialTitle: doodledialStore.dialTitle,
+					dialTitleX: doodledialStore.dialTitleX,
+					dialTitleY: doodledialStore.dialTitleY,
+					dialTitleFontSize: doodledialStore.dialTitleFontSize,
 					groups: doodledialStore.groups
 				}
 			);
@@ -322,7 +322,7 @@
 				style="width: {fitSize * zoomLevel}px; height: {fitSize * zoomLevel}px; margin: auto;"
 			>
 				<div
-					class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {optimizerStore.optimizerPending
+					class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-center overflow-hidden relative z-10 {solverStore.solverPending
 						? 'cursor-not-allowed'
 						: isPanning
 							? 'cursor-grabbing'
@@ -396,22 +396,22 @@
 </div>
 
 <style>
-	:global(.disc-title) {
+	:global(.dial-title) {
 		user-select: none;
 		-webkit-user-select: none;
 		cursor: grab;
 	}
-	:global(.disc-title:active) {
+	:global(.dial-title:active) {
 		cursor: grabbing;
 	}
-	:global(.path-label) {
+	:global(.cutout-label) {
 		cursor: grab;
 	}
-	:global(.path-label:hover) {
+	:global(.cutout-label:hover) {
 		fill: #6366f1;
 		font-weight: 700;
 	}
-	:global(.path-label:active) {
+	:global(.cutout-label:active) {
 		cursor: grabbing;
 	}
 </style>

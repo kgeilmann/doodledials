@@ -41,50 +41,50 @@ describe('global config store', () => {
 	it('uses defaults when localStorage is empty', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(100);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
+		expect(globalConfig.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('loads persisted values from localStorage on init', async () => {
 		localStorage.setItem(
 			STORAGE_KEY,
-			JSON.stringify({ diameter: 150, pathLabelOptimizerEnabled: false })
+			JSON.stringify({ diameter: 150, autoLabelPlacementEnabled: false })
 		);
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(150);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
+		expect(globalConfig.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('falls back to defaults when localStorage has partial data', async () => {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify({ diameter: 180 }));
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(180);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
+		expect(globalConfig.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('falls back to defaults when localStorage has corrupt data', async () => {
 		localStorage.setItem(STORAGE_KEY, 'not-json');
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		expect(globalConfig.diameter).toBe(100);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
+		expect(globalConfig.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('persists to localStorage on save', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.diameter = 150;
-		globalConfig.pathLabelOptimizerEnabled = false;
+		globalConfig.autoLabelPlacementEnabled = false;
 		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 		expect(saved.diameter).toBe(150);
-		expect(saved.pathLabelOptimizerEnabled).toBe(false);
+		expect(saved.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('reset restores defaults', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
 		globalConfig.diameter = 150;
-		globalConfig.pathLabelOptimizerEnabled = true;
+		globalConfig.autoLabelPlacementEnabled = true;
 		globalConfig.reset();
 		expect(globalConfig.diameter).toBe(100);
-		expect(globalConfig.pathLabelOptimizerEnabled).toBe(false);
+		expect(globalConfig.autoLabelPlacementEnabled).toBe(false);
 	});
 
 	it('has default centerHoleDiameter of 0.5', async () => {
@@ -107,24 +107,24 @@ describe('global config store', () => {
 		expect(globalConfig.centerHoleDiameter).toBe(0.5);
 	});
 
-	it('has default optimizerGapDefault of 3', async () => {
+	it('has default solverGapDefault of 3', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.optimizerGapDefault).toBe(3);
+		expect(globalConfig.solverGapDefault).toBe(3);
 	});
 
-	it('persists and restores optimizerGapDefault', async () => {
+	it('persists and restores solverGapDefault', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.optimizerGapDefault = 8;
+		globalConfig.solverGapDefault = 8;
 		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-		expect(saved.optimizerGapDefault).toBe(8);
+		expect(saved.solverGapDefault).toBe(8);
 	});
 
-	it('resets optimizerGapDefault to default', async () => {
+	it('resets solverGapDefault to default', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.optimizerGapDefault = 10;
+		globalConfig.solverGapDefault = 10;
 		globalConfig.reset();
-		expect(globalConfig.optimizerGapDefault).toBe(3);
+		expect(globalConfig.solverGapDefault).toBe(3);
 	});
 
 	it('has default bruteforceTimeLimit of 120', async () => {
@@ -167,63 +167,63 @@ describe('global config store', () => {
 		expect(globalConfig.defaultExportFormat).toBe('laser-svg');
 	});
 
-	it('has default centerMarkType of hole', async () => {
+	it('has default centerStyle of hole', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.centerMarkType).toBe('hole');
+		expect(globalConfig.centerStyle).toBe('hole');
 	});
 
-	it('persists and restores centerMarkType', async () => {
+	it('persists and restores centerStyle', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.centerMarkType = 'crosshair';
+		globalConfig.centerStyle = 'crosshair';
 		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-		expect(saved.centerMarkType).toBe('crosshair');
+		expect(saved.centerStyle).toBe('crosshair');
 	});
 
-	it('resets centerMarkType to default', async () => {
+	it('resets centerStyle to default', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.centerMarkType = 'none';
+		globalConfig.centerStyle = 'none';
 		globalConfig.reset();
-		expect(globalConfig.centerMarkType).toBe('hole');
+		expect(globalConfig.centerStyle).toBe('hole');
 	});
 
-	it('has default pathLabelFontSize of 10', async () => {
+	it('has default cutoutLabelFontSize of 10', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.pathLabelFontSize).toBe(10);
+		expect(globalConfig.cutoutLabelFontSize).toBe(10);
 	});
 
-	it('persists and restores pathLabelFontSize', async () => {
+	it('persists and restores cutoutLabelFontSize', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.pathLabelFontSize = 14;
+		globalConfig.cutoutLabelFontSize = 14;
 		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-		expect(saved.pathLabelFontSize).toBe(14);
+		expect(saved.cutoutLabelFontSize).toBe(14);
 	});
 
-	it('resets pathLabelFontSize to default', async () => {
+	it('resets cutoutLabelFontSize to default', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.pathLabelFontSize = 16;
+		globalConfig.cutoutLabelFontSize = 16;
 		globalConfig.reset();
-		expect(globalConfig.pathLabelFontSize).toBe(10);
+		expect(globalConfig.cutoutLabelFontSize).toBe(10);
 	});
 
-	it('has default discTitleFontSize of 12', async () => {
+	it('has default dialTitleFontSize of 12', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		expect(globalConfig.discTitleFontSize).toBe(12);
+		expect(globalConfig.dialTitleFontSize).toBe(12);
 	});
 
-	it('persists and restores discTitleFontSize', async () => {
+	it('persists and restores dialTitleFontSize', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.discTitleFontSize = 16;
+		globalConfig.dialTitleFontSize = 16;
 		globalConfig.save();
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-		expect(saved.discTitleFontSize).toBe(16);
+		expect(saved.dialTitleFontSize).toBe(16);
 	});
 
-	it('resets discTitleFontSize to default', async () => {
+	it('resets dialTitleFontSize to default', async () => {
 		const { globalConfig } = await import('./global-config.svelte.ts');
-		globalConfig.discTitleFontSize = 20;
+		globalConfig.dialTitleFontSize = 20;
 		globalConfig.reset();
-		expect(globalConfig.discTitleFontSize).toBe(12);
+		expect(globalConfig.dialTitleFontSize).toBe(12);
 	});
 });

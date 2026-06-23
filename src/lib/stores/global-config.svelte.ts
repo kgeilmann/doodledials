@@ -1,4 +1,4 @@
-import type { CenterMarkType } from '$lib/types/doodledial';
+import type { CenterStyle } from '$lib/types/doodledial';
 import type { ExportFormat } from '$lib/utils/export-formats';
 
 const STORAGE_KEY = 'doodledial:config';
@@ -6,58 +6,58 @@ const STORAGE_KEY = 'doodledial:config';
 interface PersistedConfig {
 	diameter: number;
 	centerHoleDiameter: number;
-	pathLabelOptimizerEnabled: boolean;
-	forceDirectedOptimizerEnabled: boolean;
-	optimizerGapDefault: number;
+	autoLabelPlacementEnabled: boolean;
+	forceDirectedSolverEnabled: boolean;
+	solverGapDefault: number;
 	bruteforceTimeLimit: number;
 	defaultExportFormat: ExportFormat;
 	titleFontFamily: string;
-	centerMarkType: CenterMarkType;
-	pathLabelFontSize: number;
-	discTitleFontSize: number;
+	centerStyle: CenterStyle;
+	cutoutLabelFontSize: number;
+	dialTitleFontSize: number;
 }
 
 export const DEFAULTS = {
 	diameter: 100,
 	centerHoleDiameter: 0.5,
-	pathLabelOptimizerEnabled: false,
-	forceDirectedOptimizerEnabled: false,
-	optimizerGapDefault: 3,
+	autoLabelPlacementEnabled: false,
+	forceDirectedSolverEnabled: false,
+	solverGapDefault: 3,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
 	titleFontFamily: 'sans-serif',
-	centerMarkType: 'hole' as CenterMarkType,
-	pathLabelFontSize: 10,
-	discTitleFontSize: 12
+	centerStyle: 'hole' as CenterStyle,
+	cutoutLabelFontSize: 10,
+	dialTitleFontSize: 12
 } as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
 	diameter: number = $state(DEFAULTS.diameter);
 	centerHoleDiameter: number = $state(DEFAULTS.centerHoleDiameter);
-	pathLabelOptimizerEnabled: boolean = $state(DEFAULTS.pathLabelOptimizerEnabled);
-	forceDirectedOptimizerEnabled: boolean = $state(DEFAULTS.forceDirectedOptimizerEnabled);
-	optimizerGapDefault: number = $state(DEFAULTS.optimizerGapDefault);
+	autoLabelPlacementEnabled: boolean = $state(DEFAULTS.autoLabelPlacementEnabled);
+	forceDirectedSolverEnabled: boolean = $state(DEFAULTS.forceDirectedSolverEnabled);
+	solverGapDefault: number = $state(DEFAULTS.solverGapDefault);
 	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
 	titleFontFamily: string = $state(DEFAULTS.titleFontFamily);
-	centerMarkType: CenterMarkType = $state(DEFAULTS.centerMarkType);
-	pathLabelFontSize: number = $state(DEFAULTS.pathLabelFontSize);
-	discTitleFontSize: number = $state(DEFAULTS.discTitleFontSize);
+	centerStyle: CenterStyle = $state(DEFAULTS.centerStyle);
+	cutoutLabelFontSize: number = $state(DEFAULTS.cutoutLabelFontSize);
+	dialTitleFontSize: number = $state(DEFAULTS.dialTitleFontSize);
 	constructor() {
 		this._load();
 		$effect.root(() => {
 			$effect(() => {
 				void this.diameter;
 				void this.centerHoleDiameter;
-				void this.pathLabelOptimizerEnabled;
-				void this.forceDirectedOptimizerEnabled;
-				void this.optimizerGapDefault;
+				void this.autoLabelPlacementEnabled;
+				void this.forceDirectedSolverEnabled;
+				void this.solverGapDefault;
 				void this.bruteforceTimeLimit;
 				void this.defaultExportFormat;
 				void this.titleFontFamily;
-				void this.centerMarkType;
-				void this.pathLabelFontSize;
-				void this.discTitleFontSize;
+				void this.centerStyle;
+				void this.cutoutLabelFontSize;
+				void this.dialTitleFontSize;
 				this._save();
 			});
 		});
@@ -70,15 +70,15 @@ class GlobalConfigStore {
 	reset() {
 		this.diameter = DEFAULTS.diameter;
 		this.centerHoleDiameter = DEFAULTS.centerHoleDiameter;
-		this.pathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
-		this.forceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
-		this.optimizerGapDefault = DEFAULTS.optimizerGapDefault;
+		this.autoLabelPlacementEnabled = DEFAULTS.autoLabelPlacementEnabled;
+		this.forceDirectedSolverEnabled = DEFAULTS.forceDirectedSolverEnabled;
+		this.solverGapDefault = DEFAULTS.solverGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
 		this.titleFontFamily = DEFAULTS.titleFontFamily;
-		this.centerMarkType = DEFAULTS.centerMarkType;
-		this.pathLabelFontSize = DEFAULTS.pathLabelFontSize;
-		this.discTitleFontSize = DEFAULTS.discTitleFontSize;
+		this.centerStyle = DEFAULTS.centerStyle;
+		this.cutoutLabelFontSize = DEFAULTS.cutoutLabelFontSize;
+		this.dialTitleFontSize = DEFAULTS.dialTitleFontSize;
 	}
 
 	private _load(): void {
@@ -89,17 +89,17 @@ class GlobalConfigStore {
 				const parsed = JSON.parse(raw) as Partial<PersistedConfig>;
 				this.diameter = parsed.diameter ?? DEFAULTS.diameter;
 				this.centerHoleDiameter = parsed.centerHoleDiameter ?? DEFAULTS.centerHoleDiameter;
-				this.pathLabelOptimizerEnabled =
-					parsed.pathLabelOptimizerEnabled ?? DEFAULTS.pathLabelOptimizerEnabled;
-				this.forceDirectedOptimizerEnabled =
-					parsed.forceDirectedOptimizerEnabled ?? DEFAULTS.forceDirectedOptimizerEnabled;
-				this.optimizerGapDefault = parsed.optimizerGapDefault ?? DEFAULTS.optimizerGapDefault;
+				this.autoLabelPlacementEnabled =
+					parsed.autoLabelPlacementEnabled ?? DEFAULTS.autoLabelPlacementEnabled;
+				this.forceDirectedSolverEnabled =
+					parsed.forceDirectedSolverEnabled ?? DEFAULTS.forceDirectedSolverEnabled;
+				this.solverGapDefault = parsed.solverGapDefault ?? DEFAULTS.solverGapDefault;
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
 				this.titleFontFamily = parsed.titleFontFamily ?? DEFAULTS.titleFontFamily;
-				this.centerMarkType = parsed.centerMarkType ?? DEFAULTS.centerMarkType;
-				this.pathLabelFontSize = parsed.pathLabelFontSize ?? DEFAULTS.pathLabelFontSize;
-				this.discTitleFontSize = parsed.discTitleFontSize ?? DEFAULTS.discTitleFontSize;
+				this.centerStyle = parsed.centerStyle ?? DEFAULTS.centerStyle;
+				this.cutoutLabelFontSize = parsed.cutoutLabelFontSize ?? DEFAULTS.cutoutLabelFontSize;
+				this.dialTitleFontSize = parsed.dialTitleFontSize ?? DEFAULTS.dialTitleFontSize;
 			}
 		} catch (e) {
 			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
@@ -113,15 +113,15 @@ class GlobalConfigStore {
 			JSON.stringify({
 				diameter: this.diameter,
 				centerHoleDiameter: this.centerHoleDiameter,
-				pathLabelOptimizerEnabled: this.pathLabelOptimizerEnabled,
-				forceDirectedOptimizerEnabled: this.forceDirectedOptimizerEnabled,
-				optimizerGapDefault: this.optimizerGapDefault,
+				autoLabelPlacementEnabled: this.autoLabelPlacementEnabled,
+				forceDirectedSolverEnabled: this.forceDirectedSolverEnabled,
+				solverGapDefault: this.solverGapDefault,
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
 				defaultExportFormat: this.defaultExportFormat,
 				titleFontFamily: this.titleFontFamily,
-				centerMarkType: this.centerMarkType,
-				pathLabelFontSize: this.pathLabelFontSize,
-				discTitleFontSize: this.discTitleFontSize
+				centerStyle: this.centerStyle,
+				cutoutLabelFontSize: this.cutoutLabelFontSize,
+				dialTitleFontSize: this.dialTitleFontSize
 			})
 		);
 	}

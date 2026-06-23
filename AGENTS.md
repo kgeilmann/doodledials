@@ -6,6 +6,12 @@
 
 ---
 
+## Glossary
+
+Always read `docs/GLOSSARY.md` to understand the project's domain terminology and naming conventions.
+
+---
+
 After writing code _always_ run `pnpm check` and `pnpm lint`, do not accept any errors or warnings.
 
 ## SVELTE MCP

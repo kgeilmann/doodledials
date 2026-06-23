@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createOptimizerStore, optimizerTuningDefaults } from '$lib/stores/optimizer.svelte';
+import { createSolverStore, solverTuningDefaults } from '$lib/stores/solver.svelte';
 import type { DialConfig, SVGContent, Layer } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 
@@ -9,7 +9,7 @@ interface MockDoodledialStore {
 	layers: Layer[];
 	groups: { id: string; color: string }[];
 	applyLayerRotations(rotations: Record<string, number>): void;
-	setOptimizerGapMm(gapMm: number): void;
+	setSolverGapMm(gapMm: number): void;
 }
 
 function createMockDoodledialStore(overrides?: Partial<MockDoodledialStore>): MockDoodledialStore {
@@ -21,7 +21,7 @@ function createMockDoodledialStore(overrides?: Partial<MockDoodledialStore>): Mo
 		applyLayerRotations(_rotations: Record<string, number>) {
 			_rotations satisfies Record<string, number>;
 		},
-		setOptimizerGapMm(_gapMm: number) {
+		setSolverGapMm(_gapMm: number) {
 			_gapMm satisfies number;
 		},
 		...overrides
@@ -35,8 +35,8 @@ function createTestStore(options?: { svgContent?: SVGContent | null }) {
 	} else {
 		ddStore.svgContent = null;
 	}
-	return createOptimizerStore({
-		globalConfig: { optimizerGapDefault: 10, bruteforceTimeLimit: 60 },
+	return createSolverStore({
+		globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
 		doodledialStore: ddStore
 	});
 }
@@ -47,110 +47,110 @@ function createTestStoreWithSvg() {
 	});
 }
 
-describe('optimizer store', () => {
+describe('solver store', () => {
 	describe('initial state', () => {
 		it('has default pending state', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerPending).toBe(false);
+			expect(store.solverPending).toBe(false);
 		});
 
 		it('has zero progress', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerProgress).toBe(0);
+			expect(store.solverProgress).toBe(0);
 		});
 
 		it('has idle phase', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerProgressPhase).toBe('Idle');
+			expect(store.solverProgressPhase).toBe('Idle');
 		});
 
 		it('has empty progress message', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerProgressMessage).toBe('');
+			expect(store.solverProgressMessage).toBe('');
 		});
 
 		it('has default gap input from injected globalConfig', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerGapMmInput).toBe('10');
+			expect(store.solverGapMmInput).toBe('10');
 		});
 
 		it('has default max runtime input from injected globalConfig', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerMaxRuntimeSInput).toBe('60');
+			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
 
 		it('has default random seed', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerRandomSeedInput).toBe('42');
+			expect(store.solverRandomSeedInput).toBe('42');
 		});
 
 		it('has round output angles enabled by default', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerRoundOutputAngles).toBe(true);
+			expect(store.solverRoundOutputAngles).toBe(true);
 		});
 
 		it('has default mode as force-directed', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerMode).toBe('force-directed');
+			expect(store.solverMode).toBe('force-directed');
 		});
 
 		it('has overlays hidden by default', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerOverlayVisible).toBe(false);
-			expect(store.optimizerRunDialogOpen).toBe(false);
+			expect(store.solverOverlayVisible).toBe(false);
+			expect(store.solverRunDialogOpen).toBe(false);
 			expect(store.bruteforceResultDialogOpen).toBe(false);
 		});
 
 		it('has zero elapsed time', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerElapsedMs).toBe(0);
+			expect(store.solverElapsedMs).toBe(0);
 		});
 
 		it('has null max runtime ms', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerMaxRuntimeMs).toBeNull();
+			expect(store.solverMaxRuntimeMs).toBeNull();
 		});
 
 		it('has default tuning values', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerTuning).toEqual(optimizerTuningDefaults);
+			expect(store.solverTuning).toEqual(solverTuningDefaults);
 		});
 
 		it('has empty top layouts', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerTopLayouts).toEqual([]);
+			expect(store.solverTopLayouts).toEqual([]);
 		});
 
 		it('has null svg template', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerSvgTemplate).toBeNull();
+			expect(store.solverSvgTemplate).toBeNull();
 		});
 
 		it('has result index 0', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerResultSelectedIndex).toBe(0);
+			expect(store.solverResultSelectedIndex).toBe(0);
 		});
 
 		it('has empty thumbnails when no template', () => {
 			const store = createTestStore();
 			store.reset();
-			expect(store.optimizerThumbnailSvgs).toEqual([]);
+			expect(store.solverThumbnailSvgs).toEqual([]);
 		});
 	});
 
@@ -202,58 +202,58 @@ describe('optimizer store', () => {
 		});
 	});
 
-	describe('resetOptimizerTuning', () => {
+	describe('resetSolverTuning', () => {
 		it('resets tuning to defaults', () => {
 			const store = createTestStore();
-			store.optimizerTuning.overlapMagnitudeWeight = 0.5;
-			store.optimizerTuning.timeStepDt = 1.0;
-			store.resetOptimizerTuning();
-			expect(store.optimizerTuning).toEqual(optimizerTuningDefaults);
+			store.solverTuning.overlapMagnitudeWeight = 0.5;
+			store.solverTuning.timeStepDt = 1.0;
+			store.resetSolverTuning();
+			expect(store.solverTuning).toEqual(solverTuningDefaults);
 		});
 
 		it('resets initialize randomly', () => {
 			const store = createTestStore();
-			store.optimizerInitializeRandomly = true;
-			store.resetOptimizerTuning();
-			expect(store.optimizerInitializeRandomly).toBe(false);
+			store.solverInitializeRandomly = true;
+			store.resetSolverTuning();
+			expect(store.solverInitializeRandomly).toBe(false);
 		});
 
 		it('resets round output angles', () => {
 			const store = createTestStore();
-			store.optimizerRoundOutputAngles = false;
-			store.resetOptimizerTuning();
-			expect(store.optimizerRoundOutputAngles).toBe(true);
+			store.solverRoundOutputAngles = false;
+			store.resetSolverTuning();
+			expect(store.solverRoundOutputAngles).toBe(true);
 		});
 
 		it('resets gap input from global config', () => {
 			const store = createTestStore();
-			store.optimizerGapMmInput = '99';
-			store.resetOptimizerTuning();
-			expect(store.optimizerGapMmInput).toBe('10');
+			store.solverGapMmInput = '99';
+			store.resetSolverTuning();
+			expect(store.solverGapMmInput).toBe('10');
 		});
 
 		it('resets random seed input', () => {
 			const store = createTestStore();
-			store.optimizerRandomSeedInput = '123';
-			store.resetOptimizerTuning();
-			expect(store.optimizerRandomSeedInput).toBe('42');
+			store.solverRandomSeedInput = '123';
+			store.resetSolverTuning();
+			expect(store.solverRandomSeedInput).toBe('42');
 		});
 
 		it('resets max runtime input', () => {
 			const store = createTestStore();
-			store.optimizerMaxRuntimeSInput = '999';
-			store.resetOptimizerTuning();
-			expect(store.optimizerMaxRuntimeSInput).toBe('60');
+			store.solverMaxRuntimeSInput = '999';
+			store.resetSolverTuning();
+			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
 	});
 
 	describe('dialog state management', () => {
-		it('closes optimizer dialog via handleCloseOptimizerDialog', () => {
+		it('closes solver dialog via handleCloseSolverDialog', () => {
 			const store = createTestStoreWithSvg();
-			store.handleOpenOptimizerDialog('force-directed');
-			expect(store.optimizerRunDialogOpen).toBe(true);
-			store.handleCloseOptimizerDialog();
-			expect(store.optimizerRunDialogOpen).toBe(false);
+			store.handleOpenSolverDialog('force-directed');
+			expect(store.solverRunDialogOpen).toBe(true);
+			store.handleCloseSolverDialog();
+			expect(store.solverRunDialogOpen).toBe(false);
 		});
 
 		it('closes bruteforce result dialog via handleCloseBruteforceResultDialog', () => {
@@ -269,76 +269,76 @@ describe('optimizer store', () => {
 		});
 	});
 
-	describe('handleStopOptimizer', () => {
+	describe('handleStopSolver', () => {
 		it('does not crash when no abort controller is active', () => {
 			const store = createTestStore();
-			expect(() => store.handleStopOptimizer()).not.toThrow();
+			expect(() => store.handleStopSolver()).not.toThrow();
 		});
 
 		it('can be called multiple times', () => {
 			const store = createTestStore();
-			store.handleStopOptimizer();
-			store.handleStopOptimizer();
+			store.handleStopSolver();
+			store.handleStopSolver();
 		});
 	});
 
 	describe('reset', () => {
 		it('resets all state to initial values', () => {
 			const store = createTestStoreWithSvg();
-			store.handleOpenOptimizerDialog('force-directed');
+			store.handleOpenSolverDialog('force-directed');
 			store.reset();
-			expect(store.optimizerPending).toBe(false);
-			expect(store.optimizerProgress).toBe(0);
-			expect(store.optimizerProgressPhase).toBe('Idle');
-			expect(store.optimizerRunDialogOpen).toBe(false);
+			expect(store.solverPending).toBe(false);
+			expect(store.solverProgress).toBe(0);
+			expect(store.solverProgressPhase).toBe('Idle');
+			expect(store.solverRunDialogOpen).toBe(false);
 		});
 
 		it('resets tuning to defaults', () => {
 			const store = createTestStore();
-			store.optimizerTuning.overlapMagnitudeWeight = 999;
+			store.solverTuning.overlapMagnitudeWeight = 999;
 			store.reset();
-			expect(store.optimizerTuning).toEqual(optimizerTuningDefaults);
+			expect(store.solverTuning).toEqual(solverTuningDefaults);
 		});
 
 		it('resets inputs to global config defaults', () => {
 			const store = createTestStore();
-			store.optimizerGapMmInput = '50';
+			store.solverGapMmInput = '50';
 			store.reset();
-			expect(store.optimizerGapMmInput).toBe('10');
-			expect(store.optimizerMaxRuntimeSInput).toBe('60');
+			expect(store.solverGapMmInput).toBe('10');
+			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
 	});
 
-	describe('handleOpenOptimizerDialog', () => {
+	describe('handleOpenSolverDialog', () => {
 		it('does nothing when no svgContent', () => {
 			const store = createTestStore();
-			store.handleOpenOptimizerDialog('force-directed');
-			expect(store.optimizerRunDialogOpen).toBe(false);
+			store.handleOpenSolverDialog('force-directed');
+			expect(store.solverRunDialogOpen).toBe(false);
 		});
 
-		it('does nothing when optimizer is pending', () => {
+		it('does nothing when solver is pending', () => {
 			const store = createTestStoreWithSvg();
 			store.reset();
-			store.handleOpenOptimizerDialog('bruteforce');
-			expect(store.optimizerMode).toBe('bruteforce');
-			expect(store.optimizerRunDialogOpen).toBe(true);
+			store.handleOpenSolverDialog('bruteforce');
+			expect(store.solverMode).toBe('bruteforce');
+			expect(store.solverRunDialogOpen).toBe(true);
 		});
 
 		it('resets input fields when opening', () => {
 			const store = createTestStoreWithSvg();
-			store.optimizerGapMmInput = '99';
-			store.optimizerMaxRuntimeSInput = '999';
-			store.handleOpenOptimizerDialog('bruteforce');
-			expect(store.optimizerGapMmInput).toBe('10');
-			expect(store.optimizerMaxRuntimeSInput).toBe('60');
+			store.solverGapMmInput = '99';
+			store.solverMaxRuntimeSInput = '999';
+			store.handleOpenSolverDialog('bruteforce');
+			expect(store.solverGapMmInput).toBe('10');
+			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
 	});
 
-	describe('handleConfirmOptimizerDialogRun', () => {
+	describe('handleConfirmSolverDialogRun', () => {
 		it('closes dialog and does not crash without svg', () => {
 			const store = createTestStore();
-			store.handleConfirmOptimizerDialogRun();
-			expect(store.optimizerRunDialogOpen).toBe(false);
+			store.handleConfirmSolverDialogRun();
+			expect(store.solverRunDialogOpen).toBe(false);
 		});
 	});
 
@@ -359,9 +359,9 @@ describe('optimizer store', () => {
 	});
 });
 
-describe('optimizer store with defaults', () => {
+describe('solver store with defaults', () => {
 	it('can create store without options', () => {
-		const defaultStore = createOptimizerStore();
-		expect(defaultStore.optimizerGapMmInput).toBeDefined();
+		const defaultStore = createSolverStore();
+		expect(defaultStore.solverGapMmInput).toBeDefined();
 	});
 });

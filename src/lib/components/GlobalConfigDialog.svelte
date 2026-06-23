@@ -2,29 +2,29 @@
 	import { DEFAULTS, globalConfig } from '$lib/stores/global-config.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import type { ExportFormat } from '$lib/utils/export-formats';
-	import type { CenterMarkType } from '$lib/types/doodledial';
+	import type { CenterStyle } from '$lib/types/doodledial';
 	import { FONT_FAMILIES } from '$lib/utils/constants';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
 	const { minDiameter, maxDiameter } = doodledialStore.config;
 
-	let activeTab = $state<'default-disc' | 'default-optimizer' | 'experimental' | 'export'>(
-		'default-disc'
+	let activeTab = $state<'default-dial' | 'default-solver' | 'experimental' | 'export'>(
+		'default-dial'
 	);
 
 	let draftDiameter = $state(globalConfig.diameter);
 	let draftCenterHoleDiameter = $state(globalConfig.centerHoleDiameter);
-	let draftCenterMarkType = $state<CenterMarkType>(globalConfig.centerMarkType);
+	let draftCenterStyle = $state<CenterStyle>(globalConfig.centerStyle);
 	let draftTitleFontFamily = $state(globalConfig.titleFontFamily);
-	let draftPathLabelFontSize = $state(globalConfig.pathLabelFontSize);
-	let draftDiscTitleFontSize = $state(globalConfig.discTitleFontSize);
+	let draftCutoutLabelFontSize = $state(globalConfig.cutoutLabelFontSize);
+	let draftDialTitleFontSize = $state(globalConfig.dialTitleFontSize);
 
-	let draftOptimizerGapDefault = $state(globalConfig.optimizerGapDefault);
+	let draftSolverGapDefault = $state(globalConfig.solverGapDefault);
 	let draftBruteforceTimeLimit = $state(globalConfig.bruteforceTimeLimit);
 
-	let draftPathLabelOptimizerEnabled = $state(globalConfig.pathLabelOptimizerEnabled);
-	let draftForceDirectedOptimizerEnabled = $state(globalConfig.forceDirectedOptimizerEnabled);
+	let draftAutoLabelPlacementEnabled = $state(globalConfig.autoLabelPlacementEnabled);
+	let draftForceDirectedSolverEnabled = $state(globalConfig.forceDirectedSolverEnabled);
 
 	let draftDefaultExportFormat = $state<ExportFormat>(globalConfig.defaultExportFormat);
 
@@ -42,18 +42,18 @@
 		draftCenterHoleDiameter = clamped;
 	}
 
-	function handleTogglePathLabel() {
-		draftPathLabelOptimizerEnabled = !draftPathLabelOptimizerEnabled;
+	function handleToggleAutoLabelPlacement() {
+		draftAutoLabelPlacementEnabled = !draftAutoLabelPlacementEnabled;
 	}
 
 	function handleToggleForceDirected() {
-		draftForceDirectedOptimizerEnabled = !draftForceDirectedOptimizerEnabled;
+		draftForceDirectedSolverEnabled = !draftForceDirectedSolverEnabled;
 	}
 
-	function handleOptimizerGapInputChange(e: Event) {
+	function handleSolverGapInputChange(e: Event) {
 		const value = parseFloat((e.target as HTMLInputElement).value);
 		if (!Number.isFinite(value) || value < 0) return;
-		draftOptimizerGapDefault = value;
+		draftSolverGapDefault = value;
 	}
 
 	function handleBruteforceTimeLimitInputChange(e: Event) {
@@ -62,43 +62,43 @@
 		draftBruteforceTimeLimit = value;
 	}
 
-	function handlePathLabelFontSizeInputChange(e: Event) {
+	function handleCutoutLabelFontSizeInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
 		if (!Number.isFinite(value)) return;
-		draftPathLabelFontSize = value;
+		draftCutoutLabelFontSize = value;
 	}
 
-	function handleDiscTitleFontSizeInputChange(e: Event) {
+	function handleDialTitleFontSizeInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
 		if (!Number.isFinite(value)) return;
-		draftDiscTitleFontSize = value;
+		draftDialTitleFontSize = value;
 	}
 
 	function handleReset() {
 		draftDiameter = DEFAULTS.diameter;
 		draftCenterHoleDiameter = DEFAULTS.centerHoleDiameter;
-		draftCenterMarkType = DEFAULTS.centerMarkType;
+		draftCenterStyle = DEFAULTS.centerStyle;
 		draftTitleFontFamily = DEFAULTS.titleFontFamily;
-		draftPathLabelFontSize = DEFAULTS.pathLabelFontSize;
-		draftDiscTitleFontSize = DEFAULTS.discTitleFontSize;
-		draftOptimizerGapDefault = DEFAULTS.optimizerGapDefault;
+		draftCutoutLabelFontSize = DEFAULTS.cutoutLabelFontSize;
+		draftDialTitleFontSize = DEFAULTS.dialTitleFontSize;
+		draftSolverGapDefault = DEFAULTS.solverGapDefault;
 		draftBruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
-		draftPathLabelOptimizerEnabled = DEFAULTS.pathLabelOptimizerEnabled;
-		draftForceDirectedOptimizerEnabled = DEFAULTS.forceDirectedOptimizerEnabled;
+		draftAutoLabelPlacementEnabled = DEFAULTS.autoLabelPlacementEnabled;
+		draftForceDirectedSolverEnabled = DEFAULTS.forceDirectedSolverEnabled;
 		draftDefaultExportFormat = DEFAULTS.defaultExportFormat;
 	}
 
 	function handleOK() {
 		globalConfig.diameter = draftDiameter;
 		globalConfig.centerHoleDiameter = draftCenterHoleDiameter;
-		globalConfig.centerMarkType = draftCenterMarkType;
+		globalConfig.centerStyle = draftCenterStyle;
 		globalConfig.titleFontFamily = draftTitleFontFamily;
-		globalConfig.pathLabelFontSize = draftPathLabelFontSize;
-		globalConfig.discTitleFontSize = draftDiscTitleFontSize;
-		globalConfig.optimizerGapDefault = draftOptimizerGapDefault;
+		globalConfig.cutoutLabelFontSize = draftCutoutLabelFontSize;
+		globalConfig.dialTitleFontSize = draftDialTitleFontSize;
+		globalConfig.solverGapDefault = draftSolverGapDefault;
 		globalConfig.bruteforceTimeLimit = draftBruteforceTimeLimit;
-		globalConfig.pathLabelOptimizerEnabled = draftPathLabelOptimizerEnabled;
-		globalConfig.forceDirectedOptimizerEnabled = draftForceDirectedOptimizerEnabled;
+		globalConfig.autoLabelPlacementEnabled = draftAutoLabelPlacementEnabled;
+		globalConfig.forceDirectedSolverEnabled = draftForceDirectedSolverEnabled;
 		globalConfig.defaultExportFormat = draftDefaultExportFormat;
 		globalConfig.save();
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
@@ -134,19 +134,19 @@
 			<div class="flex gap-1 mb-6 border-b border-gray-200" role="tablist">
 				<button
 					role="tab"
-					aria-selected={activeTab === 'default-disc'}
-					onclick={() => (activeTab = 'default-disc')}
-					class="pb-2 px-3 text-sm font-medium transition {activeTab === 'default-disc'
+					aria-selected={activeTab === 'default-dial'}
+					onclick={() => (activeTab = 'default-dial')}
+					class="pb-2 px-3 text-sm font-medium transition {activeTab === 'default-dial'
 						? 'text-indigo-600 border-b-2 border-indigo-600'
-						: 'text-gray-500 hover:text-gray-700'}">Default Disc Settings</button
+						: 'text-gray-500 hover:text-gray-700'}">Default Dial Settings</button
 				>
 				<button
 					role="tab"
-					aria-selected={activeTab === 'default-optimizer'}
-					onclick={() => (activeTab = 'default-optimizer')}
-					class="pb-2 px-3 text-sm font-medium transition {activeTab === 'default-optimizer'
+					aria-selected={activeTab === 'default-solver'}
+					onclick={() => (activeTab = 'default-solver')}
+					class="pb-2 px-3 text-sm font-medium transition {activeTab === 'default-solver'
 						? 'text-indigo-600 border-b-2 border-indigo-600'
-						: 'text-gray-500 hover:text-gray-700'}">Default Optimizer</button
+						: 'text-gray-500 hover:text-gray-700'}">Default Solver</button
 				>
 				<button
 					role="tab"
@@ -168,11 +168,11 @@
 
 			<!-- Tab Content -->
 			<div class="space-y-6 min-h-[280px]">
-				{#if activeTab === 'default-disc'}
+				{#if activeTab === 'default-dial'}
 					<div>
 						<div class="flex items-center justify-between mb-2">
 							<label for="global-diameter-input" class="text-sm font-medium text-gray-700"
-								>Disc Diameter</label
+								>Dial Diameter</label
 							>
 							<div class="flex items-center gap-2">
 								<input
@@ -220,49 +220,49 @@
 						</div>
 						<fieldset class="flex gap-2">
 							<label
-								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterStyle ===
 								'hole'
 									? 'border-indigo-500 bg-indigo-50 text-indigo-700'
 									: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
 							>
 								<input
 									type="radio"
-									name="center-mark-type"
+									name="center-style"
 									value="hole"
-									checked={draftCenterMarkType === 'hole'}
-									onchange={() => (draftCenterMarkType = 'hole')}
+									checked={draftCenterStyle === 'hole'}
+									onchange={() => (draftCenterStyle = 'hole')}
 									class="h-4 w-4 accent-indigo-600"
 								/>
 								<span>Hole</span>
 							</label>
 							<label
-								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterStyle ===
 								'crosshair'
 									? 'border-indigo-500 bg-indigo-50 text-indigo-700'
 									: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
 							>
 								<input
 									type="radio"
-									name="center-mark-type"
+									name="center-style"
 									value="crosshair"
-									checked={draftCenterMarkType === 'crosshair'}
-									onchange={() => (draftCenterMarkType = 'crosshair')}
+									checked={draftCenterStyle === 'crosshair'}
+									onchange={() => (draftCenterStyle = 'crosshair')}
 									class="h-4 w-4 accent-indigo-600"
 								/>
 								<span>Crosshair</span>
 							</label>
 							<label
-								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterMarkType ===
+								class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm transition {draftCenterStyle ===
 								'none'
 									? 'border-indigo-500 bg-indigo-50 text-indigo-700'
 									: 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
 							>
 								<input
 									type="radio"
-									name="center-mark-type"
+									name="center-style"
 									value="none"
-									checked={draftCenterMarkType === 'none'}
-									onchange={() => (draftCenterMarkType = 'none')}
+									checked={draftCenterStyle === 'none'}
+									onchange={() => (draftCenterStyle = 'none')}
 									class="h-4 w-4 accent-indigo-600"
 								/>
 								<span>None</span>
@@ -290,61 +290,61 @@
 
 					<div class="border-t border-gray-100 pt-6">
 						<div class="flex items-center justify-between mb-2">
-							<label for="global-path-label-font-size" class="text-sm font-medium text-gray-700"
-								>Path Label Font Size</label
+							<label for="global-cutout-label-font-size" class="text-sm font-medium text-gray-700"
+								>Cutout Label Font Size</label
 							>
 							<div class="flex items-center gap-2">
 								<input
-									id="global-path-label-font-size"
+									id="global-cutout-label-font-size"
 									type="number"
 									min="4"
 									max="40"
-									value={draftPathLabelFontSize}
-									onchange={handlePathLabelFontSizeInputChange}
+									value={draftCutoutLabelFontSize}
+									onchange={handleCutoutLabelFontSizeInputChange}
 									class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 								/>
 								<span class="text-sm text-gray-500">px</span>
 							</div>
 						</div>
-						<p class="text-xs text-gray-500">Default font size for path labels</p>
+						<p class="text-xs text-gray-500">Default font size for cutout labels</p>
 					</div>
 
 					<div class="border-t border-gray-100 pt-6">
 						<div class="flex items-center justify-between mb-2">
-							<label for="global-disc-title-font-size" class="text-sm font-medium text-gray-700"
-								>Disc Title Font Size</label
+							<label for="global-dial-title-font-size" class="text-sm font-medium text-gray-700"
+								>Dial Title Font Size</label
 							>
 							<div class="flex items-center gap-2">
 								<input
-									id="global-disc-title-font-size"
+									id="global-dial-title-font-size"
 									type="number"
 									min="8"
 									max="36"
-									value={draftDiscTitleFontSize}
-									onchange={handleDiscTitleFontSizeInputChange}
+									value={draftDialTitleFontSize}
+									onchange={handleDialTitleFontSizeInputChange}
 									class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 								/>
 								<span class="text-sm text-gray-500">px</span>
 							</div>
 						</div>
-						<p class="text-xs text-gray-500">Default font size for disc titles</p>
+						<p class="text-xs text-gray-500">Default font size for dial titles</p>
 					</div>
 				{/if}
 
-				{#if activeTab === 'default-optimizer'}
+				{#if activeTab === 'default-solver'}
 					<div>
 						<div class="flex items-center justify-between mb-2">
-							<label for="global-optimizer-gap-input" class="text-sm font-medium text-gray-700"
-								>Optimizer Gap</label
+							<label for="global-solver-gap-input" class="text-sm font-medium text-gray-700"
+								>Solver Gap</label
 							>
 							<div class="flex items-center gap-2">
 								<input
-									id="global-optimizer-gap-input"
+									id="global-solver-gap-input"
 									type="number"
 									min="0"
 									step="0.5"
-									value={draftOptimizerGapDefault}
-									onchange={handleOptimizerGapInputChange}
+									value={draftSolverGapDefault}
+									onchange={handleSolverGapInputChange}
 									class="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 								/>
 								<span class="text-sm text-gray-500">mm</span>
@@ -372,7 +372,7 @@
 								<span class="text-sm text-gray-500">s</span>
 							</div>
 						</div>
-						<p class="text-xs text-gray-500">Maximum runtime for brute force optimizer</p>
+						<p class="text-xs text-gray-500">Maximum runtime for brute force solver</p>
 					</div>
 				{/if}
 
@@ -381,23 +381,23 @@
 						<div class="flex items-center justify-between">
 							<div>
 								<span class="text-sm font-medium text-gray-700"
-									>Path Label Optimizer (Experimental)</span
+									>Auto Label Placement (Experimental)</span
 								>
-								<p class="text-xs text-gray-500 mt-0.5">Enable auto-placement of path labels</p>
+								<p class="text-xs text-gray-500 mt-0.5">Enable auto-placement of cutout labels</p>
 							</div>
 							<button
 								type="button"
 								role="switch"
-								aria-checked={draftPathLabelOptimizerEnabled}
-								aria-label="Toggle path label optimizer"
-								onclick={handleTogglePathLabel}
-								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftPathLabelOptimizerEnabled
+								aria-checked={draftAutoLabelPlacementEnabled}
+								aria-label="Toggle auto label placement"
+								onclick={handleToggleAutoLabelPlacement}
+								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftAutoLabelPlacementEnabled
 									? 'bg-indigo-600'
 									: 'bg-gray-200'}"
 							>
 								<span
 									aria-hidden="true"
-									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftPathLabelOptimizerEnabled
+									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftAutoLabelPlacementEnabled
 										? 'translate-x-5'
 										: 'translate-x-0'}"
 								></span>
@@ -409,7 +409,7 @@
 						<div class="flex items-center justify-between">
 							<div>
 								<span class="text-sm font-medium text-gray-700"
-									>Force Directed Optimizer (Experimental)</span
+									>Force Directed Solver (Experimental)</span
 								>
 								<p class="text-xs text-gray-500 mt-0.5">
 									Use physics-based force directed optimization instead of brute force search
@@ -418,17 +418,17 @@
 							<button
 								type="button"
 								role="switch"
-								aria-checked={draftForceDirectedOptimizerEnabled}
-								aria-label="Toggle force directed optimizer"
-								data-testid="toggle-force-directed-optimizer"
+								aria-checked={draftForceDirectedSolverEnabled}
+								aria-label="Toggle force directed solver"
+								data-testid="toggle-force-directed-solver"
 								onclick={handleToggleForceDirected}
-								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftForceDirectedOptimizerEnabled
+								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {draftForceDirectedSolverEnabled
 									? 'bg-indigo-600'
 									: 'bg-gray-200'}"
 							>
 								<span
 									aria-hidden="true"
-									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftForceDirectedOptimizerEnabled
+									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {draftForceDirectedSolverEnabled
 										? 'translate-x-5'
 										: 'translate-x-0'}"
 								></span>

@@ -5,7 +5,7 @@ import { SvelteMap } from 'svelte/reactivity';
 export interface DetectionStoreOptions {
 	getLayers: () => Layer[];
 	getCombinedSvg: () => string | null;
-	getConfig: () => { optimizerGapMm?: number; diameter: number };
+	getConfig: () => { solverGapMm?: number; diameter: number };
 	onError?: (error: string) => void;
 }
 
@@ -25,7 +25,7 @@ function clearMap<K, V>(target: SvelteMap<K, V>) {
 export function createDetectionStore(options: DetectionStoreOptions) {
 	const { getLayers, getCombinedSvg, getConfig, onError } = options;
 
-	let checkingOverlaps = $state<boolean>(false);
+	let isDetecting = $state<boolean>(false);
 	const overlaps: SvelteMap<string, Map<string, number>> = new SvelteMap();
 	const cutoutGaps: SvelteMap<string, Set<string>> = new SvelteMap();
 
@@ -58,7 +58,7 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 		}
 
 		detectionRunning = true;
-		checkingOverlaps = true;
+		isDetecting = true;
 
 		try {
 			const svg = getCombinedSvg();
@@ -84,7 +84,7 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 				const result = await detectCutoutGaps(
 					visibleLayers,
 					svg,
-					config.optimizerGapMm ?? 2,
+					config.solverGapMm ?? 2,
 					config.diameter
 				);
 				replaceMapContent(cutoutGaps, result);
@@ -93,7 +93,7 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 				onError?.(`Gap detection failed: ${err instanceof Error ? err.message : String(err)}`);
 			}
 		} finally {
-			checkingOverlaps = false;
+			isDetecting = false;
 			detectionRunning = false;
 			if (detectionStale) {
 				detectionStale = false;
@@ -103,8 +103,8 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 	}
 
 	return {
-		get checkingOverlaps() {
-			return checkingOverlaps;
+		get isDetecting() {
+			return isDetecting;
 		},
 		get overlaps() {
 			return overlaps;
@@ -114,8 +114,8 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 		},
 		scheduleDetection,
 		runDetectionNow,
-		setCheckingOverlaps(checking: boolean) {
-			checkingOverlaps = checking;
+		setDetecting(checking: boolean) {
+			isDetecting = checking;
 		},
 		setOverlaps(newOverlaps: Map<string, Map<string, number>>) {
 			replaceMapContent(overlaps, newOverlaps);
@@ -138,7 +138,7 @@ export function createDetectionStore(options: DetectionStoreOptions) {
 			detectionStale = false;
 			clearMap(overlaps);
 			clearMap(cutoutGaps);
-			checkingOverlaps = false;
+			isDetecting = false;
 		}
 	};
 }

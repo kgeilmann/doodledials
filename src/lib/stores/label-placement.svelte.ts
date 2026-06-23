@@ -8,7 +8,7 @@ export interface LabelPlacementStoreOptions {
 
 export function createLabelPlacementStore(options?: LabelPlacementStoreOptions) {
 	const getIsPlacementEnabled =
-		options?.getIsPlacementEnabled ?? (() => globalConfig.pathLabelOptimizerEnabled);
+		options?.getIsPlacementEnabled ?? (() => globalConfig.autoLabelPlacementEnabled);
 
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	let running = false;

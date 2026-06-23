@@ -1,8 +1,8 @@
 import type { Layer } from '$lib/types/doodledial';
 import {
-	combineOptimizerSvgTemplate,
-	createOptimizerSvgTemplate,
-	type OptimizerSvgTemplate
+	combineSolverSvgTemplate,
+	createSolverSvgTemplate,
+	type SolverSvgTemplate
 } from '$lib/utils/doodledial';
 import {
 	createOverlapDetectionCache,
@@ -10,15 +10,15 @@ import {
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
-import type { OptimizerInput, OptimizerProgress } from './shared';
+import type { SolverInput, SolverProgress } from './shared';
 
-export type { OptimizerInput, OptimizerProgress } from './shared';
+export type { SolverInput, SolverProgress } from './shared';
 
-export interface OptimizerResult {
+export interface SolverResult {
 	layout: Record<string, number>;
 }
 
-export interface OptimizerTuning {
+export interface SolverTuning {
 	overlapMagnitudeWeight?: number;
 	overlapMagnitudePower?: number;
 	maxOverlapForceMagnitude?: number;
@@ -32,26 +32,26 @@ export interface OptimizerTuning {
 	maxUniqueForce?: number;
 }
 
-export interface OptimizerIterationSnapshot {
+export interface SolverIterationSnapshot {
 	iteration: number;
 	averageForceMagnitude: number;
 	overlapAggregate: number;
 	minimumGap: number;
 }
 
-export interface OptimizerOptions {
+export interface SolverOptions {
 	signal?: AbortSignal;
 	initializeRandomly?: boolean;
 	randomSeed?: number;
 	roundOutputAngles?: boolean;
-	tuning?: OptimizerTuning;
-	onIterationSnapshot?: (snapshot: OptimizerIterationSnapshot) => void;
+	tuning?: SolverTuning;
+	onIterationSnapshot?: (snapshot: SolverIterationSnapshot) => void;
 }
 
-export class OptimizerCancelledError extends Error {
-	constructor(message = 'Optimizer cancelled') {
+export class SolverCancelledError extends Error {
+	constructor(message = 'Solver cancelled') {
 		super(message);
-		this.name = 'OptimizerCancelledError';
+		this.name = 'SolverCancelledError';
 	}
 }
 
@@ -70,7 +70,7 @@ const UNIQUE_FORCE_WEIGHT = 0.02;
 const MIN_UNIQUE_ANGLE_SEPARATION = 5;
 const MAX_UNIQUE_FORCE = 2;
 
-interface ResolvedOptimizerTuning {
+interface ResolvedSolverTuning {
 	overlapMagnitudeWeight: number;
 	overlapMagnitudePower: number;
 	maxOverlapForceMagnitude: number;
@@ -84,7 +84,7 @@ interface ResolvedOptimizerTuning {
 	maxUniqueForce: number;
 }
 
-const DEFAULT_OPTIMIZER_TUNING: ResolvedOptimizerTuning = {
+const DEFAULT_OPTIMIZER_TUNING: ResolvedSolverTuning = {
 	overlapMagnitudeWeight: OVERLAP_MAGNITUDE_WEIGHT,
 	overlapMagnitudePower: OVERLAP_MAGNITUDE_POWER,
 	maxOverlapForceMagnitude: MAX_OVERLAP_FORCE_MAGNITUDE,
@@ -98,7 +98,7 @@ const DEFAULT_OPTIMIZER_TUNING: ResolvedOptimizerTuning = {
 	maxUniqueForce: MAX_UNIQUE_FORCE
 };
 
-function resolveOptimizerTuning(tuning?: OptimizerTuning): ResolvedOptimizerTuning {
+function resolveSolverTuning(tuning?: SolverTuning): ResolvedSolverTuning {
 	return { ...DEFAULT_OPTIMIZER_TUNING, ...tuning };
 }
 
@@ -261,7 +261,7 @@ function zeroMeanForceMap(forceMap: LayerForceMap, layerIds: string[]): LayerFor
 export function calculateRestoringForceMap(
 	restoringContributions: LayerForceMap,
 	layerIds: string[],
-	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
+	tuning: ResolvedSolverTuning = DEFAULT_OPTIMIZER_TUNING
 ): LayerForceMap {
 	const clamped: LayerForceMap = Object.fromEntries(
 		layerIds.map((layerId) => [
@@ -276,7 +276,7 @@ export function calculateRestoringForceMap(
 export function calculateUniqueContributions(
 	state: Record<string, number>,
 	layerIds: string[],
-	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
+	tuning: ResolvedSolverTuning = DEFAULT_OPTIMIZER_TUNING
 ): LayerForceMap {
 	const contributions: LayerForceMap = createZeroForceMap(layerIds);
 
@@ -312,7 +312,7 @@ export function calculateUniqueContributions(
 export function calculateUniqueForceMap(
 	uniqueContributions: LayerForceMap,
 	layerIds: string[],
-	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
+	tuning: ResolvedSolverTuning = DEFAULT_OPTIMIZER_TUNING
 ): LayerForceMap {
 	const clamped: LayerForceMap = Object.fromEntries(
 		layerIds.map((layerId) => [
@@ -351,17 +351,17 @@ function buildRotatedLayers(layers: Layer[], state: Record<string, number>): Lay
 }
 
 async function detectLayoutOverlaps(
-	input: OptimizerInput,
+	input: SolverInput,
 	state: Record<string, number>,
 	overlapCache: OverlapDetectionCache,
-	optimizerSvgTemplate: OptimizerSvgTemplate
+	solverSvgTemplate: SolverSvgTemplate
 ): Promise<Map<string, Map<string, number>>> {
 	const layers = buildRotatedLayers(input.layers, state);
-	const combinedSvg = combineOptimizerSvgTemplate(optimizerSvgTemplate, state);
+	const combinedSvg = combineSolverSvgTemplate(solverSvgTemplate, state);
 
 	return detectOverlaps(layers, combinedSvg, {
 		cache: overlapCache,
-		cutoutStrokeWidthMm: input.config.optimizerGapMm ?? 2,
+		cutoutStrokeWidthMm: input.config.solverGapMm ?? 2,
 		dialDiameterMm: input.diameter
 	});
 }
@@ -376,7 +376,7 @@ function getOverlapCount(
 
 export function calculateOverlapMagnitudeFromSharedPixels(
 	sharedPixels: number,
-	tuning: ResolvedOptimizerTuning = DEFAULT_OPTIMIZER_TUNING
+	tuning: ResolvedSolverTuning = DEFAULT_OPTIMIZER_TUNING
 ): number {
 	if (sharedPixels < MIN_OVERLAP_PIXELS) {
 		return 0;
@@ -392,7 +392,7 @@ function calculateOverlapMagnitude(
 	currentOverlaps: Map<string, Map<string, number>>,
 	layerId: string,
 	overlappingLayerIds: string[],
-	tuning: ResolvedOptimizerTuning
+	tuning: ResolvedSolverTuning
 ): number {
 	const totalMagnitude = overlappingLayerIds.reduce((sum, otherLayerId) => {
 		const overlap = getOverlapCount(currentOverlaps, layerId, otherLayerId);
@@ -403,13 +403,13 @@ function calculateOverlapMagnitude(
 }
 
 async function calculateOverlapForce(
-	input: OptimizerInput,
+	input: SolverInput,
 	state: Record<string, number>,
 	currentOverlaps: Map<string, Map<string, number>>,
 	layerId: string,
-	tuning: ResolvedOptimizerTuning,
+	tuning: ResolvedSolverTuning,
 	overlapCache: OverlapDetectionCache,
-	optimizerSvgTemplate: OptimizerSvgTemplate
+	solverSvgTemplate: SolverSvgTemplate
 ): Promise<number> {
 	const overlappingLayerIds = input.layers
 		.filter((layer) => layer.id !== layerId)
@@ -445,8 +445,8 @@ async function calculateOverlapForce(
 		};
 
 		const [positiveOverlaps, negativeOverlaps] = await Promise.all([
-			detectLayoutOverlaps(input, positiveState, overlapCache, optimizerSvgTemplate),
-			detectLayoutOverlaps(input, negativeState, overlapCache, optimizerSvgTemplate)
+			detectLayoutOverlaps(input, positiveState, overlapCache, solverSvgTemplate),
+			detectLayoutOverlaps(input, negativeState, overlapCache, solverSvgTemplate)
 		]);
 
 		let positiveTotalDecrease = 0;
@@ -509,24 +509,24 @@ function getExplorationDirection(layerId: string): -1 | 1 {
 
 function throwIfCancelled(signal?: AbortSignal): void {
 	if (signal?.aborted) {
-		throw new OptimizerCancelledError();
+		throw new SolverCancelledError();
 	}
 }
 
-export async function runOptimizer(
-	input: OptimizerInput,
-	onProgress?: (progress: OptimizerProgress) => void,
-	options?: OptimizerOptions
-): Promise<OptimizerResult> {
+export async function runSolver(
+	input: SolverInput,
+	onProgress?: (progress: SolverProgress) => void,
+	options?: SolverOptions
+): Promise<SolverResult> {
 	throwIfCancelled(options?.signal);
 
 	const layerIds = input.layers.map((layer) => layer.id);
 	const simulatedIterations = getIterationCount(layerIds.length);
 	const shouldInitializeRandomly = options?.initializeRandomly ?? false;
 	const shouldRoundOutputAngles = options?.roundOutputAngles ?? true;
-	const tuning = resolveOptimizerTuning(options?.tuning);
+	const tuning = resolveSolverTuning(options?.tuning);
 	const overlapCache = createOverlapDetectionCache();
-	const optimizerSvgTemplate = createOptimizerSvgTemplate(
+	const solverSvgTemplate = createSolverSvgTemplate(
 		input.svgContent,
 		{
 			...input.config,
@@ -547,7 +547,7 @@ export async function runOptimizer(
 			input,
 			state,
 			overlapCache,
-			optimizerSvgTemplate
+			solverSvgTemplate
 		);
 		const restoringContributions = calculateRestoringContributions(state, layerIds);
 		const restoringForceMap = calculateRestoringForceMap(restoringContributions, layerIds, tuning);
@@ -567,7 +567,7 @@ export async function runOptimizer(
 				layerId,
 				tuning,
 				overlapCache,
-				optimizerSvgTemplate
+				solverSvgTemplate
 			);
 			throwIfCancelled(options?.signal);
 			const restoringForce = calculateRestoringForce(layerId, restoringForceMap);

@@ -1,8 +1,8 @@
 import type { Layer } from '$lib/types/doodledial';
 import {
-	combineOptimizerSvgTemplate,
-	createOptimizerSvgTemplate,
-	type OptimizerSvgTemplate
+	combineSolverSvgTemplate,
+	createSolverSvgTemplate,
+	type SolverSvgTemplate
 } from '$lib/utils/doodledial';
 import {
 	createOverlapDetectionCache,
@@ -10,7 +10,7 @@ import {
 	type OverlapDetectionCache
 } from '$lib/utils/overlap-detection';
 import { normalizeAngle, roundLayoutAngles } from '$lib/utils/rotation';
-import type { OptimizerInput, OptimizerProgress } from './shared';
+import type { SolverInput, SolverProgress } from './shared';
 
 const FULL_CIRCLE = 360;
 const MAX_TOP_LAYOUTS = 12;
@@ -118,10 +118,10 @@ export function addToTopLayouts(
 	return false;
 }
 
-export interface OptimizerResult {
+export interface SolverResult {
 	layout: Record<string, number>;
 	topLayouts: Record<string, number>[];
-	stopReason: BruteforceOptimizerStopReason;
+	stopReason: BruteforceSolverStopReason;
 	feasibleSolutionsFound: number;
 	resumeContext: BruteforceResumeContext;
 }
@@ -129,47 +129,47 @@ export interface OptimizerResult {
 export interface BruteforceResumeContext {
 	overlapCache: OverlapDetectionCache;
 	pairFeasibilityMemo: Map<string, boolean>;
-	optimizerSvgTemplate: OptimizerSvgTemplate;
+	solverSvgTemplate: SolverSvgTemplate;
 	bestLayout: Record<string, number> | null;
 	topLayouts: Record<string, number>[];
 	feasibleSolutionsFound: number;
 }
 
-export type BruteforceOptimizerStopReason =
+export type BruteforceSolverStopReason =
 	| 'exact_complete'
 	| 'cancelled'
 	| 'time_limit'
 	| 'stopped'
 	| 'no_feasible_solution';
 
-export interface BruteforceOptimizerSearchSnapshot {
+export interface BruteforceSolverSearchSnapshot {
 	nodesVisited: number;
 	depth: number;
 	feasibleSolutionsFound: number;
-	stopReason?: BruteforceOptimizerStopReason;
+	stopReason?: BruteforceSolverStopReason;
 	resumeContext?: BruteforceResumeContext;
 }
 
-export interface BruteforceOptimizerOptions {
+export interface BruteforceSolverOptions {
 	signal?: AbortSignal;
 	roundOutputAngles?: boolean;
 	maxRuntimeMs?: number;
 	anchorLayerId?: string;
 	searchSeed?: number;
-	onSearchSnapshot?: (snapshot: BruteforceOptimizerSearchSnapshot) => void;
+	onSearchSnapshot?: (snapshot: BruteforceSolverSearchSnapshot) => void;
 	resumeContext?: BruteforceResumeContext;
 }
 
-export class BruteforceOptimizerCancelledError extends Error {
-	constructor(message = 'Bruteforce optimizer cancelled') {
+export class BruteforceSolverCancelledError extends Error {
+	constructor(message = 'Bruteforce solver cancelled') {
 		super(message);
-		this.name = 'BruteforceOptimizerCancelledError';
+		this.name = 'BruteforceSolverCancelledError';
 	}
 }
 
 function throwIfCancelled(signal?: AbortSignal): void {
 	if (signal?.aborted) {
-		throw new BruteforceOptimizerCancelledError();
+		throw new BruteforceSolverCancelledError();
 	}
 }
 
@@ -397,14 +397,14 @@ function buildPairFeasibilityMemoKey(
 	return `${secondLayerId}:${normalizedSecondAngle}|${firstLayerId}:${normalizedFirstAngle}`;
 }
 
-export async function runBruteforceOptimizer(
-	input: OptimizerInput,
-	onProgress?: (progress: OptimizerProgress) => void,
-	options?: BruteforceOptimizerOptions
-): Promise<OptimizerResult> {
+export async function runBruteforceSolver(
+	input: SolverInput,
+	onProgress?: (progress: SolverProgress) => void,
+	options?: BruteforceSolverOptions
+): Promise<SolverResult> {
 	const emitTerminalProgressAndSnapshot = (
 		feasibleSolutionsFound: number,
-		stopReason: BruteforceOptimizerStopReason
+		stopReason: BruteforceSolverStopReason
 	): void => {
 		onProgress?.({
 			percent: 100,
@@ -412,7 +412,7 @@ export async function runBruteforceOptimizer(
 			iteration: 0,
 			totalIterations: 0,
 			topLayouts,
-			optimizerSvgTemplate
+			solverSvgTemplate
 		});
 		options?.onSearchSnapshot?.({
 			nodesVisited: 0,
@@ -436,7 +436,7 @@ export async function runBruteforceOptimizer(
 			resumeContext: {
 				overlapCache: createOverlapDetectionCache(),
 				pairFeasibilityMemo: new Map(),
-				optimizerSvgTemplate: createOptimizerSvgTemplate(
+				solverSvgTemplate: createSolverSvgTemplate(
 					input.svgContent,
 					{ ...input.config, diameter: input.diameter },
 					[],
@@ -463,7 +463,7 @@ export async function runBruteforceOptimizer(
 			resumeContext: {
 				overlapCache: createOverlapDetectionCache(),
 				pairFeasibilityMemo: new Map(),
-				optimizerSvgTemplate: createOptimizerSvgTemplate(
+				solverSvgTemplate: createSolverSvgTemplate(
 					input.svgContent,
 					{ ...input.config, diameter: input.diameter },
 					input.layers,
@@ -491,9 +491,9 @@ export async function runBruteforceOptimizer(
 	const totalIterations = computeTotalIterations(remainingLayerIds.length);
 
 	const overlapCache = options?.resumeContext?.overlapCache ?? createOverlapDetectionCache();
-	const optimizerSvgTemplate =
-		options?.resumeContext?.optimizerSvgTemplate ??
-		createOptimizerSvgTemplate(
+	const solverSvgTemplate =
+		options?.resumeContext?.solverSvgTemplate ??
+		createSolverSvgTemplate(
 			input.svgContent,
 			{
 				...input.config,
@@ -503,7 +503,7 @@ export async function runBruteforceOptimizer(
 			input.groups,
 			input.hiddenLayerIds
 		);
-	const optimizerRotationsByLayerId = Object.fromEntries(
+	const solverRotationsByLayerId = Object.fromEntries(
 		input.layers.map((layer) => [layer.id, 0])
 	) as Record<string, number>;
 	const pairFeasibilityMemo =
@@ -521,7 +521,7 @@ export async function runBruteforceOptimizer(
 	let bestLayout: Record<string, number> | null = options?.resumeContext?.bestLayout ?? null;
 	const topLayouts: Record<string, number>[] = options?.resumeContext?.topLayouts ?? [];
 	let topLayoutsDirty = topLayouts.length > 0;
-	let stopReason: BruteforceOptimizerStopReason | undefined;
+	let stopReason: BruteforceSolverStopReason | undefined;
 
 	const isTimedOut = (): boolean => {
 		if (typeof maxRuntimeMs !== 'number' || maxRuntimeMs < 0) {
@@ -558,7 +558,7 @@ export async function runBruteforceOptimizer(
 				? Math.min(99, Math.round(((now - startedAtMs) / maxRuntimeMs) * 100))
 				: Math.min(99, Math.round((nodesVisited / totalIterations) * 100));
 
-		const progressPayload: OptimizerProgress = {
+		const progressPayload: SolverProgress = {
 			percent,
 			message: `Solutions found: ${feasibleSolutionsFound}`,
 			iteration: nodesVisited,
@@ -568,7 +568,7 @@ export async function runBruteforceOptimizer(
 
 		if (topLayoutsDirty) {
 			progressPayload.topLayouts = topLayouts;
-			progressPayload.optimizerSvgTemplate = optimizerSvgTemplate;
+			progressPayload.solverSvgTemplate = solverSvgTemplate;
 			topLayoutsDirty = false;
 		}
 
@@ -612,19 +612,16 @@ export async function runBruteforceOptimizer(
 			}
 		];
 
-		optimizerRotationsByLayerId[firstLayerId] = pairLayers[0].rotation;
-		optimizerRotationsByLayerId[secondLayerId] = pairLayers[1].rotation;
-		const combinedSvg = combineOptimizerSvgTemplate(
-			optimizerSvgTemplate,
-			optimizerRotationsByLayerId
-		);
+		solverRotationsByLayerId[firstLayerId] = pairLayers[0].rotation;
+		solverRotationsByLayerId[secondLayerId] = pairLayers[1].rotation;
+		const combinedSvg = combineSolverSvgTemplate(solverSvgTemplate, solverRotationsByLayerId);
 		const overlapPixels = await detectPairOverlapPixels({
 			firstLayer: pairLayers[0],
 			secondLayer: pairLayers[1],
 			combinedSvg,
 			cache: overlapCache,
 			overlapMode: 'any',
-			cutoutStrokeWidthMm: input.config.optimizerGapMm ?? 2,
+			cutoutStrokeWidthMm: input.config.solverGapMm ?? 2,
 			dialDiameterMm: input.diameter
 		});
 
@@ -867,7 +864,7 @@ export async function runBruteforceOptimizer(
 			await search(0, remainingLayerIds);
 		}
 	} catch (error) {
-		if (error instanceof BruteforceOptimizerCancelledError) {
+		if (error instanceof BruteforceSolverCancelledError) {
 			stopReason = 'cancelled';
 			const selectedResumeLayout =
 				bestLayout ?? buildDefaultLayout(input.layers, anchorLayerId, layerIds);
@@ -879,7 +876,7 @@ export async function runBruteforceOptimizer(
 				resumeContext: {
 					overlapCache,
 					pairFeasibilityMemo,
-					optimizerSvgTemplate,
+					solverSvgTemplate,
 					bestLayout: selectedResumeLayout,
 					topLayouts,
 					feasibleSolutionsFound
@@ -912,7 +909,7 @@ export async function runBruteforceOptimizer(
 		resumeContext: {
 			overlapCache,
 			pairFeasibilityMemo,
-			optimizerSvgTemplate,
+			solverSvgTemplate,
 			bestLayout,
 			topLayouts,
 			feasibleSolutionsFound

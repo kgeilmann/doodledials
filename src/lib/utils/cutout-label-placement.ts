@@ -9,7 +9,7 @@ import {
 import { detectCutoutLabelOverlapPixels } from './overlap-detection';
 import { normalizeAngle } from './rotation';
 
-export interface PathLabelLayerInput {
+export interface CutoutLabelLayerInput {
 	id: string;
 	index: number;
 	rotation: number;
@@ -19,12 +19,12 @@ export interface PathLabelLayerInput {
 	labelOffsetY?: number;
 }
 
-export interface SolvePathLabelPlacementsInput {
+export interface SolveCutoutLabelPlacementsInput {
 	combinedSvg: string;
 	maxRadiusPx: number;
 	ringStepPx?: number;
 	angleStepDeg?: number;
-	layers: PathLabelLayerInput[];
+	layers: CutoutLabelLayerInput[];
 	pathAnchors: Record<string, { x: number; y: number }>;
 	labelSizeByLayerId?: Record<string, { width: number; height: number }>;
 	markLines: Segment[];
@@ -35,15 +35,15 @@ export interface SolvePathLabelPlacementsInput {
 	visibleLayerIds?: string[];
 }
 
-export interface SolvedPathLabelPlacement {
+export interface SolvedCutoutLabelPlacement {
 	offsetX: number;
 	offsetY: number;
 	status: LabelPlacementStatus;
 	obb: Obb | null;
 }
 
-export interface SolvePathLabelPlacementsResult {
-	byLayerId: Record<string, SolvedPathLabelPlacement>;
+export interface SolveCutoutLabelPlacementsResult {
+	byLayerId: Record<string, SolvedCutoutLabelPlacement>;
 }
 
 interface Candidate {
@@ -72,7 +72,7 @@ function getAngleOffsets(stepDeg: number): number[] {
 }
 
 function buildCandidatesForLayer(
-	layer: PathLabelLayerInput,
+	layer: CutoutLabelLayerInput,
 	anchor: { x: number; y: number },
 	labelSize: { width: number; height: number },
 	maxRadiusPx: number,
@@ -112,10 +112,10 @@ function buildCandidatesForLayer(
 	return candidates;
 }
 
-export async function solvePathLabelPlacements(
-	input: SolvePathLabelPlacementsInput
-): Promise<SolvePathLabelPlacementsResult> {
-	const byLayerId: Record<string, SolvedPathLabelPlacement> = {};
+export async function solveCutoutLabelPlacements(
+	input: SolveCutoutLabelPlacementsInput
+): Promise<SolveCutoutLabelPlacementsResult> {
+	const byLayerId: Record<string, SolvedCutoutLabelPlacement> = {};
 	const sortedLayers = [...input.layers].sort((a, b) => {
 		if (a.index !== b.index) {
 			return a.index - b.index;

@@ -7,11 +7,11 @@ svg {
 	--highlight: #6366f1;
 }
 
-.layer-label {
+.mark-label {
 	user-select: none;
 }
 
-.path-label {
+.cutout-label {
 	user-select: none;
 }
 

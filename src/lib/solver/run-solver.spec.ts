@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 
-const { createOptimizerSvgTemplateMock, combineOptimizerSvgTemplateMock, detectOverlapsMock } =
+const { createSolverSvgTemplateMock, combineSolverSvgTemplateMock, detectOverlapsMock } =
 	vi.hoisted(() => ({
-		createOptimizerSvgTemplateMock: vi.fn(
+		createSolverSvgTemplateMock: vi.fn(
 			(_content: SVGContent, _config: DialConfig, layers: { id: string; groupId: string }[]) => ({
 				rawTemplate: 'template',
 				layerIds: layers.map((l) => l.id)
 			})
 		),
-		combineOptimizerSvgTemplateMock: vi.fn(
+		combineSolverSvgTemplateMock: vi.fn(
 			(
 				_template: { rawTemplate: string; layerIds: string[] },
 				rotationsByLayerId: Record<string, number>
@@ -37,8 +37,8 @@ const { createOptimizerSvgTemplateMock, combineOptimizerSvgTemplateMock, detectO
 	}));
 
 vi.mock('$lib/utils/doodledial', () => ({
-	createOptimizerSvgTemplate: createOptimizerSvgTemplateMock,
-	combineOptimizerSvgTemplate: combineOptimizerSvgTemplateMock
+	createSolverSvgTemplate: createSolverSvgTemplateMock,
+	combineSolverSvgTemplate: combineSolverSvgTemplateMock
 }));
 
 vi.mock('$lib/utils/overlap-detection', () => ({
@@ -50,16 +50,16 @@ vi.mock('$lib/utils/overlap-detection', () => ({
 }));
 
 import {
-	type OptimizerIterationSnapshot,
-	OptimizerCancelledError,
+	type SolverIterationSnapshot,
+	SolverCancelledError,
 	analyzeCircularGaps,
 	calculateOverlapMagnitudeFromSharedPixels,
 	calculateRestoringContributions,
 	calculateRestoringForceMap,
 	calculateUniqueContributions,
 	calculateUniqueForceMap,
-	runOptimizer
-} from './run-optimizer';
+	runSolver
+} from './run-solver';
 
 describe('calculateOverlapMagnitudeFromSharedPixels', () => {
 	test('returns zero below minimum overlap threshold', () => {
@@ -202,7 +202,7 @@ describe('calculateUniqueForceMap', () => {
 	});
 });
 
-describe('runOptimizer', () => {
+describe('runSolver', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -213,7 +213,7 @@ describe('runOptimizer', () => {
 			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' }
 		];
 
-		const result = await runOptimizer({
+		const result = await runSolver({
 			diameter: 200,
 			config: {
 				diameter: 200,
@@ -226,8 +226,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			},
 			layers,
@@ -237,8 +237,8 @@ describe('runOptimizer', () => {
 			}
 		});
 
-		expect(createOptimizerSvgTemplateMock).toHaveBeenCalled();
-		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
+		expect(createSolverSvgTemplateMock).toHaveBeenCalled();
+		expect(combineSolverSvgTemplateMock).toHaveBeenCalled();
 		expect(detectOverlapsMock).toHaveBeenCalled();
 
 		const svgSnapshots = detectOverlapsMock.mock.calls.map(([, svg]) => svg);
@@ -249,13 +249,13 @@ describe('runOptimizer', () => {
 		expect(Number.isFinite(result.layout.layerB)).toBe(true);
 	});
 
-	test('creates optimizer svg template once and combines via template replacement', async () => {
+	test('creates solver svg template once and combines via template replacement', async () => {
 		const layers: Layer[] = [
 			{ id: 'layerA', index: 0, name: 'Layer A', rotation: 0, visible: true, groupId: '' },
 			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0, visible: true, groupId: '' }
 		];
 
-		await runOptimizer({
+		await runSolver({
 			diameter: 200,
 			config: {
 				diameter: 200,
@@ -268,8 +268,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			},
 			layers,
@@ -279,8 +279,8 @@ describe('runOptimizer', () => {
 			}
 		});
 
-		expect(createOptimizerSvgTemplateMock).toHaveBeenCalledTimes(1);
-		expect(combineOptimizerSvgTemplateMock).toHaveBeenCalled();
+		expect(createSolverSvgTemplateMock).toHaveBeenCalledTimes(1);
+		expect(combineSolverSvgTemplateMock).toHaveBeenCalled();
 	});
 
 	test('applies a deterministic exploration nudge when overlap probes cannot reduce pixels', async () => {
@@ -298,7 +298,7 @@ describe('runOptimizer', () => {
 		];
 
 		try {
-			const result = await runOptimizer({
+			const result = await runSolver({
 				diameter: 200,
 				config: {
 					diameter: 200,
@@ -311,8 +311,8 @@ describe('runOptimizer', () => {
 					scale: 1,
 					sizeToFit: true,
 					centerHoleDiameter: 2,
-					centerMarkType: 'hole',
-					pathLabelFontSize: 10,
+					centerStyle: 'hole',
+					cutoutLabelFontSize: 10,
 					titleFontFamily: 'sans-serif'
 				},
 				layers,
@@ -351,7 +351,7 @@ describe('runOptimizer', () => {
 		];
 
 		await expect(
-			runOptimizer(
+			runSolver(
 				{
 					diameter: 200,
 					config: {
@@ -365,8 +365,8 @@ describe('runOptimizer', () => {
 						scale: 1,
 						sizeToFit: true,
 						centerHoleDiameter: 2,
-						centerMarkType: 'hole',
-						pathLabelFontSize: 10,
+						centerStyle: 'hole',
+						cutoutLabelFontSize: 10,
 						titleFontFamily: 'sans-serif'
 					} as const,
 					layers,
@@ -378,7 +378,7 @@ describe('runOptimizer', () => {
 				undefined,
 				{ signal: controller.signal }
 			)
-		).rejects.toBeInstanceOf(OptimizerCancelledError);
+		).rejects.toBeInstanceOf(SolverCancelledError);
 	});
 
 	test('uses deterministic random initialization when seed is provided', async () => {
@@ -403,8 +403,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			} as const,
 			layers,
@@ -415,12 +415,12 @@ describe('runOptimizer', () => {
 		};
 
 		try {
-			const first = await runOptimizer(input, undefined, {
+			const first = await runSolver(input, undefined, {
 				initializeRandomly: true,
 				randomSeed: 42,
 				roundOutputAngles: false
 			});
-			const second = await runOptimizer(input, undefined, {
+			const second = await runSolver(input, undefined, {
 				initializeRandomly: true,
 				randomSeed: 42,
 				roundOutputAngles: false
@@ -449,7 +449,7 @@ describe('runOptimizer', () => {
 			{ id: 'layerB', index: 1, name: 'Layer B', rotation: 0.6, visible: true, groupId: '' }
 		];
 
-		const result = await runOptimizer({
+		const result = await runSolver({
 			diameter: 200,
 			config: {
 				diameter: 200,
@@ -462,8 +462,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			},
 			layers,
@@ -502,8 +502,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			} as const,
 			layers,
@@ -522,7 +522,7 @@ describe('runOptimizer', () => {
 			...initialAnalysis.gaps.map((gap) => Math.abs(gap.gap - initialAnalysis.idealGap))
 		);
 
-		const result = await runOptimizer(input, undefined, { roundOutputAngles: false });
+		const result = await runSolver(input, undefined, { roundOutputAngles: false });
 
 		const finalAnalysis = analyzeCircularGaps(
 			result.layout,
@@ -557,8 +557,8 @@ describe('runOptimizer', () => {
 				scale: 1,
 				sizeToFit: true,
 				centerHoleDiameter: 2,
-				centerMarkType: 'hole',
-				pathLabelFontSize: 10,
+				centerStyle: 'hole',
+				cutoutLabelFontSize: 10,
 				titleFontFamily: 'sans-serif'
 			} as const,
 			layers,
@@ -575,7 +575,7 @@ describe('runOptimizer', () => {
 		);
 		const initialMinGap = Math.min(...initialAnalysis.gaps.map((gap) => gap.gap));
 
-		const result = await runOptimizer(input, undefined, { roundOutputAngles: false });
+		const result = await runSolver(input, undefined, { roundOutputAngles: false });
 
 		const finalAnalysis = analyzeCircularGaps(
 			result.layout,
@@ -595,8 +595,8 @@ describe('runOptimizer', () => {
 			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 240, visible: true, groupId: '' }
 		];
 
-		const snapshots: OptimizerIterationSnapshot[] = [];
-		const result = await runOptimizer(
+		const snapshots: SolverIterationSnapshot[] = [];
+		const result = await runSolver(
 			{
 				diameter: 200,
 				config: {
@@ -610,8 +610,8 @@ describe('runOptimizer', () => {
 					scale: 1,
 					sizeToFit: true,
 					centerHoleDiameter: 2,
-					centerMarkType: 'hole',
-					pathLabelFontSize: 10,
+					centerStyle: 'hole',
+					cutoutLabelFontSize: 10,
 					titleFontFamily: 'sans-serif'
 				},
 				layers,
@@ -657,8 +657,8 @@ describe('runOptimizer', () => {
 			{ id: 'layerC', index: 2, name: 'Layer C', rotation: 0, visible: true, groupId: '' }
 		];
 
-		const snapshots: OptimizerIterationSnapshot[] = [];
-		await runOptimizer(
+		const snapshots: SolverIterationSnapshot[] = [];
+		await runSolver(
 			{
 				diameter: 200,
 				config: {
@@ -672,8 +672,8 @@ describe('runOptimizer', () => {
 					scale: 1,
 					sizeToFit: true,
 					centerHoleDiameter: 2,
-					centerMarkType: 'hole',
-					pathLabelFontSize: 10,
+					centerStyle: 'hole',
+					cutoutLabelFontSize: 10,
 					titleFontFamily: 'sans-serif'
 				},
 				layers,

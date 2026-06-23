@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 	import { globalConfig } from '$lib/stores/global-config.svelte';
-	import { optimizerStore } from '$lib/stores/optimizer.svelte';
+	import { solverStore } from '$lib/stores/solver.svelte';
 	import { exportLaserSvg, exportStl, exportPreviewSvg } from '$lib/utils/export-formats';
-	import type { CenterMarkType } from '$lib/types/doodledial';
+	import type { CenterStyle } from '$lib/types/doodledial';
 	import type { ExportFormat } from '$lib/utils/export-formats';
 
 	let dialogOpen = $state(false);
 	let selectedFormat: ExportFormat = $state(globalConfig.defaultExportFormat);
-	let selectedCenterMark: CenterMarkType = $state(globalConfig.centerMarkType);
-	let discThicknessMm = $state('3');
+	let selectedCenterStyle: CenterStyle = $state(globalConfig.centerStyle);
+	let dialThicknessMm = $state('3');
 	let markThicknessMm = $state('0.5');
 	let raised = $state(true);
 
@@ -19,7 +19,7 @@
 	}
 
 	function makeFilename(base: string, ext: string): string {
-		const title = doodledialStore.discTitle.trim();
+		const title = doodledialStore.dialTitle.trim();
 		const suffix = title ? `-${title.replace(/[^a-zA-Z0-9_-]/g, '_')}` : '';
 		return `doodledial${suffix}.${ext}`;
 	}
@@ -42,8 +42,8 @@
 
 	function openDialog() {
 		selectedFormat = globalConfig.defaultExportFormat;
-		selectedCenterMark = globalConfig.centerMarkType;
-		discThicknessMm = '3';
+		selectedCenterStyle = globalConfig.centerStyle;
+		dialThicknessMm = '3';
 		markThicknessMm = '0.5';
 		raised = true;
 		dialogOpen = true;
@@ -79,11 +79,11 @@
 					doodledialStore.config,
 					getVisibleLayers(),
 					{
-						centerMarkType: selectedCenterMark,
-						discTitle: doodledialStore.discTitle || undefined,
-						discTitleX: doodledialStore.discTitleX,
-						discTitleY: doodledialStore.discTitleY,
-						discTitleFontSize: doodledialStore.discTitleFontSize
+						centerStyle: selectedCenterStyle,
+						dialTitle: doodledialStore.dialTitle || undefined,
+						dialTitleX: doodledialStore.dialTitleX,
+						dialTitleY: doodledialStore.dialTitleY,
+						dialTitleFontSize: doodledialStore.dialTitleFontSize
 					}
 				);
 				createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
@@ -93,7 +93,7 @@
 					doodledialStore.config,
 					getVisibleLayers(),
 					{
-						discThicknessMm: parseThickness(discThicknessMm, 3),
+						dialThicknessMm: parseThickness(dialThicknessMm, 3),
 						markThicknessMm: parseThickness(markThicknessMm, 0.5),
 						raised
 					}
@@ -116,7 +116,7 @@
 <div class="relative inline-flex">
 	<button
 		onclick={openDialog}
-		disabled={!doodledialStore.svgContent || optimizerStore.optimizerPending}
+		disabled={!doodledialStore.svgContent || solverStore.solverPending}
 		class="group flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:bg-gray-300 enabled:hover:bg-indigo-700 enabled:hover:shadow-lg enabled:hover:shadow-indigo-200 enabled:active:scale-95"
 	>
 		<svg
@@ -185,36 +185,36 @@
 						<div class="mt-1 flex gap-2">
 							<button
 								type="button"
-								onclick={() => (selectedCenterMark = 'hole')}
+								onclick={() => (selectedCenterStyle = 'hole')}
 								class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition"
-								class:bg-indigo-600={selectedCenterMark === 'hole'}
-								class:text-white={selectedCenterMark === 'hole'}
-								class:border={selectedCenterMark !== 'hole'}
-								class:border-gray-300={selectedCenterMark !== 'hole'}
-								class:text-gray-600={selectedCenterMark !== 'hole'}
-								class:hover:bg-gray-50={selectedCenterMark !== 'hole'}>Hole</button
+								class:bg-indigo-600={selectedCenterStyle === 'hole'}
+								class:text-white={selectedCenterStyle === 'hole'}
+								class:border={selectedCenterStyle !== 'hole'}
+								class:border-gray-300={selectedCenterStyle !== 'hole'}
+								class:text-gray-600={selectedCenterStyle !== 'hole'}
+								class:hover:bg-gray-50={selectedCenterStyle !== 'hole'}>Hole</button
 							>
 							<button
 								type="button"
-								onclick={() => (selectedCenterMark = 'crosshair')}
+								onclick={() => (selectedCenterStyle = 'crosshair')}
 								class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition"
-								class:bg-indigo-600={selectedCenterMark === 'crosshair'}
-								class:text-white={selectedCenterMark === 'crosshair'}
-								class:border={selectedCenterMark !== 'crosshair'}
-								class:border-gray-300={selectedCenterMark !== 'crosshair'}
-								class:text-gray-600={selectedCenterMark !== 'crosshair'}
-								class:hover:bg-gray-50={selectedCenterMark !== 'crosshair'}>Crosshair</button
+								class:bg-indigo-600={selectedCenterStyle === 'crosshair'}
+								class:text-white={selectedCenterStyle === 'crosshair'}
+								class:border={selectedCenterStyle !== 'crosshair'}
+								class:border-gray-300={selectedCenterStyle !== 'crosshair'}
+								class:text-gray-600={selectedCenterStyle !== 'crosshair'}
+								class:hover:bg-gray-50={selectedCenterStyle !== 'crosshair'}>Crosshair</button
 							>
 							<button
 								type="button"
-								onclick={() => (selectedCenterMark = 'none')}
+								onclick={() => (selectedCenterStyle = 'none')}
 								class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition"
-								class:bg-indigo-600={selectedCenterMark === 'none'}
-								class:text-white={selectedCenterMark === 'none'}
-								class:border={selectedCenterMark !== 'none'}
-								class:border-gray-300={selectedCenterMark !== 'none'}
-								class:text-gray-600={selectedCenterMark !== 'none'}
-								class:hover:bg-gray-50={selectedCenterMark !== 'none'}>None</button
+								class:bg-indigo-600={selectedCenterStyle === 'none'}
+								class:text-white={selectedCenterStyle === 'none'}
+								class:border={selectedCenterStyle !== 'none'}
+								class:border-gray-300={selectedCenterStyle !== 'none'}
+								class:text-gray-600={selectedCenterStyle !== 'none'}
+								class:hover:bg-gray-50={selectedCenterStyle !== 'none'}>None</button
 							>
 						</div>
 					</div>
@@ -228,12 +228,12 @@
 					<div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<label
 							class="flex flex-col gap-1 text-xs font-medium text-gray-600"
-							for="disc-thickness-mm"
+							for="dial-thickness-mm"
 						>
-							<span>Disc thickness (mm)</span>
+							<span>Dial thickness (mm)</span>
 							<input
-								id="disc-thickness-mm"
-								bind:value={discThicknessMm}
+								id="dial-thickness-mm"
+								bind:value={dialThicknessMm}
 								type="number"
 								min="0.1"
 								step="0.1"

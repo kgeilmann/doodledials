@@ -125,7 +125,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		notifyChange();
 	}
 
-	function setLayerLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
+	function setMarkLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
 		const layer = layers.get(id);
 		if (layer) {
 			layers.set(id, {
@@ -138,7 +138,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		}
 	}
 
-	function setLayerLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
+	function setMarkLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
 		const layer = layers.get(id);
 		if (layer) {
 			layers.set(id, {
@@ -151,7 +151,7 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		}
 	}
 
-	function getLayerLabelOffset(
+	function getMarkLabelOffset(
 		id: string
 	): { labelOffsetX: number; labelOffsetY: number } | undefined {
 		const layer = layers.get(id);
@@ -164,22 +164,22 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		return undefined;
 	}
 
-	function getLayerLabelPlacementMode(id: string): 'auto' | 'manual' {
+	function getMarkLabelPlacementMode(id: string): 'auto' | 'manual' {
 		return layers.get(id)?.labelPlacementMode || 'auto';
 	}
 
-	function setLayerLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
+	function setMarkLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
 		const layer = layers.get(id);
 		if (layer) {
 			layers.set(id, { ...layer, labelPlacementStatus: status });
 		}
 	}
 
-	function getLayerLabelPlacementStatus(id: string): LabelPlacementStatus {
+	function getMarkLabelPlacementStatus(id: string): LabelPlacementStatus {
 		return layers.get(id)?.labelPlacementStatus || { status: 'placed' };
 	}
 
-	function resetLayerLabelPlacementMode(id: string) {
+	function resetMarkLabelPlacementMode(id: string) {
 		const layer = layers.get(id);
 		if (layer) {
 			layers.set(id, { ...layer, labelPlacementMode: 'auto' });
@@ -254,13 +254,13 @@ export function createLayerStore(options?: LayerStoreOptions) {
 		isGroupVisible,
 		setLayerRotation,
 		applyLayerRotations,
-		setLayerLabelOffsetManual,
-		setLayerLabelOffsetAuto,
-		getLayerLabelOffset,
-		getLayerLabelPlacementMode,
-		setLayerLabelPlacementStatus,
-		getLayerLabelPlacementStatus,
-		resetLayerLabelPlacementMode,
+		setMarkLabelOffsetManual,
+		setMarkLabelOffsetAuto,
+		getMarkLabelOffset,
+		getMarkLabelPlacementMode,
+		setMarkLabelPlacementStatus,
+		getMarkLabelPlacementStatus,
+		resetMarkLabelPlacementMode,
 		renumberLayersByAngle,
 		setHighlightedLayer(layerId: string | null) {
 			highlightedLayer = layerId;

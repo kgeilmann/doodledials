@@ -33,8 +33,8 @@ const BASE_CONFIG: DialConfig = {
 	scale: 1,
 	sizeToFit: true,
 	centerHoleDiameter: 0.5,
-	centerMarkType: 'hole',
-	pathLabelFontSize: 10,
+	centerStyle: 'hole',
+	cutoutLabelFontSize: 10,
 	titleFontFamily: 'sans-serif'
 };
 
@@ -77,17 +77,17 @@ function multiplyMatrices(
 }
 
 describe('scale transform center', () => {
-	it('wrapper group should have scale transform about disc center', () => {
+	it('wrapper group should have scale transform about dial center', () => {
 		const { content, layers } = buildFixture();
 		const cx = 100;
 		const cy = 100;
 
 		const svg = combineDoodledial(content, { ...BASE_CONFIG, scale: 1.5 }, layers, null, null, {
-			includePathLabels: false,
+			includeCutoutLabels: false,
 			includeHighlighting: false,
 			respectLayerVisibility: false,
 			applyDiameter: false,
-			centerMarkType: 'none'
+			centerStyle: 'none'
 		});
 		const doc = SVG(svg) as Svg;
 		const cutout = doc.findOne('.cutout')!;
@@ -111,7 +111,7 @@ describe('scale transform center', () => {
 		expect(wrapperTransform.f).toBeCloseTo(cy * (1 - 1.5), 0);
 	});
 
-	it('cutout center should stay at disc center when scale changes with zero offset', () => {
+	it('cutout center should stay at dial center when scale changes with zero offset', () => {
 		const { content, layers } = buildFixture();
 
 		function renderedCenter(svgStr: string): { x: number; y: number } {
@@ -134,21 +134,21 @@ describe('scale transform center', () => {
 
 		const at1 = renderedCenter(
 			combineDoodledial(content, { ...BASE_CONFIG, scale: 1 }, layers, null, null, {
-				includePathLabels: false,
+				includeCutoutLabels: false,
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				centerMarkType: 'none'
+				centerStyle: 'none'
 			})
 		);
 
 		const at15 = renderedCenter(
 			combineDoodledial(content, { ...BASE_CONFIG, scale: 1.5 }, layers, null, null, {
-				includePathLabels: false,
+				includeCutoutLabels: false,
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				centerMarkType: 'none'
+				centerStyle: 'none'
 			})
 		);
 
@@ -178,21 +178,21 @@ describe('scale transform center', () => {
 
 		const at1 = renderedSize(
 			combineDoodledial(content, { ...BASE_CONFIG, scale: 1 }, layers, null, null, {
-				includePathLabels: false,
+				includeCutoutLabels: false,
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				centerMarkType: 'none'
+				centerStyle: 'none'
 			})
 		);
 
 		const at15 = renderedSize(
 			combineDoodledial(content, { ...BASE_CONFIG, scale: 1.5 }, layers, null, null, {
-				includePathLabels: false,
+				includeCutoutLabels: false,
 				includeHighlighting: false,
 				respectLayerVisibility: false,
 				applyDiameter: false,
-				centerMarkType: 'none'
+				centerStyle: 'none'
 			})
 		);
 

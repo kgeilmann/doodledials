@@ -8,10 +8,10 @@ import { parseSvgPaths } from '$lib/utils/doodledial';
 
 interface GlobalConfigLike {
 	diameter: number;
-	pathLabelOptimizerEnabled: boolean;
+	autoLabelPlacementEnabled: boolean;
 	titleFontFamily: string;
-	pathLabelFontSize: number;
-	discTitleFontSize: number;
+	cutoutLabelFontSize: number;
+	dialTitleFontSize: number;
 }
 
 function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
@@ -19,7 +19,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	let config = $state<DialConfig>({
 		...DEFAULT_DIAL_CONFIG,
 		diameter: globalConfig.diameter,
-		pathLabelFontSize: globalConfig.pathLabelFontSize,
+		cutoutLabelFontSize: globalConfig.cutoutLabelFontSize,
 		titleFontFamily: globalConfig.titleFontFamily
 	});
 	let svgContent = $state<SVGContent | null>(null);
@@ -31,7 +31,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	const detectionStore = createDetectionStore({
 		getLayers: () => layerStore.layers,
 		getCombinedSvg: () => combinedSvg,
-		getConfig: () => ({ optimizerGapMm: config.optimizerGapMm, diameter: config.diameter }),
+		getConfig: () => ({ solverGapMm: config.solverGapMm, diameter: config.diameter }),
 		onError(err) {
 			error = err;
 		}
@@ -46,26 +46,26 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 	});
 
 	const labelPlacementStore = createLabelPlacementStore({
-		getIsPlacementEnabled: () => globalConfig.pathLabelOptimizerEnabled
+		getIsPlacementEnabled: () => globalConfig.autoLabelPlacementEnabled
 	});
 
-	let discTitle = $state<string>('');
-	let discTitleX = $state<number>(100);
-	let discTitleY = $state<number>(20);
-	let discTitleFontSize = $state<number>(globalConfig.discTitleFontSize);
+	let dialTitle = $state<string>('');
+	let dialTitleX = $state<number>(100);
+	let dialTitleY = $state<number>(20);
+	let dialTitleFontSize = $state<number>(globalConfig.dialTitleFontSize);
 
 	return {
-		get discTitle() {
-			return discTitle;
+		get dialTitle() {
+			return dialTitle;
 		},
-		get discTitleX() {
-			return discTitleX;
+		get dialTitleX() {
+			return dialTitleX;
 		},
-		get discTitleY() {
-			return discTitleY;
+		get dialTitleY() {
+			return dialTitleY;
 		},
-		get discTitleFontSize() {
-			return discTitleFontSize;
+		get dialTitleFontSize() {
+			return dialTitleFontSize;
 		},
 		get config() {
 			return config;
@@ -101,8 +101,8 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			return layerStore.selectedLayer;
 		},
 
-		get checkingOverlaps() {
-			return detectionStore.checkingOverlaps;
+		get isDetecting() {
+			return detectionStore.isDetecting;
 		},
 		get overlaps() {
 			return detectionStore.overlaps;
@@ -110,8 +110,8 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		get cutoutGaps() {
 			return detectionStore.cutoutGaps;
 		},
-		get autoPathLabelPlacementEnabled() {
-			return globalConfig.pathLabelOptimizerEnabled;
+		get autoLabelPlacementEnabled() {
+			return globalConfig.autoLabelPlacementEnabled;
 		},
 		getLayer(id: string) {
 			return layerStore.getLayer(id);
@@ -126,15 +126,15 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			const clamped = Math.min(Math.max(centerHoleDiameter, 0), 3);
 			config = { ...config, centerHoleDiameter: clamped };
 		},
-		setDiscTitle(text: string) {
-			discTitle = text;
+		setDialTitle(text: string) {
+			dialTitle = text;
 		},
-		setDiscTitlePosition(x: number, y: number) {
-			discTitleX = x;
-			discTitleY = y;
+		setDialTitlePosition(x: number, y: number) {
+			dialTitleX = x;
+			dialTitleY = y;
 		},
-		setDiscTitleFontSize(size: number) {
-			discTitleFontSize = size;
+		setDialTitleFontSize(size: number) {
+			dialTitleFontSize = size;
 		},
 		setOffsetX(offsetX: number) {
 			config = { ...config, offsetX };
@@ -148,8 +148,8 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = { ...config, scale };
 			labelPlacementStore.schedule();
 		},
-		setPathLabelFontSize(size: number) {
-			config = { ...config, pathLabelFontSize: size };
+		setCutoutLabelFontSize(size: number) {
+			config = { ...config, cutoutLabelFontSize: size };
 			labelPlacementStore.schedule();
 		},
 		setTitleFontFamily(fontFamily: string) {
@@ -177,8 +177,8 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		setOriginalRawSvg(raw: string | null) {
 			originalRawSvg = raw;
 		},
-		setOptimizerGapMm(optimizerGapMm: number) {
-			config = { ...config, optimizerGapMm };
+		setSolverGapMm(solverGapMm: number) {
+			config = { ...config, solverGapMm };
 			detectionStore.runDetectionNow();
 		},
 		setAutoPlacementRunner(runner: (() => void | Promise<void>) | null) {
@@ -208,8 +208,8 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		setSelectedLayer(layerId: string | null) {
 			layerStore.setSelectedLayer(layerId);
 		},
-		setCheckingOverlaps(checking: boolean) {
-			detectionStore.setCheckingOverlaps(checking);
+		setDetecting(checking: boolean) {
+			detectionStore.setDetecting(checking);
 		},
 		setOverlaps(newOverlaps: Map<string, Map<string, number>>) {
 			detectionStore.setOverlaps(newOverlaps);
@@ -244,31 +244,31 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		applyLayerRotations(rotations: Record<string, number>) {
 			layerStore.applyLayerRotations(rotations);
 		},
-		setLayerLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
-			layerStore.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
+		setMarkLabelOffset(id: string, labelOffsetX: number, labelOffsetY: number) {
+			layerStore.setMarkLabelOffsetManual(id, labelOffsetX, labelOffsetY);
 		},
-		setLayerLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
-			layerStore.setLayerLabelOffsetManual(id, labelOffsetX, labelOffsetY);
+		setMarkLabelOffsetManual(id: string, labelOffsetX: number, labelOffsetY: number) {
+			layerStore.setMarkLabelOffsetManual(id, labelOffsetX, labelOffsetY);
 		},
-		setLayerLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
-			layerStore.setLayerLabelOffsetAuto(id, labelOffsetX, labelOffsetY);
+		setMarkLabelOffsetAuto(id: string, labelOffsetX: number, labelOffsetY: number) {
+			layerStore.setMarkLabelOffsetAuto(id, labelOffsetX, labelOffsetY);
 		},
-		getLayerLabelOffset(id: string) {
-			return layerStore.getLayerLabelOffset(id);
+		getMarkLabelOffset(id: string) {
+			return layerStore.getMarkLabelOffset(id);
 		},
-		getLayerLabelPlacementMode(id: string) {
-			return layerStore.getLayerLabelPlacementMode(id);
+		getMarkLabelPlacementMode(id: string) {
+			return layerStore.getMarkLabelPlacementMode(id);
 		},
-		setLayerLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
-			layerStore.setLayerLabelPlacementStatus(id, status);
+		setMarkLabelPlacementStatus(id: string, status: LabelPlacementStatus) {
+			layerStore.setMarkLabelPlacementStatus(id, status);
 		},
-		getLayerLabelPlacementStatus(id: string) {
-			return layerStore.getLayerLabelPlacementStatus(id);
+		getMarkLabelPlacementStatus(id: string) {
+			return layerStore.getMarkLabelPlacementStatus(id);
 		},
-		resetLayerLabelPlacementMode(id: string) {
-			layerStore.resetLayerLabelPlacementMode(id);
+		resetMarkLabelPlacementMode(id: string) {
+			layerStore.resetMarkLabelPlacementMode(id);
 		},
-		requestLayerLabelAutoPlacement(id: string) {
+		requestMarkLabelAutoPlacement(id: string) {
 			return labelPlacementStore.requestLayerAutoPlacement(id, !!layerStore.getLayer(id));
 		},
 		showAllLayers() {
@@ -294,7 +294,7 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			config = {
 				...DEFAULT_DIAL_CONFIG,
 				diameter: globalConfig.diameter,
-				pathLabelFontSize: globalConfig.pathLabelFontSize,
+				cutoutLabelFontSize: globalConfig.cutoutLabelFontSize,
 				titleFontFamily: globalConfig.titleFontFamily
 			};
 			svgContent = null;
@@ -304,10 +304,10 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 			error = null;
 			layerStore.reset();
 			detectionStore.reset();
-			discTitle = '';
-			discTitleX = 100;
-			discTitleY = 20;
-			discTitleFontSize = globalConfig.discTitleFontSize;
+			dialTitle = '';
+			dialTitleX = 100;
+			dialTitleY = 20;
+			dialTitleFontSize = globalConfig.dialTitleFontSize;
 		}
 	};
 }

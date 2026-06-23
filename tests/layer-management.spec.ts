@@ -95,12 +95,12 @@ test.describe('Layer Management', () => {
 				throw new Error('doodledialStore test handle is not available');
 			}
 
-			(store.setLayerLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
+			(store.setMarkLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
 				status: 'error',
 				reason: 'no-valid-position-within-radius'
 			});
 			(store.setAutoPlacementRunner as (runner: () => Promise<void>) => void)(async () => {
-				(store.setLayerLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
+				(store.setMarkLabelPlacementStatus as (id: string, status: unknown) => void)('layer-1', {
 					status: 'placed'
 				});
 			});

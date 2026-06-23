@@ -1,5 +1,5 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
-import type { CenterMarkType, DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { CenterStyle, DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from './doodledial';
 
 export interface LaserExportOptions {
@@ -8,11 +8,11 @@ export interface LaserExportOptions {
 	cutColor?: string;
 	engraveColor?: string;
 	cutStrokeWidth?: number;
-	centerMarkType?: CenterMarkType;
-	discTitle?: string;
-	discTitleX?: number;
-	discTitleY?: number;
-	discTitleFontSize?: number;
+	centerStyle?: CenterStyle;
+	dialTitle?: string;
+	dialTitleX?: number;
+	dialTitleY?: number;
+	dialTitleFontSize?: number;
 }
 
 export function exportLaserSvg(
@@ -26,19 +26,19 @@ export function exportLaserSvg(
 	const cutColor = options?.cutColor ?? '#ff0000';
 	const engraveColor = options?.engraveColor ?? 'rgb(0, 0, 0)';
 	const cutStrokeWidth = options?.cutStrokeWidth ?? 0.1;
-	const centerMarkType = options?.centerMarkType ?? config.centerMarkType;
+	const centerStyle = options?.centerStyle ?? config.centerStyle;
 
 	const combinedSvg = combineDoodledial(content, config, layers, null, null, {
-		includePathLabels: true,
+		includeCutoutLabels: true,
 		includeHighlighting: false,
 		respectLayerVisibility: true,
 		applyCutoutTransforms: true,
 		applyDiameter: true,
-		centerMarkType,
-		discTitle: options?.discTitle,
-		discTitleX: options?.discTitleX,
-		discTitleY: options?.discTitleY,
-		discTitleFontSize: options?.discTitleFontSize
+		centerStyle,
+		dialTitle: options?.dialTitle,
+		dialTitleX: options?.dialTitleX,
+		dialTitleY: options?.dialTitleY,
+		dialTitleFontSize: options?.dialTitleFontSize
 	});
 
 	const doc = SVG(combinedSvg) as Svg;
@@ -50,11 +50,11 @@ export function exportLaserSvg(
 		}
 	});
 
-	doc.find('#disc').forEach((disc) => {
-		disc.addClass(cutClassName);
-		disc.css('stroke', cutColor);
-		disc.css('fill', 'none');
-		disc.css('stroke-width', String(cutStrokeWidth));
+	doc.find('#dial').forEach((dial) => {
+		dial.addClass(cutClassName);
+		dial.css('stroke', cutColor);
+		dial.css('fill', 'none');
+		dial.css('stroke-width', String(cutStrokeWidth));
 	});
 
 	doc.find('.cutout').forEach((cutout) => {
@@ -96,12 +96,12 @@ export function exportLaserSvg(
 		el.css('stroke', engraveColor);
 	});
 
-	doc.find('.home-notch').forEach((el) => {
+	doc.find('.start-marker').forEach((el) => {
 		el.addClass(engraveClassName);
 		el.css('fill', engraveColor);
 	});
 
-	doc.find('.disc-title').forEach((el) => {
+	doc.find('.dial-title').forEach((el) => {
 		el.addClass(engraveClassName);
 		el.css('fill', engraveColor);
 	});

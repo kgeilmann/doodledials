@@ -1,7 +1,7 @@
 import { SVG, Svg, G, Text, Matrix, Element as SvgElement } from '@svgdotjs/svg.js';
 import {
 	DEFAULT_DIAL_CONFIG,
-	type CenterMarkType,
+	type CenterStyle,
 	type DialConfig,
 	type Layer,
 	type SVGContent
@@ -9,7 +9,7 @@ import {
 import { DPI, MM_PER_INCH, MM_TO_PX } from './constants';
 import { normalizeAngle } from './rotation';
 
-const DISC_PADDING_PX = 10;
+const DIAL_PADDING_PX = 10;
 const MARK_LENGTH_PX = 3 * MM_TO_PX;
 const NORMALIZED_IMAGE_DIMENSION = DEFAULT_DIAL_CONFIG.maxDiameter;
 
@@ -65,7 +65,7 @@ export function parseSvgPaths(
 	}
 
 	const style = doc.style();
-	style.rule('#disc', {
+	style.rule('#dial', {
 		fill: 'none',
 		stroke: 'black',
 		'stroke-width': '2'
@@ -91,7 +91,7 @@ export function parseSvgPaths(
 	});
 
 	const all = SVG().group().attr('id', 'all');
-	const discElements = SVG().group().attr('id', 'disc-elements');
+	const dialElements = SVG().group().attr('id', 'dial-elements');
 
 	doc.children().forEach((c) => {
 		c.remove();
@@ -109,20 +109,20 @@ export function parseSvgPaths(
 	const normalizedTranslateY =
 		(NORMALIZED_IMAGE_DIMENSION - normalizedHeight) / 2 - sourceViewBox.y * sourceScale;
 	const maxImageDimension = NORMALIZED_IMAGE_DIMENSION;
-	const viewBoxOrigin = -(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DISC_PADDING_PX;
-	const viewBoxExtent = maxImageDimension * Math.SQRT2 + 2 * DISC_PADDING_PX;
+	const viewBoxOrigin = -(maxImageDimension * Math.SQRT2 - maxImageDimension) / 2 - DIAL_PADDING_PX;
+	const viewBoxExtent = maxImageDimension * Math.SQRT2 + 2 * DIAL_PADDING_PX;
 
-	discElements
+	dialElements
 		.circle(maxImageDimension * Math.SQRT2)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
-		.id('disc');
+		.id('dial');
 
-	discElements
+	dialElements
 		.circle(2 * MM_TO_PX)
 		.center(maxImageDimension / 2, maxImageDimension / 2)
 		.id('center-hole');
 
-	style.rule('.home-notch', {
+	style.rule('.start-marker', {
 		'pointer-events': 'none'
 	});
 
@@ -183,7 +183,7 @@ export function parseSvgPaths(
 			groupName = String(elId);
 			groupId = String(elId);
 		} else {
-			groupName = `Disc ${groupIdx + 1}`;
+			groupName = `Dial ${groupIdx + 1}`;
 			groupId = `group-${groupIdx}`;
 		}
 
@@ -229,13 +229,13 @@ export function parseSvgPaths(
 						[cx + 3, cy - r + 5]
 					])
 					.fill('black')
-					.addClass('home-notch');
+					.addClass('start-marker');
 			}
-			const pathLabel = createPathLabel(layerId, globalIndex, {
+			const cutoutLabel = createCutoutLabel(layerId, globalIndex, {
 				x2: viewBoxOrigin + viewBoxExtent - 6 + (15 * globalIndex) / 14,
 				cy: viewBoxOrigin + 6 + (((globalIndex - 1) * 14) % 200)
 			});
-			layer.add(pathLabel);
+			layer.add(cutoutLabel);
 			groupEl.add(layer);
 
 			layers.push({
@@ -247,7 +247,7 @@ export function parseSvgPaths(
 		}
 	}
 
-	all.add(discElements);
+	all.add(dialElements);
 
 	doc.viewbox(viewBoxOrigin, viewBoxOrigin, viewBoxExtent, viewBoxExtent);
 
@@ -265,20 +265,20 @@ export function parseSvgPaths(
 function createMark(
 	layerId: string,
 	max: number,
-	discSizeToFitEverything: number,
+	dialSizeToFitEverything: number,
 	layerNumber: number
 ): G {
 	const markGroup = SVG().group();
 
 	const centerX = max / 2;
-	const markStartY = max / 2 - discSizeToFitEverything / 2;
+	const markStartY = max / 2 - dialSizeToFitEverything / 2;
 	const markEndY = markStartY + MARK_LENGTH_PX;
 	const mark = markGroup.line(centerX, markStartY, centerX, markEndY);
 	mark.addClass('mark-line');
 	mark.attr('data-layer-id', layerId);
 
 	const text = markGroup.text(String(layerNumber));
-	text.addClass('layer-label');
+	text.addClass('mark-label');
 	text.attr('data-layer-id', layerId);
 	text.font({ family: 'monospace', size: 10, anchor: 'middle' });
 	text.center(centerX, markEndY + 8);
@@ -292,20 +292,20 @@ function createMark(
 	return markGroup;
 }
 
-function createPathLabel(
+function createCutoutLabel(
 	layerId: string,
 	layerIndex: number,
 	pathBox: { x2: number; cy: number }
 ): G {
 	const group = SVG().group();
-	group.id('path-label-' + layerId);
+	group.id('cutout-label-' + layerId);
 
-	const pathLabel = SVG().text(String(layerIndex));
-	pathLabel.addClass('path-label');
-	pathLabel.attr('data-layer-id', layerId);
-	pathLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
-	pathLabel.center(pathBox.x2 + 4, pathBox.cy - 5);
-	group.add(pathLabel);
+	const cutoutLabel = SVG().text(String(layerIndex));
+	cutoutLabel.addClass('cutout-label');
+	cutoutLabel.attr('data-layer-id', layerId);
+	cutoutLabel.font({ family: 'monospace', size: 10, anchor: 'start' });
+	cutoutLabel.center(pathBox.x2 + 4, pathBox.cy - 5);
+	group.add(cutoutLabel);
 
 	if (layerIndex === 9) {
 		const underscore = group.line(pathBox.x2 + 1, pathBox.cy, pathBox.x2 + 7, pathBox.cy);
@@ -317,45 +317,45 @@ function createPathLabel(
 }
 
 export interface CombineDoodledialOptions {
-	includePathLabels?: boolean;
+	includeCutoutLabels?: boolean;
 	includeHighlighting?: boolean;
 	respectLayerVisibility?: boolean;
 	applyCutoutTransforms?: boolean;
 	applyDiameter?: boolean;
-	centerMarkType?: CenterMarkType;
-	discTitle?: string;
-	discTitleX?: number;
-	discTitleY?: number;
-	discTitleFontSize?: number;
+	centerStyle?: CenterStyle;
+	dialTitle?: string;
+	dialTitleX?: number;
+	dialTitleY?: number;
+	dialTitleFontSize?: number;
 	groups?: { id: string; color: string }[];
 }
 
-export interface OptimizerSvgTemplate {
+export interface SolverSvgTemplate {
 	rawTemplate: string;
 	layerIds: string[];
 	rotationPlaceholderByLayerId: Record<string, string>;
 }
 
-const OPTIMIZER_ROTATION_PLACEHOLDER_BASE = 1_000_000;
+const SOLVER_ROTATION_PLACEHOLDER_BASE = 1_000_000;
 
-function toOptimizerRotationPlaceholder(index: number, cx: number, cy: number): string {
-	return `rotate(${OPTIMIZER_ROTATION_PLACEHOLDER_BASE + index}, ${cx}, ${cy})`;
+function toSolverRotationPlaceholder(index: number, cx: number, cy: number): string {
+	return `rotate(${SOLVER_ROTATION_PLACEHOLDER_BASE + index}, ${cx}, ${cy})`;
 }
 
-export function createOptimizerSvgTemplate(
+export function createSolverSvgTemplate(
 	content: SVGContent,
 	config: DialConfig,
 	layers: { id: string; groupId: string }[],
 	groups?: { id: string; color: string }[],
 	hiddenLayerIds?: string[]
-): OptimizerSvgTemplate {
+): SolverSvgTemplate {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
 	const rotationPlaceholderByLayerId: Record<string, string> = {};
 
 	applyCutoutTransforms(doc, config, cx, cy);
-	removePathLabels(doc);
+	removeCutoutLabels(doc);
 
 	for (const [index, layer] of layers.entries()) {
 		const svgLayer = doc.findOne('#' + layer.id) as G | null;
@@ -363,7 +363,7 @@ export function createOptimizerSvgTemplate(
 			continue;
 		}
 
-		const rotationPlaceholder = toOptimizerRotationPlaceholder(index, cx, cy);
+		const rotationPlaceholder = toSolverRotationPlaceholder(index, cx, cy);
 		rotationPlaceholderByLayerId[layer.id] = rotationPlaceholder;
 
 		svgLayer.attr('visibility', 'visible');
@@ -396,7 +396,7 @@ export function createOptimizerSvgTemplate(
 		}
 	}
 
-	applyDiscScaling(doc, config);
+	applyDialScaling(doc, config);
 	const scaleFactor = config.diameter / config.maxDiameter;
 	doc.find('.mark-wrapper').forEach((wrapper) => {
 		wrapper.scale(scaleFactor, cx, cy);
@@ -417,8 +417,8 @@ export function createOptimizerSvgTemplate(
 	};
 }
 
-export function combineOptimizerSvgTemplate(
-	template: OptimizerSvgTemplate,
+export function combineSolverSvgTemplate(
+	template: SolverSvgTemplate,
 	rotationsByLayerId: Record<string, number>
 ): string {
 	let combinedSvg = template.rawTemplate;
@@ -433,7 +433,7 @@ export function combineOptimizerSvgTemplate(
 		combinedSvg = combinedSvg.replace(
 			rotationPlaceholder,
 			rotationPlaceholder.replace(
-				String(OPTIMIZER_ROTATION_PLACEHOLDER_BASE + template.layerIds.indexOf(layerId)),
+				String(SOLVER_ROTATION_PLACEHOLDER_BASE + template.layerIds.indexOf(layerId)),
 				String(angle)
 			)
 		);
@@ -442,15 +442,15 @@ export function combineOptimizerSvgTemplate(
 	return combinedSvg;
 }
 
-export function precomputeOptimizerSvgContent(content: SVGContent, config: DialConfig): SVGContent {
+export function precomputeSolverSvgContent(content: SVGContent, config: DialConfig): SVGContent {
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
 
 	applyCutoutTransforms(doc, config, cx, cy);
-	removePathLabels(doc);
+	removeCutoutLabels(doc);
 
-	applyDiscScaling(doc, config);
+	applyDialScaling(doc, config);
 	const scaleFactor = config.diameter / config.maxDiameter;
 	doc.find('.mark-wrapper').forEach((wrapper) => {
 		wrapper.scale(scaleFactor, cx, cy);
@@ -481,12 +481,12 @@ export function combineDoodledial(
 	const doc = SVG(content.raw) as Svg;
 	const cx = doc.viewbox().cx;
 	const cy = doc.viewbox().cy;
-	const includePathLabels = options?.includePathLabels ?? true;
+	const includeCutoutLabels = options?.includeCutoutLabels ?? true;
 	const includeHighlighting = options?.includeHighlighting ?? true;
 	const respectLayerVisibility = options?.respectLayerVisibility ?? true;
 	const applyCutoutTransforms = options?.applyCutoutTransforms ?? true;
 	const applyDiameter = options?.applyDiameter ?? true;
-	const centerMarkType = options?.centerMarkType ?? 'crosshair';
+	const centerStyle = options?.centerStyle ?? 'crosshair';
 
 	let highlighted: G | undefined;
 	let selected: G | undefined;
@@ -524,21 +524,21 @@ export function combineDoodledial(
 			}
 		}
 
-		svgLayer.find('.layer-label').forEach((el) => {
+		svgLayer.find('.mark-label').forEach((el) => {
 			(el as Text).text(String(layer.index));
-			(el as Text).font('size', config.pathLabelFontSize);
+			(el as Text).font('size', config.cutoutLabelFontSize);
 		});
 
-		if (includePathLabels && applyCutoutTransforms) {
-			svgLayer.find('#path-label-' + layer.id).forEach((label) => {
+		if (includeCutoutLabels && applyCutoutTransforms) {
+			svgLayer.find('#cutout-label-' + layer.id).forEach((label) => {
 				const group = label as G;
-				const pathLabel = group.findOne('.path-label') as Text;
-				if (!pathLabel) return;
-				pathLabel.text(String(layer.index));
+				const cutoutLabel = group.findOne('.cutout-label') as Text;
+				if (!cutoutLabel) return;
+				cutoutLabel.text(String(layer.index));
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
-				pathLabel.font('size', config.pathLabelFontSize);
-				pathLabel.font('family', 'monospace');
+				cutoutLabel.font('size', config.cutoutLabelFontSize);
+				cutoutLabel.font('family', 'monospace');
 				const pathUnderscore = group.findOne('.nine-underscore');
 				if (layer.index === 9 && !pathUnderscore) {
 					const newUnderscore = doc.line(0, 0, 0, 0);
@@ -550,7 +550,7 @@ export function combineDoodledial(
 				}
 				const underscore = group.findOne('.nine-underscore');
 				if (underscore) {
-					const bbox = pathLabel.bbox();
+					const bbox = cutoutLabel.bbox();
 					const baseY = bbox.y + bbox.height + 1;
 					const midX = bbox.x + bbox.width / 2;
 					const halfLen = bbox.width * 0.4;
@@ -561,7 +561,7 @@ export function combineDoodledial(
 				}
 				group.translate(offsetXPx + labelOffsetX, offsetYPx + labelOffsetY);
 			});
-			svgLayer.find('.layer-label').forEach((label) => {
+			svgLayer.find('.mark-label').forEach((label) => {
 				(label as Text).font('family', 'monospace');
 			});
 		}
@@ -570,9 +570,9 @@ export function combineDoodledial(
 		if (markWrapper) {
 			const markUnderscore = markWrapper.findOne('.nine-underscore');
 			if (layer.index === 9 && !markUnderscore) {
-				const layerLabel = markWrapper.findOne('.layer-label') as Text;
-				if (layerLabel) {
-					const bbox = layerLabel.bbox();
+				const markLabel = markWrapper.findOne('.mark-label') as Text;
+				if (markLabel) {
+					const bbox = markLabel.bbox();
 					const baseY = bbox.y + bbox.height + 1;
 					const midX = bbox.x + bbox.width / 2;
 					const halfLen = bbox.width * 0.4;
@@ -594,12 +594,12 @@ export function combineDoodledial(
 	}
 
 	if (applyDiameter) {
-		applyDiscScaling(doc, config);
+		applyDialScaling(doc, config);
 		const scaleFactor = config.diameter / config.maxDiameter;
 		doc.find('.mark-wrapper').forEach((wrapper) => {
 			wrapper.scale(scaleFactor, cx, cy);
 		});
-		doc.find('[id^="path-label-"]').forEach((label) => {
+		doc.find('[id^="cutout-label-"]').forEach((label) => {
 			label.scale(scaleFactor, cx, cy);
 		});
 		if (applyCutoutTransforms && config.sizeToFit) {
@@ -614,7 +614,7 @@ export function combineDoodledial(
 
 	const centerHoleCircle = doc.findOne('#center-hole') as import('@svgdotjs/svg.js').Circle | null;
 	if (centerHoleCircle) {
-		if (centerMarkType === 'crosshair') {
+		if (centerStyle === 'crosshair') {
 			centerHoleCircle.hide();
 			const halfLen = 4;
 			doc
@@ -625,7 +625,7 @@ export function combineDoodledial(
 				.line(cx, cy - halfLen, cx, cy + halfLen)
 				.stroke({ width: 1, color: 'black' })
 				.addClass('center-crosshair');
-		} else if (centerMarkType === 'hole') {
+		} else if (centerStyle === 'hole') {
 			if (config.centerHoleDiameter > 0) {
 				const holeRadiusPx = (config.centerHoleDiameter * MM_TO_PX) / 2;
 				centerHoleCircle.radius(holeRadiusPx);
@@ -639,18 +639,18 @@ export function combineDoodledial(
 		}
 	}
 
-	const titleText = options?.discTitle;
+	const titleText = options?.dialTitle;
 	if (titleText) {
 		const titleEl = doc.text(titleText);
-		titleEl.addClass('disc-title');
-		titleEl.attr('data-disc-title', 'true');
+		titleEl.addClass('dial-title');
+		titleEl.attr('data-dial-title', 'true');
 		titleEl.font({
 			family: config.titleFontFamily,
-			size: options?.discTitleFontSize ?? 12,
+			size: options?.dialTitleFontSize ?? 12,
 			anchor: 'middle',
 			weight: 'bold'
 		});
-		titleEl.center(options?.discTitleX ?? 100, options?.discTitleY ?? 20);
+		titleEl.center(options?.dialTitleX ?? 100, options?.dialTitleY ?? 20);
 		titleEl.fill('black');
 	}
 
@@ -690,24 +690,24 @@ function applyCutoutTransformsForGroup(group: G, config: DialConfig, cx: number,
 	});
 }
 
-function applyDiscScaling(doc: Svg, config: DialConfig): void {
+function applyDialScaling(doc: Svg, config: DialConfig): void {
 	const viewBox = doc.viewbox();
-	const discCircle = doc.findOne('#disc');
-	const discRadius = discCircle ? Number(discCircle.attr('r')) : 0;
-	const correctionFactor = discRadius > 0 ? viewBox.width / (2 * discRadius) : 1;
+	const dialCircle = doc.findOne('#dial');
+	const dialRadius = dialCircle ? Number(dialCircle.attr('r')) : 0;
+	const correctionFactor = dialRadius > 0 ? viewBox.width / (2 * dialRadius) : 1;
 
 	const pixelDiameter = ((config.maxDiameter * DPI) / MM_PER_INCH) * correctionFactor;
 	doc.width(pixelDiameter);
 	doc.height(pixelDiameter);
 
-	const discElements = doc.findOne('#disc-elements') as G | null;
-	if (discElements) {
-		discElements.scale(config.diameter / config.maxDiameter, viewBox.cx, viewBox.cy);
+	const dialElements = doc.findOne('#dial-elements') as G | null;
+	if (dialElements) {
+		dialElements.scale(config.diameter / config.maxDiameter, viewBox.cx, viewBox.cy);
 	}
 }
 
-function removePathLabels(doc: Svg): void {
-	doc.find('[id^="path-label-"]').forEach((label) => {
+function removeCutoutLabels(doc: Svg): void {
+	doc.find('[id^="cutout-label-"]').forEach((label) => {
 		label.remove();
 	});
 }
