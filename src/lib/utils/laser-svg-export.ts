@@ -36,7 +36,13 @@ function exportLaserSvgMultiGroup(
 	options?: LaserExportOptions,
 	groups?: LayerGroup[]
 ): string {
-	const subSvgs = groups!.map((group) => {
+	const groupsWithLayers = (groups ?? []).filter((group) =>
+		layers.some((l) => l.groupId === group.id && l.visible)
+	);
+	if (groupsWithLayers.length <= 1) {
+		return exportLaserSvgSingle(content, config, layers, options);
+	}
+	const subSvgs = groupsWithLayers.map((group) => {
 		const groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
 		return exportLaserSvgSingle(content, config, groupLayers, options);
 	});

@@ -20,7 +20,13 @@ export function exportPreviewSvg(combinedSvg: string, options?: PreviewExportOpt
 		options.layers
 	) {
 		const { content, config, layers, centerStyle } = options;
-		const subSvgs = options.groups.map((group) => {
+		const groupsWithLayers = options.groups.filter((group) =>
+			layers.some((l) => l.groupId === group.id && l.visible)
+		);
+		if (groupsWithLayers.length <= 1) {
+			return combinedSvg;
+		}
+		const subSvgs = groupsWithLayers.map((group) => {
 			const groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
 			return combineDoodledial(content, config, groupLayers, null, null, {
 				includeCutoutLabels: true,

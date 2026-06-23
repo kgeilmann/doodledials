@@ -217,6 +217,41 @@ describe('laser export multi-group', () => {
 		expect(result.match(/id="center-hole"/g)).toHaveLength(2);
 	});
 
+	it('skips groups with no visible layers in multi-group export', () => {
+		const { content } = buildExportFixture();
+		const layers = [
+			{ id: 'layer-1', name: 'Layer 1', index: 1, visible: true, rotation: 0, groupId: 'g1' },
+			{ id: 'layer-2', name: 'Layer 2', index: 2, visible: false, rotation: 0, groupId: 'g2' }
+		];
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+		const result = exportLaserSvg(content, SAMPLE_CONFIG, layers, undefined, groups);
+		// Only g1 has visible layers, so no grid wrapping should appear
+		expect(result).not.toContain('transform="translate(');
+	});
+
+	it('preview export skips groups with no visible layers', () => {
+		const { content } = buildExportFixture();
+		const layers = [
+			{ id: 'layer-1', name: 'Layer 1', index: 1, visible: true, rotation: 0, groupId: 'g1' },
+			{ id: 'layer-2', name: 'Layer 2', index: 2, visible: false, rotation: 0, groupId: 'g2' }
+		];
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+		const result = exportPreviewSvg('<svg xmlns="http://www.w3.org/2000/svg"></svg>', {
+			groups,
+			content,
+			config: SAMPLE_CONFIG,
+			layers
+		});
+		// Only g1 has visible layers, so no grid wrapping should appear
+		expect(result).not.toContain('transform="translate(');
+	});
+
 	it('single group behaves the same as before', () => {
 		const { content, layers } = buildExportFixture();
 		const resultWithoutGroups = exportLaserSvg(content, SAMPLE_CONFIG, layers);
