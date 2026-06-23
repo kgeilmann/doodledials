@@ -71,7 +71,12 @@
 		try {
 			if (selectedFormat === 'preview-svg') {
 				if (!doodledialStore.combinedSvg) return;
-				const svg = exportPreviewSvg(doodledialStore.combinedSvg);
+				const svg = exportPreviewSvg(doodledialStore.combinedSvg, {
+					groups: doodledialStore.groups,
+					content: doodledialStore.svgContent ?? undefined,
+					config: doodledialStore.config,
+					layers: doodledialStore.layers
+				});
 				createDownload(svg, makeFilename('doodledial-preview', 'svg'), 'image/svg+xml');
 			} else if (selectedFormat === 'laser-svg') {
 				const svg = exportLaserSvg(
@@ -84,7 +89,8 @@
 						dialTitleX: doodledialStore.dialTitleX,
 						dialTitleY: doodledialStore.dialTitleY,
 						dialTitleFontSize: doodledialStore.dialTitleFontSize
-					}
+					},
+					doodledialStore.groups
 				);
 				createDownload(svg, makeFilename('doodledial', 'svg'), 'image/svg+xml');
 			} else if (selectedFormat === 'stl') {

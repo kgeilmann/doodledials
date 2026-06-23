@@ -15,7 +15,11 @@ export function combineMultiGroupSvg(subSvgs: string[], spacing: number): string
 	const defsMatch = subSvgs[0].match(/(<defs>[\s\S]*?<\/defs>|<style[^>]*>[\s\S]*?<\/style>)/i);
 	const defsContent = defsMatch ? defsMatch[0] : '';
 
-	let result = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${totalHeight}" width="${totalWidth}" height="${totalHeight}">`;
+	const xmlnsMatch = subSvgs[0].match(/xmlns(?::\w+)?="[^"]*"/g) || [];
+	const xmlnsAttrs = xmlnsMatch.filter((a) => a !== 'xmlns="http://www.w3.org/2000/svg"').join(' ');
+	const xmlnsStr = xmlnsAttrs ? ' ' + xmlnsAttrs : '';
+
+	let result = `<svg xmlns="http://www.w3.org/2000/svg"${xmlnsStr} viewBox="0 0 ${totalWidth} ${totalHeight}" width="${totalWidth}" height="${totalHeight}">`;
 	if (defsContent) {
 		result += defsContent;
 	}

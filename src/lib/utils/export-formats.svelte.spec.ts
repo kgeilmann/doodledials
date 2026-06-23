@@ -259,4 +259,12 @@ describe('combineMultiGroupSvg', () => {
 	it('returns empty string for empty input', () => {
 		expect(combineMultiGroupSvg([], 60)).toBe('');
 	});
+
+	it('preserves namespace declarations from source SVGs', () => {
+		const subSvgs = [
+			'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 100 100"><g inkscape:label="test"/></svg>'
+		];
+		const result = combineMultiGroupSvg(subSvgs, 60);
+		expect(result).toContain('xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"');
+	});
 });
