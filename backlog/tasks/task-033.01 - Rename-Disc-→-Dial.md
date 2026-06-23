@@ -1,9 +1,10 @@
 ---
 id: TASK-033.01
 title: Rename Disc → Dial
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-06-23 21:00'
+updated_date: '2026-06-23 21:22'
 labels: []
 dependencies: []
 parent_task_id: TASK-033
