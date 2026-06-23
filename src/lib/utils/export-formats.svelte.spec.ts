@@ -1,6 +1,7 @@
 import { SVG, type Svg } from '@svgdotjs/svg.js';
 import { describe, expect, it } from 'vitest';
 import { combineDoodledial, parseSvgPaths } from './doodledial';
+import { combineMultiGroupSvg } from './multi-group-svg-export';
 import {
 	exportLaserSvg,
 	exportStl,
@@ -161,5 +162,40 @@ describe('export formats', () => {
 		expect(stlShort).toContain('facet normal');
 		expect(stlShort).toContain('vertex');
 		expect(stlShort).not.toBe(stlTall);
+	});
+});
+
+describe('combineMultiGroupSvg', () => {
+	it('arranges sub-SVGs in a grid', () => {
+		const subSvgs = [
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle r="10"/></svg>',
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect w="10" h="10"/></svg>',
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M0 0"/></svg>',
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><line x1="0" y1="0" x2="10" y2="10"/></svg>'
+		];
+		const result = combineMultiGroupSvg(subSvgs, 60);
+
+		expect(result).toContain('<svg');
+		expect(result).toContain('</svg>');
+
+		expect(result).toContain('translate(0, 0)');
+		expect(result).toContain('translate(160, 0)');
+		expect(result).toContain('translate(0, 160)');
+		expect(result).toContain('translate(160, 160)');
+
+		expect(result).toContain('viewBox="0 0 320 320"');
+	});
+
+	it('handles single SVG', () => {
+		const result = combineMultiGroupSvg(
+			['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle r="10"/></svg>'],
+			60
+		);
+		expect(result).toContain('translate(0, 0)');
+		expect(result).not.toContain('translate(160');
+	});
+
+	it('returns empty string for empty input', () => {
+		expect(combineMultiGroupSvg([], 60)).toBe('');
 	});
 });
