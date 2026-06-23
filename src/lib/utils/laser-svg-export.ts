@@ -1,6 +1,7 @@
 import { SVG, Svg } from '@svgdotjs/svg.js';
-import type { CenterStyle, DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { CenterStyle, DialConfig, Layer, LayerGroup, SVGContent } from '$lib/types/doodledial';
 import { combineDoodledial } from './doodledial';
+import { combineMultiGroupSvg } from './multi-group-svg-export';
 
 export interface LaserExportOptions {
 	cutClassName?: string;
@@ -16,6 +17,33 @@ export interface LaserExportOptions {
 }
 
 export function exportLaserSvg(
+	content: SVGContent,
+	config: DialConfig,
+	layers?: Layer[],
+	options?: LaserExportOptions,
+	groups?: LayerGroup[]
+): string {
+	if (groups && groups.length > 1) {
+		return exportLaserSvgMultiGroup(content, config, layers ?? [], options, groups);
+	}
+	return exportLaserSvgSingle(content, config, layers, options);
+}
+
+function exportLaserSvgMultiGroup(
+	content: SVGContent,
+	config: DialConfig,
+	layers: Layer[],
+	options?: LaserExportOptions,
+	groups?: LayerGroup[]
+): string {
+	const subSvgs = groups!.map((group) => {
+		const groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
+		return exportLaserSvgSingle(content, config, groupLayers, options);
+	});
+	return combineMultiGroupSvg(subSvgs, 60);
+}
+
+function exportLaserSvgSingle(
 	content: SVGContent,
 	config: DialConfig,
 	layers?: Layer[],

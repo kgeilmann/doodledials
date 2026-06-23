@@ -165,6 +165,36 @@ describe('export formats', () => {
 	});
 });
 
+describe('laser export multi-group', () => {
+	it('produces multiple sub-dials when groups > 1', () => {
+		const { content, layers: fixtureLayers } = buildExportFixture();
+		const layers = fixtureLayers.map((l, i) => ({
+			...l,
+			groupId: i < Math.ceil(fixtureLayers.length / 2) ? 'g1' : 'g2'
+		}));
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+		const result = exportLaserSvg(content, SAMPLE_CONFIG, layers, undefined, groups);
+
+		const translateMatches = result.match(/transform="translate\(/g);
+		expect(translateMatches).toHaveLength(2);
+
+		expect(result.match(/id="dial"/g)).toHaveLength(2);
+
+		expect(result.match(/id="center-hole"/g)).toHaveLength(2);
+	});
+
+	it('single group behaves the same as before', () => {
+		const { content, layers } = buildExportFixture();
+		const resultWithoutGroups = exportLaserSvg(content, SAMPLE_CONFIG, layers);
+		const resultWithSingleGroup = exportLaserSvg(content, SAMPLE_CONFIG, layers, undefined, []);
+
+		expect(resultWithSingleGroup).toBe(resultWithoutGroups);
+	});
+});
+
 describe('combineMultiGroupSvg', () => {
 	it('arranges sub-SVGs in a grid', () => {
 		const subSvgs = [
