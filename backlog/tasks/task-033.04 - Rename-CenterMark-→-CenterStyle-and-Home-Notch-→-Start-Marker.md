@@ -1,9 +1,10 @@
 ---
 id: TASK-033.04
 title: Rename CenterMark → CenterStyle and Home Notch → Start Marker
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-06-23 21:00'
+updated_date: '2026-06-23 21:18'
 labels: []
 dependencies: []
 parent_task_id: TASK-033
