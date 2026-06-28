@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { solverStore } from '$lib/stores/solver.svelte';
+	import { doodledialStore } from '$lib/stores/doodledial.svelte';
 
 	function handleBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) {
@@ -173,6 +174,41 @@
 							class="w-full rounded-lg border border-gray-300 px-2 py-1"
 						/>
 					</label>
+				{/if}
+				{#if doodledialStore.groups.length > 1}
+					<div class="col-span-2">
+						<span class="text-xs font-medium text-gray-600">Select dials to solve</span>
+						<div
+							class="mt-2 flex flex-col gap-2 rounded-lg border border-gray-200 p-3 max-h-36 overflow-y-auto"
+						>
+							{#each doodledialStore.groups as group (group.id)}
+								<label class="flex items-center gap-2 text-sm text-gray-700">
+									<input
+										type="checkbox"
+										checked={solverStore.solverSelectedGroupIds.includes(group.id)}
+										onchange={(e) => {
+											if (e.currentTarget.checked) {
+												solverStore.solverSelectedGroupIds = [
+													...solverStore.solverSelectedGroupIds,
+													group.id
+												];
+											} else {
+												solverStore.solverSelectedGroupIds =
+													solverStore.solverSelectedGroupIds.filter((id) => id !== group.id);
+											}
+										}}
+										class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+									/>
+									<span
+										class="w-3 h-3 rounded-full"
+										style="background-color: {group.color}"
+										aria-hidden="true"
+									></span>
+									<span>{group.name}</span>
+								</label>
+							{/each}
+						</div>
+					</div>
 				{/if}
 			</div>
 
