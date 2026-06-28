@@ -175,6 +175,10 @@ export function createSolverStore(options?: {
 
 	function handleCloseBruteforceResultDialog() {
 		bruteforceResultDialogOpen = false;
+		if (solverMultiGroupQueue.length > 0) {
+			solverOverlayVisible = true;
+			void handleRunSolver('bruteforce');
+		}
 	}
 
 	function handleContinueBruteforce() {
@@ -225,8 +229,6 @@ export function createSolverStore(options?: {
 
 		// If more groups to solve, start next one
 		if (solverMultiGroupQueue.length > 0) {
-			const nextGroupId = solverMultiGroupQueue[0];
-			solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
 			solverProgressMessage = `Solving next group...`;
 			solverOverlayVisible = true;
 			void handleRunSolver('bruteforce');
@@ -340,16 +342,22 @@ export function createSolverStore(options?: {
 			};
 
 			if (mode === 'bruteforce') {
-				solverMultiGroupQueue = [];
-				if (groupsToSolve.length > 1) {
-					// Multi-group brute-force: store queue, only process first group
+				// Determine which group to solve this run
+				const targetGroupId =
+					solverMultiGroupQueue.length > 0 ? solverMultiGroupQueue[0] : groupsToSolve[0];
+				if (solverMultiGroupQueue.length > 0) {
+					solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
+				}
+
+				// Initialize queue for remaining groups on first call
+				if (solverMultiGroupQueue.length === 0 && groupsToSolve.length > 1) {
 					solverMultiGroupQueue = groupsToSolve.slice(1);
 				}
 
 				solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
 				startSolverLiveTimer(runStartedAtMs);
 
-				const singleGroupInput = buildSolverInputForGroups([groupsToSolve[0]]);
+				const singleGroupInput = buildSolverInputForGroups([targetGroupId]);
 
 				const bruteForceResult = await runBruteforceSolver(singleGroupInput, progressHandler, {
 					signal: solverAbortController.signal,
@@ -435,6 +443,7 @@ export function createSolverStore(options?: {
 					solverProgressMessage = `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || '?')} - optimisation stopped.`;
 				} else {
 					solverCancelled = true;
+					solverApplied = false;
 					solverProgressPhase = 'Cancelled';
 					solverProgressMessage = `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || '?')} - optimisation cancelled.`;
 				}
