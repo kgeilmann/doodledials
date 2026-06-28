@@ -67,7 +67,9 @@ function buildInput(layers: Layer[]) {
 			centerHoleDiameter: 2,
 			centerStyle: 'hole',
 			cutoutLabelFontSize: 10,
-			titleFontFamily: 'sans-serif'
+			titleFontFamily: 'sans-serif',
+			numberingScheme: 'continuous',
+			titleFormat: 'none'
 		} as const,
 		layers,
 		svgContent: {

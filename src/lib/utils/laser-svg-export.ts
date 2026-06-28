@@ -14,8 +14,6 @@ export interface LaserExportOptions {
 	dialTitleX?: number;
 	dialTitleY?: number;
 	dialTitleFontSize?: number;
-	numberingScheme?: 'continuous' | 'independent';
-	titleMode?: 'none' | 'name' | 'numbered' | 'both';
 	selectedGroupIds?: string[];
 }
 
@@ -54,7 +52,7 @@ function exportLaserSvgMultiGroup(
 
 	const subSvgs = groupsWithLayers.map((group) => {
 		let groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
-		if (options?.numberingScheme === 'independent') {
+		if (config.numberingScheme === 'independent') {
 			// Sort by their original index and assign sequential 1-based indices
 			groupLayers = groupLayers
 				.slice()
@@ -67,7 +65,7 @@ function exportLaserSvgMultiGroup(
 
 		const title = options?.dialTitle || '';
 		const groupName = group.name || '';
-		const titleMode = options?.titleMode ?? 'none';
+		const titleMode = config.titleFormat;
 		const totalGroups = groupsWithLayers.length;
 		const groupIndex = groupsWithLayers.indexOf(group) + 1;
 
@@ -79,11 +77,11 @@ function exportLaserSvgMultiGroup(
 				: titleMode === 'numbered'
 					? title
 						? `${title} (${groupIndex}/${totalGroups})`
-						: `(${groupIndex}/${totalGroups})`
+						: `${groupIndex}/${totalGroups}`
 					: titleMode === 'both'
 						? title
 							? `${title} - ${groupName} (${groupIndex}/${totalGroups})`
-							: `${groupName} (${groupIndex}/${totalGroups})`
+							: `${groupName} ${groupIndex}/${totalGroups}`
 						: title;
 
 		return exportLaserSvgSingle(content, config, groupLayers, {

@@ -12,9 +12,9 @@ Add two fields to `DialConfig`:
 
 ```typescript
 interface DialConfig {
-  // ... existing fields
-  numberingScheme: 'continuous' | 'independent';
-  titleFormat: 'none' | 'name' | 'numbered' | 'both';
+	// ... existing fields
+	numberingScheme: 'continuous' | 'independent';
+	titleFormat: 'none' | 'name' | 'numbered' | 'both';
 }
 ```
 

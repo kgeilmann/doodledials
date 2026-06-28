@@ -9,8 +9,6 @@
 	let dialogOpen = $state(false);
 	let selectedFormat: ExportFormat = $state(globalConfig.defaultExportFormat);
 	let selectedCenterStyle: CenterStyle = $state(globalConfig.centerStyle);
-	let numberingScheme: 'continuous' | 'independent' = $state('continuous');
-	let titleMode: 'none' | 'name' | 'numbered' | 'both' = $state('none');
 	let selectedGroupIds: string[] = $state([]);
 	let dialThicknessMm = $state('3');
 	let markThicknessMm = $state('0.5');
@@ -46,8 +44,6 @@
 	function openDialog() {
 		selectedFormat = globalConfig.defaultExportFormat;
 		selectedCenterStyle = globalConfig.centerStyle;
-		numberingScheme = globalConfig.defaultNumberingScheme;
-		titleMode = globalConfig.defaultTitleFormat;
 		selectedGroupIds = doodledialStore.groups
 			.filter((g) => doodledialStore.isGroupVisible(g.id))
 			.map((g) => g.id);
@@ -97,8 +93,6 @@
 						dialTitleX: doodledialStore.dialTitleX,
 						dialTitleY: doodledialStore.dialTitleY,
 						dialTitleFontSize: doodledialStore.dialTitleFontSize,
-						numberingScheme,
-						titleMode,
 						selectedGroupIds
 					},
 					doodledialStore.groups
@@ -235,37 +229,6 @@
 								class:hover:bg-gray-50={selectedCenterStyle !== 'none'}>None</button
 							>
 						</div>
-					</div>
-
-					<div class="grid grid-cols-2 gap-3">
-						<label
-							class="flex flex-col gap-1 text-xs font-medium text-gray-600"
-							for="numbering-scheme"
-						>
-							<span>Numbering scheme</span>
-							<select
-								id="numbering-scheme"
-								bind:value={numberingScheme}
-								class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-indigo-500"
-							>
-								<option value="continuous">Continuous</option>
-								<option value="independent">Independent</option>
-							</select>
-						</label>
-
-						<label class="flex flex-col gap-1 text-xs font-medium text-gray-600" for="title-mode">
-							<span>Title format</span>
-							<select
-								id="title-mode"
-								bind:value={titleMode}
-								class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-indigo-500"
-							>
-								<option value="none">None (As-is)</option>
-								<option value="name">Name Only</option>
-								<option value="numbered">Numbered Only</option>
-								<option value="both">Name & Numbered</option>
-							</select>
-						</label>
 					</div>
 
 					{#if doodledialStore.groups.length > 1}

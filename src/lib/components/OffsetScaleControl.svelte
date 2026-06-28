@@ -138,4 +138,44 @@
 			<p class="text-xs text-gray-400">Drag title text on the dial to reposition it.</p>
 		</div>
 	</div>
+
+	<!-- Grouping -->
+	<div>
+		<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Grouping</h3>
+		<div class="flex flex-col gap-3">
+			<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
+				<span>Numbering scheme</span>
+				<select
+					value={doodledialStore.config.numberingScheme}
+					onchange={(e) =>
+						doodledialStore.setNumberingScheme(
+							(e.target as HTMLSelectElement).value as 'continuous' | 'independent'
+						)}
+					disabled={solverStore.solverPending || doodledialStore.groups.length <= 1}
+					class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					<option value="continuous">Continuous</option>
+					<option value="independent">Independent</option>
+				</select>
+			</label>
+
+			<label class="flex flex-col gap-1 text-xs font-medium text-gray-600">
+				<span>Title format</span>
+				<select
+					value={doodledialStore.config.titleFormat}
+					onchange={(e) =>
+						doodledialStore.setTitleFormat(
+							(e.target as HTMLSelectElement).value as 'none' | 'name' | 'numbered' | 'both'
+						)}
+					disabled={solverStore.solverPending || doodledialStore.groups.length <= 1}
+					class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					<option value="none">None (As-is)</option>
+					<option value="name">Name Only</option>
+					<option value="numbered">Numbered Only</option>
+					<option value="both">Name & Numbered</option>
+				</select>
+			</label>
+		</div>
+	</div>
 </div>

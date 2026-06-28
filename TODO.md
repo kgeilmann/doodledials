@@ -3,10 +3,7 @@
 Some ideas what might be worth to add
 
 - Better Multidisc Support
-  - Export all discs at once
-  - Choose numbering scheme (each disc starts at 1 or number continously)
   - Optimize all discs with one call
-  - Make title include disc number
 - Loading/Saving projects
 - Fix STL Export
 - Multi Disc STL Export

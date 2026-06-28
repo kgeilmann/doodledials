@@ -494,6 +494,18 @@ export function combineDoodledial(
 	const offsetXPx = config.offsetX * MM_TO_PX;
 	const offsetYPx = config.offsetY * MM_TO_PX;
 
+	const displayIndexByLayerId = new Map<string, number>();
+	if (config.numberingScheme === 'independent' && options?.groups && options.groups.length > 1) {
+		for (const group of options.groups) {
+			const groupLayers = (layers ?? [])
+				.filter((l) => l.groupId === group.id)
+				.sort((a, b) => a.index - b.index);
+			groupLayers.forEach((l, i) => {
+				displayIndexByLayerId.set(l.id, i + 1);
+			});
+		}
+	}
+
 	layers?.forEach((layer) => {
 		const svgLayer = doc.findOne('#' + layer.id) as G;
 		svgLayer.attr('visibility', respectLayerVisibility && !layer.visible ? 'hidden' : 'visible');
@@ -541,8 +553,9 @@ export function combineDoodledial(
 			}
 		}
 
+		const displayIndex = displayIndexByLayerId.get(layer.id) ?? layer.index;
 		svgLayer.find('.mark-label').forEach((el) => {
-			(el as Text).text(String(layer.index));
+			(el as Text).text(String(displayIndex));
 			(el as Text).font('size', config.cutoutLabelFontSize);
 		});
 
@@ -551,18 +564,18 @@ export function combineDoodledial(
 				const group = label as G;
 				const cutoutLabel = group.findOne('.cutout-label') as Text;
 				if (!cutoutLabel) return;
-				cutoutLabel.text(String(layer.index));
+				cutoutLabel.text(String(displayIndex));
 				const labelOffsetX = layer.labelOffsetX || 0;
 				const labelOffsetY = layer.labelOffsetY || 0;
 				cutoutLabel.font('size', config.cutoutLabelFontSize);
 				cutoutLabel.font('family', 'monospace');
 				const pathUnderscore = group.findOne('.nine-underscore');
-				if (layer.index === 9 && !pathUnderscore) {
+				if (displayIndex === 9 && !pathUnderscore) {
 					const newUnderscore = doc.line(0, 0, 0, 0);
 					newUnderscore.addClass('nine-underscore');
 					newUnderscore.stroke({ width: 1, color: 'black' });
 					group.add(newUnderscore);
-				} else if (layer.index !== 9 && pathUnderscore) {
+				} else if (displayIndex !== 9 && pathUnderscore) {
 					pathUnderscore.remove();
 				}
 				const underscore = group.findOne('.nine-underscore');
@@ -586,7 +599,7 @@ export function combineDoodledial(
 		const markWrapper = svgLayer.findOne('.mark-wrapper');
 		if (markWrapper) {
 			const markUnderscore = markWrapper.findOne('.nine-underscore');
-			if (layer.index === 9 && !markUnderscore) {
+			if (displayIndex === 9 && !markUnderscore) {
 				const markLabel = markWrapper.findOne('.mark-label') as Text;
 				if (markLabel) {
 					const bbox = markLabel.bbox();
@@ -598,7 +611,7 @@ export function combineDoodledial(
 					newUnderscore.stroke({ width: 1, color: 'black' });
 					markWrapper.add(newUnderscore);
 				}
-			} else if (layer.index !== 9 && markUnderscore) {
+			} else if (displayIndex !== 9 && markUnderscore) {
 				markUnderscore.remove();
 			}
 		}

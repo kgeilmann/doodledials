@@ -18,7 +18,9 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 			dialogOpen: false,
 			titleFontFamily: 'sans-serif',
 			cutoutLabelFontSize: 10,
-			dialTitleFontSize: 12
+			dialTitleFontSize: 12,
+			defaultNumberingScheme: 'continuous' as const,
+			defaultTitleFormat: 'none' as const
 		};
 		const store = createDoodledialStore({ globalConfig: mockConfig });
 		store.addLayer('layer-1', 1, 'Layer 1');

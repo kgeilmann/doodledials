@@ -47,7 +47,9 @@ const SAMPLE_CONFIG: DialConfig = {
 	centerHoleDiameter: 0.5,
 	centerStyle: 'hole',
 	cutoutLabelFontSize: 10,
-	titleFontFamily: 'sans-serif'
+	titleFontFamily: 'sans-serif',
+	numberingScheme: 'continuous',
+	titleFormat: 'none'
 };
 
 function getParsedGeometry(svg: string): {
@@ -291,9 +293,9 @@ describe('laser export multi-group', () => {
 		// independent scheme: g2's layer has index 2 but should be renumbered to 1
 		const result = exportLaserSvg(
 			content,
-			SAMPLE_CONFIG,
+			{ ...SAMPLE_CONFIG, numberingScheme: 'independent' },
 			layers,
-			{ numberingScheme: 'independent' },
+			undefined,
 			groups
 		);
 		const doc = SVG(result) as Svg;
@@ -318,9 +320,9 @@ describe('laser export multi-group', () => {
 
 		const resultName = exportLaserSvg(
 			content,
-			SAMPLE_CONFIG,
+			{ ...SAMPLE_CONFIG, titleFormat: 'name' },
 			layers,
-			{ dialTitle: 'MyProject', titleMode: 'name' },
+			{ dialTitle: 'MyProject' },
 			groups
 		);
 		expect(resultName).toContain('MyProject - Dial Alpha');
@@ -328,9 +330,9 @@ describe('laser export multi-group', () => {
 
 		const resultNumbered = exportLaserSvg(
 			content,
-			SAMPLE_CONFIG,
+			{ ...SAMPLE_CONFIG, titleFormat: 'numbered' },
 			layers,
-			{ dialTitle: 'MyProject', titleMode: 'numbered' },
+			{ dialTitle: 'MyProject' },
 			groups
 		);
 		expect(resultNumbered).toContain('MyProject (1/2)');
@@ -338,9 +340,9 @@ describe('laser export multi-group', () => {
 
 		const resultBoth = exportLaserSvg(
 			content,
-			SAMPLE_CONFIG,
+			{ ...SAMPLE_CONFIG, titleFormat: 'both' },
 			layers,
-			{ dialTitle: 'MyProject', titleMode: 'both' },
+			{ dialTitle: 'MyProject' },
 			groups
 		);
 		expect(resultBoth).toContain('MyProject - Dial Alpha (1/2)');

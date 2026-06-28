@@ -254,6 +254,23 @@
 		zoomLevel = 1;
 	}
 
+	let displayTitle = $derived.by(() => {
+		const title = doodledialStore.dialTitle;
+		const groups = doodledialStore.groups;
+		const titleFormat = doodledialStore.config.titleFormat;
+		if (titleFormat === 'none' || groups.length <= 1) return title;
+		const group = groups[0];
+		const totalGroups = groups.length;
+		if (titleFormat === 'name') return title ? `${title} - ${group.name}` : group.name;
+		if (titleFormat === 'numbered') return title ? `${title} (1/${totalGroups})` : `1/${totalGroups}`;
+		if (titleFormat === 'both') {
+			return title
+				? `${title} - ${group.name} (1/${totalGroups})`
+				: `${group.name} 1/${totalGroups}`;
+		}
+		return title;
+	});
+
 	let combinedSvg = $derived.by(() => {
 		if (!doodledialStore.svgContent) return null;
 		try {
@@ -264,7 +281,7 @@
 				doodledialStore.highlightedLayer,
 				doodledialStore.selectedLayer,
 				{
-					dialTitle: doodledialStore.dialTitle,
+					dialTitle: displayTitle,
 					dialTitleX: doodledialStore.dialTitleX,
 					dialTitleY: doodledialStore.dialTitleY,
 					dialTitleFontSize: doodledialStore.dialTitleFontSize,

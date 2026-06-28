@@ -40,6 +40,8 @@ export interface DialConfig {
 	solverGapMm?: number;
 	cutoutLabelFontSize: number;
 	titleFontFamily: string;
+	numberingScheme: 'continuous' | 'independent';
+	titleFormat: 'none' | 'name' | 'numbered' | 'both';
 }
 
 export interface SVGContent {
@@ -61,5 +63,7 @@ export const DEFAULT_DIAL_CONFIG = {
 	centerStyle: 'hole',
 	solverGapMm: 2,
 	cutoutLabelFontSize: 10,
-	titleFontFamily: 'sans-serif'
+	titleFontFamily: 'sans-serif',
+	numberingScheme: 'continuous',
+	titleFormat: 'none'
 } as const satisfies DialConfig;

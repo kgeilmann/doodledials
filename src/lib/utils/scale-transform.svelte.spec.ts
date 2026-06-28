@@ -35,7 +35,9 @@ const BASE_CONFIG: DialConfig = {
 	centerHoleDiameter: 0.5,
 	centerStyle: 'hole',
 	cutoutLabelFontSize: 10,
-	titleFontFamily: 'sans-serif'
+	titleFontFamily: 'sans-serif',
+	numberingScheme: 'continuous',
+	titleFormat: 'none'
 };
 
 function getBBox(el: unknown): { cx: number; cy: number; width: number; height: number } {

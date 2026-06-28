@@ -12,6 +12,8 @@ interface GlobalConfigLike {
 	titleFontFamily: string;
 	cutoutLabelFontSize: number;
 	dialTitleFontSize: number;
+	defaultNumberingScheme: 'continuous' | 'independent';
+	defaultTitleFormat: 'none' | 'name' | 'numbered' | 'both';
 }
 
 function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
@@ -20,7 +22,9 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		...DEFAULT_DIAL_CONFIG,
 		diameter: globalConfig.diameter,
 		cutoutLabelFontSize: globalConfig.cutoutLabelFontSize,
-		titleFontFamily: globalConfig.titleFontFamily
+		titleFontFamily: globalConfig.titleFontFamily,
+		numberingScheme: globalConfig.defaultNumberingScheme,
+		titleFormat: globalConfig.defaultTitleFormat
 	});
 	let svgContent = $state<SVGContent | null>(null);
 	let originalRawSvg = $state<string | null>(null);
@@ -154,6 +158,12 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 		},
 		setTitleFontFamily(fontFamily: string) {
 			config = { ...config, titleFontFamily: fontFamily };
+		},
+		setNumberingScheme(scheme: 'continuous' | 'independent') {
+			config = { ...config, numberingScheme: scheme };
+		},
+		setTitleFormat(format: 'none' | 'name' | 'numbered' | 'both') {
+			config = { ...config, titleFormat: format };
 		},
 		setSizeToFit(sizeToFit: boolean) {
 			config = { ...config, sizeToFit };
@@ -295,7 +305,9 @@ function createDoodledialStore(options?: { globalConfig?: GlobalConfigLike }) {
 				...DEFAULT_DIAL_CONFIG,
 				diameter: globalConfig.diameter,
 				cutoutLabelFontSize: globalConfig.cutoutLabelFontSize,
-				titleFontFamily: globalConfig.titleFontFamily
+				titleFontFamily: globalConfig.titleFontFamily,
+				numberingScheme: globalConfig.defaultNumberingScheme,
+				titleFormat: globalConfig.defaultTitleFormat
 			};
 			svgContent = null;
 			originalRawSvg = null;
