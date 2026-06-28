@@ -48,7 +48,9 @@
 		selectedCenterStyle = globalConfig.centerStyle;
 		numberingScheme = 'continuous';
 		titleMode = 'none';
-		selectedGroupIds = doodledialStore.groups.map((g) => g.id);
+		selectedGroupIds = doodledialStore.groups
+			.filter((g) => doodledialStore.isGroupVisible(g.id))
+			.map((g) => g.id);
 		dialThicknessMm = '3';
 		markThicknessMm = '0.5';
 		raised = true;
