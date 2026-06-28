@@ -1,4 +1,4 @@
-import { SVG, type Svg } from '@svgdotjs/svg.js';
+import { SVG, Text, type Svg } from '@svgdotjs/svg.js';
 import { describe, expect, it } from 'vitest';
 import { combineDoodledial, parseSvgPaths } from './doodledial';
 import { combineMultiGroupSvg } from './multi-group-svg-export';
@@ -250,6 +250,101 @@ describe('laser export multi-group', () => {
 		});
 		// Only g1 has visible layers, so no grid wrapping should appear
 		expect(result).not.toContain('transform="translate(');
+	});
+
+	it('filters by selectedGroupIds when provided', () => {
+		const { content, layers: fixtureLayers } = buildExportFixture();
+		const layers = fixtureLayers.map((l, i) => ({
+			...l,
+			groupId: i < Math.ceil(fixtureLayers.length / 2) ? 'g1' : 'g2'
+		}));
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+		const result = exportLaserSvg(
+			content,
+			SAMPLE_CONFIG,
+			layers,
+			{ selectedGroupIds: ['g1'] },
+			groups
+		);
+
+		// Only 1 group exported — no grid translate wrappers
+		expect(result).not.toContain('transform="translate(');
+		expect(result.match(/id="dial"/g)).toHaveLength(1);
+	});
+
+	it('applies independent numbering scheme when selected', () => {
+		const { content, layers: fixtureLayers } = buildExportFixture();
+		// Two layers from fixture (layer-1, layer-2), one per group
+		const [l1, l2] = fixtureLayers;
+		const layers = [
+			{ ...l1, index: 1, groupId: 'g1' },
+			{ ...l2, index: 2, groupId: 'g2' }
+		];
+		const groups = [
+			{ id: 'g1', name: 'Dial 1', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial 2', color: '#3cb44b' }
+		];
+
+		// independent scheme: g2's layer has index 2 but should be renumbered to 1
+		const result = exportLaserSvg(
+			content,
+			SAMPLE_CONFIG,
+			layers,
+			{ numberingScheme: 'independent' },
+			groups
+		);
+		const doc = SVG(result) as Svg;
+		const markLabels = doc.find('.mark-label').map((el) => (el as unknown as Text).text());
+
+		// Both dials have one layer each, both renumbered to 1
+		expect(markLabels.filter((t) => t === '1')).toHaveLength(2);
+		expect(markLabels).not.toContain('2');
+	});
+
+	it('formats titles correctly based on titleMode options', () => {
+		const { content, layers: fixtureLayers } = buildExportFixture();
+		const [l1, l2] = fixtureLayers;
+		const layers = [
+			{ ...l1, index: 1, groupId: 'g1' },
+			{ ...l2, index: 2, groupId: 'g2' }
+		];
+		const groups = [
+			{ id: 'g1', name: 'Dial Alpha', color: '#e6194b' },
+			{ id: 'g2', name: 'Dial Beta', color: '#3cb44b' }
+		];
+
+		const resultName = exportLaserSvg(
+			content,
+			SAMPLE_CONFIG,
+			layers,
+			{ dialTitle: 'MyProject', titleMode: 'name' },
+			groups
+		);
+		expect(resultName).toContain('MyProject - Dial Alpha');
+		expect(resultName).toContain('MyProject - Dial Beta');
+
+		const resultNumbered = exportLaserSvg(
+			content,
+			SAMPLE_CONFIG,
+			layers,
+			{ dialTitle: 'MyProject', titleMode: 'numbered' },
+			groups
+		);
+		expect(resultNumbered).toContain('MyProject (1/2)');
+		expect(resultNumbered).toContain('MyProject (2/2)');
+
+		const resultBoth = exportLaserSvg(
+			content,
+			SAMPLE_CONFIG,
+			layers,
+			{ dialTitle: 'MyProject', titleMode: 'both' },
+			groups
+		);
+		expect(resultBoth).toContain('MyProject - Dial Alpha (1/2)');
+		expect(resultBoth).toContain('MyProject - Dial Beta (2/2)');
 	});
 
 	it('single group behaves the same as before', () => {
