@@ -262,7 +262,8 @@
 		const group = groups[0];
 		const totalGroups = groups.length;
 		if (titleFormat === 'name') return title ? `${title} - ${group.name}` : group.name;
-		if (titleFormat === 'numbered') return title ? `${title} (1/${totalGroups})` : `1/${totalGroups}`;
+		if (titleFormat === 'numbered')
+			return title ? `${title} (1/${totalGroups})` : `1/${totalGroups}`;
 		if (titleFormat === 'both') {
 			return title
 				? `${title} - ${group.name} (1/${totalGroups})`
