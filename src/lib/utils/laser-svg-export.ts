@@ -71,18 +71,20 @@ function exportLaserSvgMultiGroup(
 		const totalGroups = groupsWithLayers.length;
 		const groupIndex = groupsWithLayers.indexOf(group) + 1;
 
-		let finalTitle = '';
-		if (titleMode === 'name') {
-			finalTitle = title ? `${title} - ${groupName}` : groupName;
-		} else if (titleMode === 'numbered') {
-			const numStr = `(${groupIndex}/${totalGroups})`;
-			finalTitle = title ? `${title} ${numStr}` : numStr;
-		} else if (titleMode === 'both') {
-			const numStr = `(${groupIndex}/${totalGroups})`;
-			finalTitle = title ? `${title} - ${groupName} ${numStr}` : `${groupName} ${numStr}`;
-		} else {
-			finalTitle = title;
-		}
+		const finalTitle =
+			titleMode === 'name'
+				? title
+					? `${title} - ${groupName}`
+					: groupName
+				: titleMode === 'numbered'
+					? title
+						? `${title} (${groupIndex}/${totalGroups})`
+						: `(${groupIndex}/${totalGroups})`
+					: titleMode === 'both'
+						? title
+							? `${title} - ${groupName} (${groupIndex}/${totalGroups})`
+							: `${groupName} (${groupIndex}/${totalGroups})`
+						: title;
 
 		return exportLaserSvgSingle(content, config, groupLayers, {
 			...options,
