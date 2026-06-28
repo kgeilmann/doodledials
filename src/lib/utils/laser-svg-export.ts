@@ -14,6 +14,9 @@ export interface LaserExportOptions {
 	dialTitleX?: number;
 	dialTitleY?: number;
 	dialTitleFontSize?: number;
+	numberingScheme?: 'continuous' | 'independent';
+	titleMode?: 'none' | 'name' | 'numbered' | 'both';
+	selectedGroupIds?: string[];
 }
 
 export function exportLaserSvg(
@@ -36,16 +39,61 @@ function exportLaserSvgMultiGroup(
 	options?: LaserExportOptions,
 	groups?: LayerGroup[]
 ): string {
-	const groupsWithLayers = (groups ?? []).filter((group) =>
+	const selectedGroupIds = options?.selectedGroupIds;
+	const groupsToExport = selectedGroupIds
+		? (groups ?? []).filter((g) => selectedGroupIds.includes(g.id))
+		: (groups ?? []);
+
+	const groupsWithLayers = groupsToExport.filter((group) =>
 		layers.some((l) => l.groupId === group.id && l.visible)
 	);
-	if (groupsWithLayers.length <= 1) {
-		return exportLaserSvgSingle(content, config, layers, options);
+
+	if (groupsWithLayers.length === 0) {
+		return '';
 	}
+
 	const subSvgs = groupsWithLayers.map((group) => {
-		const groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
-		return exportLaserSvgSingle(content, config, groupLayers, options);
+		let groupLayers = layers.filter((l) => l.groupId === group.id && l.visible);
+		if (options?.numberingScheme === 'independent') {
+			// Sort by their original index and assign sequential 1-based indices
+			groupLayers = groupLayers
+				.slice()
+				.sort((a, b) => a.index - b.index)
+				.map((l, index) => ({
+					...l,
+					index: index + 1
+				}));
+		}
+
+		const title = options?.dialTitle || '';
+		const groupName = group.name || '';
+		const titleMode = options?.titleMode ?? 'none';
+		const totalGroups = groupsWithLayers.length;
+		const groupIndex = groupsWithLayers.indexOf(group) + 1;
+
+		let finalTitle = '';
+		if (titleMode === 'name') {
+			finalTitle = title ? `${title} - ${groupName}` : groupName;
+		} else if (titleMode === 'numbered') {
+			const numStr = `(${groupIndex}/${totalGroups})`;
+			finalTitle = title ? `${title} ${numStr}` : numStr;
+		} else if (titleMode === 'both') {
+			const numStr = `(${groupIndex}/${totalGroups})`;
+			finalTitle = title ? `${title} - ${groupName} ${numStr}` : `${groupName} ${numStr}`;
+		} else {
+			finalTitle = title;
+		}
+
+		return exportLaserSvgSingle(content, config, groupLayers, {
+			...options,
+			dialTitle: finalTitle || undefined
+		});
 	});
+
+	if (groupsWithLayers.length === 1) {
+		return subSvgs[0];
+	}
+
 	return combineMultiGroupSvg(subSvgs, 60);
 }
 
