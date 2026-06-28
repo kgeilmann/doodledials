@@ -88,6 +88,7 @@ export function createSolverStore(options?: {
 	let solverSvgTemplate = $state<SolverSvgTemplate | null>(null);
 	let solverResultSelectedIndex = $state(0);
 	let bruteforceUserStopped = $state(false);
+	let solverSelectedGroupIds: string[] = $state([]);
 	let solverTuning = $state({ ...solverTuningDefaults });
 
 	const solverThumbnailSvgs = $derived.by(() => {
@@ -196,6 +197,11 @@ export function createSolverStore(options?: {
 		solverMode = mode;
 		solverGapMmInput = String(globalConfig.solverGapDefault);
 		solverMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
+		// Pre-populate from groups that have at least one visible layer
+		const visibleGroupIds = ddStore.groups
+			.filter((g) => ddStore.layers.some((l) => l.groupId === g.id && l.visible))
+			.map((g) => g.id);
+		solverSelectedGroupIds = visibleGroupIds;
 		solverRunDialogOpen = true;
 	}
 
@@ -445,6 +451,7 @@ export function createSolverStore(options?: {
 		solverSvgTemplate = null;
 		solverResultSelectedIndex = 0;
 		bruteforceUserStopped = false;
+		solverSelectedGroupIds = [];
 		solverTuning = { ...solverTuningDefaults };
 	}
 
@@ -541,6 +548,12 @@ export function createSolverStore(options?: {
 		},
 		get solverTuning() {
 			return solverTuning;
+		},
+		get solverSelectedGroupIds() {
+			return solverSelectedGroupIds;
+		},
+		set solverSelectedGroupIds(v: string[]) {
+			solverSelectedGroupIds = v;
 		},
 		get solverThumbnailSvgs() {
 			return solverThumbnailSvgs;

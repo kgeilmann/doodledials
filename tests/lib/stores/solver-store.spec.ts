@@ -152,6 +152,12 @@ describe('solver store', () => {
 			store.reset();
 			expect(store.solverThumbnailSvgs).toEqual([]);
 		});
+
+		it('has empty selected group ids by default', () => {
+			const store = createTestStore();
+			store.reset();
+			expect(store.solverSelectedGroupIds).toEqual([]);
+		});
 	});
 
 	describe('fitSvg', () => {
