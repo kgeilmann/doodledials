@@ -269,7 +269,7 @@
 		{:else}
 			<div class="border border-gray-200 rounded-lg">
 				{#each doodledialStore.groups as group (group.id)}
-					<details class="group" open>
+					<details class="group">
 						<summary
 							class="flex items-center justify-between px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 list-none select-none"
 							onclick={(e) => {
