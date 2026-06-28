@@ -514,12 +514,29 @@ export function combineDoodledial(
 
 		const isHighlighted =
 			includeHighlighting && (layer.id === highlightedLayerId || layer.id === selectedLayerId);
-		if (!isHighlighted && options?.groups && options.groups.length > 0) {
+		if (options?.groups && options.groups.length > 0) {
 			const groupColor = options.groups.find((g) => g.id === layer.groupId)?.color;
 			if (groupColor) {
-				svgLayer.find('.cutout').forEach((cutout) => {
-					cutout.css('fill', groupColor);
-					cutout.css('fill-opacity', '0.6');
+				if (!isHighlighted) {
+					svgLayer.find('.cutout').forEach((cutout) => {
+						cutout.css('fill', groupColor);
+						cutout.css('fill-opacity', '0.6');
+					});
+				}
+				svgLayer.find('.mark-line').forEach((markLine) => {
+					markLine.css('stroke', groupColor);
+				});
+				svgLayer.find('.mark-label').forEach((markLabel) => {
+					markLabel.css('fill', groupColor);
+				});
+				svgLayer.find('.start-marker').forEach((marker) => {
+					marker.css('fill', groupColor);
+				});
+				svgLayer.find('.nine-underscore').forEach((underscore) => {
+					underscore.css('stroke', groupColor);
+				});
+				svgLayer.find('.cutout-label').forEach((label) => {
+					label.css('fill', groupColor);
 				});
 			}
 		}
