@@ -526,31 +526,31 @@ export function combineDoodledial(
 
 		const isHighlighted =
 			includeHighlighting && (layer.id === highlightedLayerId || layer.id === selectedLayerId);
-		if (options?.groups && options.groups.length > 0) {
-			const groupColor = options.groups.find((g) => g.id === layer.groupId)?.color;
-			if (groupColor) {
-				if (!isHighlighted) {
-					svgLayer.find('.cutout').forEach((cutout) => {
-						cutout.css('fill', groupColor);
-						cutout.css('fill-opacity', '0.6');
-					});
-				}
-				svgLayer.find('.mark-line').forEach((markLine) => {
-					markLine.css('stroke', groupColor);
-				});
-				svgLayer.find('.mark-label').forEach((markLabel) => {
-					markLabel.css('fill', groupColor);
-				});
-				svgLayer.find('.start-marker').forEach((marker) => {
-					marker.css('fill', groupColor);
-				});
-				svgLayer.find('.nine-underscore').forEach((underscore) => {
-					underscore.css('stroke', groupColor);
-				});
-				svgLayer.find('.cutout-label').forEach((label) => {
-					label.css('fill', groupColor);
+		const groupColor = options?.groups?.find((g) => g.id === layer.groupId)?.color;
+		if (groupColor) {
+			if (!isHighlighted) {
+				svgLayer.find('.cutout').forEach((cutout) => {
+					cutout.css('fill', groupColor);
+					cutout.css('fill-opacity', '0.6');
 				});
 			}
+			svgLayer.find('.mark-line').forEach((markLine) => {
+				markLine.css('stroke', groupColor);
+			});
+			svgLayer.find('.mark-label').forEach((markLabel) => {
+				markLabel.css('fill', groupColor);
+				markLabel.css('stroke', groupColor);
+			});
+			svgLayer.find('.start-marker').forEach((marker) => {
+				marker.css('fill', groupColor);
+			});
+			svgLayer.find('.nine-underscore').forEach((underscore) => {
+				underscore.css('stroke', groupColor);
+			});
+			svgLayer.find('.cutout-label').forEach((label) => {
+				label.css('fill', groupColor);
+				label.css('stroke', groupColor);
+			});
 		}
 
 		const displayIndex = displayIndexByLayerId.get(layer.id) ?? layer.index;
@@ -573,7 +573,7 @@ export function combineDoodledial(
 				if (displayIndex === 9 && !pathUnderscore) {
 					const newUnderscore = doc.line(0, 0, 0, 0);
 					newUnderscore.addClass('nine-underscore');
-					newUnderscore.stroke({ width: 1, color: 'black' });
+					newUnderscore.stroke({ width: 1, color: groupColor ?? 'black' });
 					group.add(newUnderscore);
 				} else if (displayIndex !== 9 && pathUnderscore) {
 					pathUnderscore.remove();
@@ -608,7 +608,7 @@ export function combineDoodledial(
 					const halfLen = bbox.width * 0.4;
 					const newUnderscore = doc.line(midX - halfLen, baseY, midX + halfLen, baseY);
 					newUnderscore.addClass('nine-underscore');
-					newUnderscore.stroke({ width: 1, color: 'black' });
+					newUnderscore.stroke({ width: 1, color: groupColor ?? 'black' });
 					markWrapper.add(newUnderscore);
 				}
 			} else if (displayIndex !== 9 && markUnderscore) {
