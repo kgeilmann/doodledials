@@ -1,6 +1,7 @@
 # Design Spec: Multi-dial Laser SVG Export Support
 
 We are extending the laser SVG export feature to better support designs that consist of multiple doodle dials (groups). Specifically, we want to allow users to configure:
+
 1. **Layer Numbering Scheme**: Choose between continuous absolute indices (e.g. 1-12) or independent indices per dial (each starts at 1).
 2. **Title Formats**: Choose whether and how the dial name or index is incorporated into the title printed on the dial face.
 3. **Dial Selection**: Allow selecting specific dials to export instead of always exporting all of them.
@@ -31,6 +32,7 @@ export interface LaserExportOptions {
 ```
 
 In `exportLaserSvgMultiGroup`:
+
 1. Filter the list of `groups` to only include those in `options.selectedGroupIds` (if defined), falling back to all groups that contain visible layers.
 2. For each selected group:
    - Filter the layers belonging to that group that are visible.
@@ -49,6 +51,7 @@ In `exportLaserSvgMultiGroup`:
 ## 2. UI Changes (`src/lib/components/ExportButton.svelte`)
 
 When `Laser SVG` format is selected:
+
 - Add UI controls for `numberingScheme` (defaulting to `'continuous'`).
 - Add UI controls for `titleMode` (defaulting to `'none'` to preserve original behavior, or `'both'`).
 - Add checkboxes to select which dial groups to export if `groups.length > 1`.
@@ -60,6 +63,7 @@ When `Laser SVG` format is selected:
 ## 3. Test Adjustments (`src/lib/utils/export-formats.svelte.spec.ts`)
 
 We will add tests covering:
+
 - Exporting with independent layer numbering (verifying marks/labels start at 1 on both dials).
 - Exporting with continuous layer numbering (verifying marks/labels continue across dials).
 - Dynamic title formats (`'name'`, `'numbered'`, `'both'`).

@@ -9,6 +9,9 @@
 	let dialogOpen = $state(false);
 	let selectedFormat: ExportFormat = $state(globalConfig.defaultExportFormat);
 	let selectedCenterStyle: CenterStyle = $state(globalConfig.centerStyle);
+	let numberingScheme: 'continuous' | 'independent' = $state('continuous');
+	let titleMode: 'none' | 'name' | 'numbered' | 'both' = $state('none');
+	let selectedGroupIds: string[] = $state([]);
 	let dialThicknessMm = $state('3');
 	let markThicknessMm = $state('0.5');
 	let raised = $state(true);
@@ -43,6 +46,9 @@
 	function openDialog() {
 		selectedFormat = globalConfig.defaultExportFormat;
 		selectedCenterStyle = globalConfig.centerStyle;
+		numberingScheme = 'continuous';
+		titleMode = 'none';
+		selectedGroupIds = doodledialStore.groups.map((g) => g.id);
 		dialThicknessMm = '3';
 		markThicknessMm = '0.5';
 		raised = true;
@@ -88,7 +94,10 @@
 						dialTitle: doodledialStore.dialTitle || undefined,
 						dialTitleX: doodledialStore.dialTitleX,
 						dialTitleY: doodledialStore.dialTitleY,
-						dialTitleFontSize: doodledialStore.dialTitleFontSize
+						dialTitleFontSize: doodledialStore.dialTitleFontSize,
+						numberingScheme,
+						titleMode,
+						selectedGroupIds
 					},
 					doodledialStore.groups
 				);
@@ -184,9 +193,10 @@
 			{/if}
 
 			{#if selectedFormat === 'laser-svg'}
-				<div class="mt-4">
+				<div class="mt-4 flex flex-col gap-4">
 					<p class="text-sm text-gray-500">Laser-ready SVG with cut/engrave encoding.</p>
-					<div class="mt-3">
+
+					<div>
 						<span class="text-xs font-medium text-gray-600">Center mark</span>
 						<div class="mt-1 flex gap-2">
 							<button
@@ -224,6 +234,69 @@
 							>
 						</div>
 					</div>
+
+					<div class="grid grid-cols-2 gap-3">
+						<label
+							class="flex flex-col gap-1 text-xs font-medium text-gray-600"
+							for="numbering-scheme"
+						>
+							<span>Numbering scheme</span>
+							<select
+								id="numbering-scheme"
+								bind:value={numberingScheme}
+								class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-indigo-500"
+							>
+								<option value="continuous">Continuous</option>
+								<option value="independent">Independent</option>
+							</select>
+						</label>
+
+						<label class="flex flex-col gap-1 text-xs font-medium text-gray-600" for="title-mode">
+							<span>Title format</span>
+							<select
+								id="title-mode"
+								bind:value={titleMode}
+								class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-indigo-500"
+							>
+								<option value="none">None (As-is)</option>
+								<option value="name">Name Only</option>
+								<option value="numbered">Numbered Only</option>
+								<option value="both">Name & Numbered</option>
+							</select>
+						</label>
+					</div>
+
+					{#if doodledialStore.groups.length > 1}
+						<div>
+							<span class="text-xs font-medium text-gray-600">Select dials to export</span>
+							<div
+								class="mt-2 flex flex-col gap-2 rounded-lg border border-gray-200 p-3 max-h-36 overflow-y-auto"
+							>
+								{#each doodledialStore.groups as group (group.id)}
+									<label class="flex items-center gap-2 text-sm text-gray-700">
+										<input
+											type="checkbox"
+											checked={selectedGroupIds.includes(group.id)}
+											onchange={(e) => {
+												if (e.currentTarget.checked) {
+													selectedGroupIds = [...selectedGroupIds, group.id];
+												} else {
+													selectedGroupIds = selectedGroupIds.filter((id) => id !== group.id);
+												}
+											}}
+											class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+										/>
+										<span
+											class="w-3 h-3 rounded-full"
+											style="background-color: {group.color}"
+											aria-hidden="true"
+										></span>
+										<span>{group.name}</span>
+									</label>
+								{/each}
+							</div>
+						</div>
+					{/if}
 				</div>
 			{/if}
 
@@ -303,7 +376,10 @@
 				<button
 					type="button"
 					onclick={handleExport}
-					class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+					disabled={selectedFormat === 'laser-svg' &&
+						doodledialStore.groups.length > 1 &&
+						selectedGroupIds.length === 0}
+					class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
 					>Export</button
 				>
 			</div>
