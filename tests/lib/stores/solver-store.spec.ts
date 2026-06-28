@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createSolverStore, solverTuningDefaults } from '$lib/stores/solver.svelte';
-import type { DialConfig, SVGContent, Layer } from '$lib/types/doodledial';
+import type { DialConfig, SVGContent, Layer, LayerGroup } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 
 interface MockDoodledialStore {
 	svgContent: SVGContent | null;
 	config: DialConfig;
 	layers: Layer[];
-	groups: { id: string; color: string }[];
+	groups: LayerGroup[];
 	applyLayerRotations(rotations: Record<string, number>): void;
 	setSolverGapMm(gapMm: number): void;
 }
@@ -361,6 +361,68 @@ describe('solver store', () => {
 			const store = createTestStore();
 			store.handleContinueBruteforce();
 			expect(store.bruteforceResultDialogOpen).toBe(false);
+		});
+	});
+
+	describe('group selection', () => {
+		it('pre-populates selectedGroupIds from visible groups on dialog open', () => {
+			const layers: Layer[] = [
+				{ id: 'l1', name: 'L1', index: 0, groupId: 'g1', visible: true, rotation: 0 },
+				{ id: 'l2', name: 'L2', index: 1, groupId: 'g2', visible: false, rotation: 0 }
+			];
+			const ddStore = createMockDoodledialStore({
+				svgContent: { raw: '<svg></svg>', filename: 'test.svg' },
+				layers,
+				groups: [
+					{ id: 'g1', color: '#ff0000', name: 'Group 1' },
+					{ id: 'g2', color: '#00ff00', name: 'Group 2' }
+				]
+			});
+			const store = createSolverStore({
+				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
+				doodledialStore: ddStore
+			});
+			store.handleOpenSolverDialog('force-directed');
+			// g2 has no visible layers, so it should not be pre-selected
+			expect(store.solverSelectedGroupIds).toEqual(['g1']);
+		});
+
+		it('pre-populates all groups when all have visible layers', () => {
+			const layers: Layer[] = [
+				{ id: 'l1', name: 'L1', index: 0, groupId: 'g1', visible: true, rotation: 0 },
+				{ id: 'l2', name: 'L2', index: 1, groupId: 'g2', visible: true, rotation: 0 }
+			];
+			const ddStore = createMockDoodledialStore({
+				svgContent: { raw: '<svg></svg>', filename: 'test.svg' },
+				layers,
+				groups: [
+					{ id: 'g1', color: '#ff0000', name: 'Group 1' },
+					{ id: 'g2', color: '#00ff00', name: 'Group 2' }
+				]
+			});
+			const store = createSolverStore({
+				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
+				doodledialStore: ddStore
+			});
+			store.handleOpenSolverDialog('force-directed');
+			expect(store.solverSelectedGroupIds).toEqual(['g1', 'g2']);
+		});
+
+		it('pre-populates empty when no groups have visible layers', () => {
+			const layers: Layer[] = [
+				{ id: 'l1', name: 'L1', index: 0, groupId: 'g1', visible: false, rotation: 0 }
+			];
+			const ddStore = createMockDoodledialStore({
+				svgContent: { raw: '<svg></svg>', filename: 'test.svg' },
+				layers,
+				groups: [{ id: 'g1', color: '#ff0000', name: 'Group 1' }]
+			});
+			const store = createSolverStore({
+				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
+				doodledialStore: ddStore
+			});
+			store.handleOpenSolverDialog('force-directed');
+			expect(store.solverSelectedGroupIds).toEqual([]);
 		});
 	});
 });

@@ -6,7 +6,7 @@ import {
 } from '$lib/solver/run-bruteforce-solver';
 import { combineSolverSvgTemplate, type SolverSvgTemplate } from '$lib/utils/doodledial';
 import { SolverCancelledError, runSolver, type SolverTuning } from '$lib/solver/run-solver';
-import type { DialConfig, Layer, SVGContent } from '$lib/types/doodledial';
+import type { DialConfig, Layer, LayerGroup, SVGContent } from '$lib/types/doodledial';
 import { doodledialStore as defaultDoodledialStore } from '$lib/stores/doodledial.svelte';
 import { globalConfig as defaultGlobalConfig } from '$lib/stores/global-config.svelte';
 
@@ -34,7 +34,7 @@ export interface DoodledialStoreLike {
 	svgContent: SVGContent | null;
 	config: DialConfig;
 	layers: Layer[];
-	groups: { id: string; color: string }[];
+	groups: LayerGroup[];
 	applyLayerRotations(rotations: Record<string, number>): void;
 	setSolverGapMm(gapMm: number): void;
 }
@@ -89,6 +89,7 @@ export function createSolverStore(options?: {
 	let solverResultSelectedIndex = $state(0);
 	let bruteforceUserStopped = $state(false);
 	let solverSelectedGroupIds: string[] = $state([]);
+	let solverMultiGroupQueue: string[] = $state([]);
 	let solverTuning = $state({ ...solverTuningDefaults });
 
 	const solverThumbnailSvgs = $derived.by(() => {
@@ -221,6 +222,15 @@ export function createSolverStore(options?: {
 			ddStore.applyLayerRotations(selectedLayout);
 		}
 		bruteforceResultDialogOpen = false;
+
+		// If more groups to solve, start next one
+		if (solverMultiGroupQueue.length > 0) {
+			const nextGroupId = solverMultiGroupQueue[0];
+			solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
+			solverProgressMessage = `Solving next group...`;
+			solverOverlayVisible = true;
+			void handleRunSolver('bruteforce');
+		}
 	}
 
 	async function handleRunSolver(
@@ -265,15 +275,36 @@ export function createSolverStore(options?: {
 			ddStore.setSolverGapMm(gapMm);
 			solverGapMmInput = String(gapMm);
 
-			const visibleLayers = ddStore.layers.filter((l) => l.visible);
-			const solverInput = {
-				diameter: ddStore.config.diameter,
-				config: ddStore.config,
-				layers: visibleLayers,
-				svgContent: ddStore.svgContent,
-				groups: ddStore.groups,
-				hiddenLayerIds: ddStore.layers.filter((l) => !l.visible).map((l) => l.id)
-			};
+			const allVisibleLayers = ddStore.layers.filter((l) => l.visible);
+			const allHiddenLayerIds = ddStore.layers.filter((l) => !l.visible).map((l) => l.id);
+
+			// Determine which groups to solve
+			const groupsToSolve =
+				solverSelectedGroupIds.length > 0
+					? solverSelectedGroupIds
+					: ddStore.groups
+							.filter((g) => ddStore.layers.some((l) => l.groupId === g.id && l.visible))
+							.map((g) => g.id);
+
+			// Helper to build solver input for a specific group (or all groups together)
+			function buildSolverInputForGroups(groupIds: string[]) {
+				const layers =
+					groupIds.length > 0
+						? allVisibleLayers.filter((l) => groupIds.includes(l.groupId))
+						: allVisibleLayers;
+				const hiddenLayerIds = [
+					...allVisibleLayers.filter((l) => !groupIds.includes(l.groupId)).map((l) => l.id),
+					...allHiddenLayerIds
+				];
+				return {
+					diameter: ddStore.config.diameter,
+					config: ddStore.config,
+					layers,
+					svgContent: ddStore.svgContent!,
+					groups: ddStore.groups,
+					hiddenLayerIds
+				};
+			}
 			const parsedSeed = Number(solverRandomSeedInput);
 			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;
 			const parsedMaxRuntimeS = Math.round(Number(solverMaxRuntimeSInput));
@@ -309,9 +340,18 @@ export function createSolverStore(options?: {
 			};
 
 			if (mode === 'bruteforce') {
+				solverMultiGroupQueue = [];
+				if (groupsToSolve.length > 1) {
+					// Multi-group brute-force: store queue, only process first group
+					solverMultiGroupQueue = groupsToSolve.slice(1);
+				}
+
 				solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
 				startSolverLiveTimer(runStartedAtMs);
-				const bruteForceResult = await runBruteforceSolver(solverInput, progressHandler, {
+
+				const singleGroupInput = buildSolverInputForGroups([groupsToSolve[0]]);
+
+				const bruteForceResult = await runBruteforceSolver(singleGroupInput, progressHandler, {
 					signal: solverAbortController.signal,
 					roundOutputAngles: solverRoundOutputAngles,
 					maxRuntimeMs,
@@ -331,28 +371,54 @@ export function createSolverStore(options?: {
 				if (bruteForceResult.feasibleSolutionsFound > 0) {
 					solverApplied = false;
 				}
-			} else {
-				startSolverLiveTimer(runStartedAtMs);
-				const forceDirectedResult = await runSolver(solverInput, progressHandler, {
-					signal: solverAbortController.signal,
-					initializeRandomly: solverInitializeRandomly,
-					randomSeed: solverInitializeRandomly ? randomSeed : undefined,
-					roundOutputAngles: solverRoundOutputAngles,
-					tuning: {
-						overlapMagnitudeWeight: solverTuning.overlapMagnitudeWeight,
-						overlapMagnitudePower: solverTuning.overlapMagnitudePower,
-						maxOverlapForceMagnitude: solverTuning.maxOverlapForceMagnitude,
-						timeStepDt: solverTuning.timeStepDt,
-						restoringForceWeight: solverTuning.restoringForceWeight,
-						maxRestoringForce: solverTuning.maxRestoringForce,
-						uniqueForceWeight: solverTuning.uniqueForceWeight,
-						minUniqueAngleSeparation: solverTuning.minUniqueAngleSeparation,
-						maxUniqueForce: solverTuning.maxUniqueForce
-					}
-				});
+			} else if (mode === 'force-directed') {
+				const groupIds = groupsToSolve.length > 0 ? groupsToSolve : [''];
+				solverTotalIterations = 500 * groupIds.length;
+				solverIteration = 0;
 
-				ddStore.applyLayerRotations(forceDirectedResult.layout);
-				solverApplied = true;
+				for (let gi = 0; gi < groupIds.length; gi++) {
+					const gid = groupIds[gi];
+					const groupName = ddStore.groups.find((g) => g.id === gid)?.name ?? `Group ${gi + 1}`;
+					const isMulti = groupIds.length > 1;
+
+					if (isMulti) {
+						solverProgressMessage = `Solving ${groupName} (${gi + 1}/${groupIds.length})...`;
+					}
+
+					const singleGroupInput = buildSolverInputForGroups([gid]);
+
+					const forceDirectedResult = await runSolver(
+						singleGroupInput,
+						(p) => {
+							progressHandler({
+								...p,
+								iteration: p.iteration + gi * 500,
+								totalIterations: 500 * groupIds.length,
+								message: isMulti ? `${groupName}: ${p.message}` : p.message
+							});
+						},
+						{
+							signal: solverAbortController.signal,
+							initializeRandomly: solverInitializeRandomly,
+							randomSeed: solverInitializeRandomly ? randomSeed : undefined,
+							roundOutputAngles: solverRoundOutputAngles,
+							tuning: {
+								overlapMagnitudeWeight: solverTuning.overlapMagnitudeWeight,
+								overlapMagnitudePower: solverTuning.overlapMagnitudePower,
+								maxOverlapForceMagnitude: solverTuning.maxOverlapForceMagnitude,
+								timeStepDt: solverTuning.timeStepDt,
+								restoringForceWeight: solverTuning.restoringForceWeight,
+								maxRestoringForce: solverTuning.maxRestoringForce,
+								uniqueForceWeight: solverTuning.uniqueForceWeight,
+								minUniqueAngleSeparation: solverTuning.minUniqueAngleSeparation,
+								maxUniqueForce: solverTuning.maxUniqueForce
+							}
+						}
+					);
+
+					ddStore.applyLayerRotations(forceDirectedResult.layout);
+					solverApplied = true;
+				}
 			}
 		} catch (error) {
 			if (
@@ -452,6 +518,7 @@ export function createSolverStore(options?: {
 		solverResultSelectedIndex = 0;
 		bruteforceUserStopped = false;
 		solverSelectedGroupIds = [];
+		solverMultiGroupQueue = [];
 		solverTuning = { ...solverTuningDefaults };
 	}
 
@@ -554,6 +621,9 @@ export function createSolverStore(options?: {
 		},
 		set solverSelectedGroupIds(v: string[]) {
 			solverSelectedGroupIds = v;
+		},
+		get solverMultiGroupQueue() {
+			return solverMultiGroupQueue;
 		},
 		get solverThumbnailSvgs() {
 			return solverThumbnailSvgs;
