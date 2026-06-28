@@ -27,6 +27,12 @@
 	let draftForceDirectedSolverEnabled = $state(globalConfig.forceDirectedSolverEnabled);
 
 	let draftDefaultExportFormat = $state<ExportFormat>(globalConfig.defaultExportFormat);
+	let draftDefaultNumberingScheme = $state<'continuous' | 'independent'>(
+		globalConfig.defaultNumberingScheme
+	);
+	let draftDefaultTitleFormat = $state<'none' | 'name' | 'numbered' | 'both'>(
+		globalConfig.defaultTitleFormat
+	);
 
 	function handleDiameterInputChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value);
@@ -86,6 +92,8 @@
 		draftAutoLabelPlacementEnabled = DEFAULTS.autoLabelPlacementEnabled;
 		draftForceDirectedSolverEnabled = DEFAULTS.forceDirectedSolverEnabled;
 		draftDefaultExportFormat = DEFAULTS.defaultExportFormat;
+		draftDefaultNumberingScheme = DEFAULTS.defaultNumberingScheme;
+		draftDefaultTitleFormat = DEFAULTS.defaultTitleFormat;
 	}
 
 	function handleOK() {
@@ -100,6 +108,8 @@
 		globalConfig.autoLabelPlacementEnabled = draftAutoLabelPlacementEnabled;
 		globalConfig.forceDirectedSolverEnabled = draftForceDirectedSolverEnabled;
 		globalConfig.defaultExportFormat = draftDefaultExportFormat;
+		globalConfig.defaultNumberingScheme = draftDefaultNumberingScheme;
+		globalConfig.defaultTitleFormat = draftDefaultTitleFormat;
 		globalConfig.save();
 		doodledialStore.setCenterHoleDiameter(draftCenterHoleDiameter);
 		open = false;
@@ -495,6 +505,56 @@
 								<span>3D STL</span>
 							</label>
 						</fieldset>
+
+						<div class="border-t border-gray-100 pt-6">
+							<div class="flex items-center justify-between mb-2">
+								<label for="default-numbering-scheme" class="text-sm font-medium text-gray-700"
+									>Default Numbering Scheme</label
+								>
+								<select
+									id="default-numbering-scheme"
+									value={draftDefaultNumberingScheme}
+									onchange={(e) =>
+										(draftDefaultNumberingScheme = (e.target as HTMLSelectElement).value as
+											| 'continuous'
+											| 'independent')}
+									class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+								>
+									<option value="continuous">Continuous</option>
+									<option value="independent">Independent</option>
+								</select>
+							</div>
+							<p class="text-xs text-gray-500">
+								Default numbering for layer indices in laser export
+							</p>
+						</div>
+
+						<div class="border-t border-gray-100 pt-6">
+							<div class="flex items-center justify-between mb-2">
+								<label for="default-title-format" class="text-sm font-medium text-gray-700"
+									>Default Title Format</label
+								>
+								<select
+									id="default-title-format"
+									value={draftDefaultTitleFormat}
+									onchange={(e) =>
+										(draftDefaultTitleFormat = (e.target as HTMLSelectElement).value as
+											| 'none'
+											| 'name'
+											| 'numbered'
+											| 'both')}
+									class="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+								>
+									<option value="none">None (As-is)</option>
+									<option value="name">Name Only</option>
+									<option value="numbered">Numbered Only</option>
+									<option value="both">Name & Numbered</option>
+								</select>
+							</div>
+							<p class="text-xs text-gray-500">
+								Default title formatting for dial groups in laser export
+							</p>
+						</div>
 					</div>
 				{/if}
 			</div>

@@ -15,6 +15,8 @@ interface PersistedConfig {
 	centerStyle: CenterStyle;
 	cutoutLabelFontSize: number;
 	dialTitleFontSize: number;
+	defaultNumberingScheme: 'continuous' | 'independent';
+	defaultTitleFormat: 'none' | 'name' | 'numbered' | 'both';
 }
 
 export const DEFAULTS = {
@@ -28,7 +30,9 @@ export const DEFAULTS = {
 	titleFontFamily: 'sans-serif',
 	centerStyle: 'hole' as CenterStyle,
 	cutoutLabelFontSize: 10,
-	dialTitleFontSize: 12
+	dialTitleFontSize: 12,
+	defaultNumberingScheme: 'continuous',
+	defaultTitleFormat: 'none'
 } as const satisfies PersistedConfig;
 
 class GlobalConfigStore {
@@ -43,6 +47,8 @@ class GlobalConfigStore {
 	centerStyle: CenterStyle = $state(DEFAULTS.centerStyle);
 	cutoutLabelFontSize: number = $state(DEFAULTS.cutoutLabelFontSize);
 	dialTitleFontSize: number = $state(DEFAULTS.dialTitleFontSize);
+	defaultNumberingScheme: 'continuous' | 'independent' = $state(DEFAULTS.defaultNumberingScheme);
+	defaultTitleFormat: 'none' | 'name' | 'numbered' | 'both' = $state(DEFAULTS.defaultTitleFormat);
 	constructor() {
 		this._load();
 		$effect.root(() => {
@@ -58,6 +64,8 @@ class GlobalConfigStore {
 				void this.centerStyle;
 				void this.cutoutLabelFontSize;
 				void this.dialTitleFontSize;
+				void this.defaultNumberingScheme;
+				void this.defaultTitleFormat;
 				this._save();
 			});
 		});
@@ -79,6 +87,8 @@ class GlobalConfigStore {
 		this.centerStyle = DEFAULTS.centerStyle;
 		this.cutoutLabelFontSize = DEFAULTS.cutoutLabelFontSize;
 		this.dialTitleFontSize = DEFAULTS.dialTitleFontSize;
+		this.defaultNumberingScheme = DEFAULTS.defaultNumberingScheme;
+		this.defaultTitleFormat = DEFAULTS.defaultTitleFormat;
 	}
 
 	private _load(): void {
@@ -100,6 +110,9 @@ class GlobalConfigStore {
 				this.centerStyle = parsed.centerStyle ?? DEFAULTS.centerStyle;
 				this.cutoutLabelFontSize = parsed.cutoutLabelFontSize ?? DEFAULTS.cutoutLabelFontSize;
 				this.dialTitleFontSize = parsed.dialTitleFontSize ?? DEFAULTS.dialTitleFontSize;
+				this.defaultNumberingScheme =
+					parsed.defaultNumberingScheme ?? DEFAULTS.defaultNumberingScheme;
+				this.defaultTitleFormat = parsed.defaultTitleFormat ?? DEFAULTS.defaultTitleFormat;
 			}
 		} catch (e) {
 			console.warn('[global-config] Failed to load persisted config, using defaults:', e);
@@ -121,7 +134,9 @@ class GlobalConfigStore {
 				titleFontFamily: this.titleFontFamily,
 				centerStyle: this.centerStyle,
 				cutoutLabelFontSize: this.cutoutLabelFontSize,
-				dialTitleFontSize: this.dialTitleFontSize
+				dialTitleFontSize: this.dialTitleFontSize,
+				defaultNumberingScheme: this.defaultNumberingScheme,
+				defaultTitleFormat: this.defaultTitleFormat
 			})
 		);
 	}

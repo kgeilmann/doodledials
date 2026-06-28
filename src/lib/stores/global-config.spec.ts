@@ -226,4 +226,44 @@ describe('global config store', () => {
 		globalConfig.reset();
 		expect(globalConfig.dialTitleFontSize).toBe(12);
 	});
+
+	it('has default defaultNumberingScheme of continuous', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.defaultNumberingScheme).toBe('continuous');
+	});
+
+	it('persists and restores defaultNumberingScheme', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultNumberingScheme = 'independent';
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.defaultNumberingScheme).toBe('independent');
+	});
+
+	it('resets defaultNumberingScheme to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultNumberingScheme = 'independent';
+		globalConfig.reset();
+		expect(globalConfig.defaultNumberingScheme).toBe('continuous');
+	});
+
+	it('has default defaultTitleFormat of none', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		expect(globalConfig.defaultTitleFormat).toBe('none');
+	});
+
+	it('persists and restores defaultTitleFormat', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultTitleFormat = 'both';
+		globalConfig.save();
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+		expect(saved.defaultTitleFormat).toBe('both');
+	});
+
+	it('resets defaultTitleFormat to default', async () => {
+		const { globalConfig } = await import('./global-config.svelte.ts');
+		globalConfig.defaultTitleFormat = 'numbered';
+		globalConfig.reset();
+		expect(globalConfig.defaultTitleFormat).toBe('none');
+	});
 });

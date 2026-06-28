@@ -46,8 +46,8 @@
 	function openDialog() {
 		selectedFormat = globalConfig.defaultExportFormat;
 		selectedCenterStyle = globalConfig.centerStyle;
-		numberingScheme = 'continuous';
-		titleMode = 'none';
+		numberingScheme = globalConfig.defaultNumberingScheme;
+		titleMode = globalConfig.defaultTitleFormat;
 		selectedGroupIds = doodledialStore.groups
 			.filter((g) => doodledialStore.isGroupVisible(g.id))
 			.map((g) => g.id);
