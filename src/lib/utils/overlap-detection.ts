@@ -356,7 +356,10 @@ function createIsolatedSvgDocument(
 	includeSharedChildren: boolean
 ): { isolatedDoc: Document; isolatedRoot: SVGSVGElement } {
 	const svgNamespace = sourceRoot.namespaceURI ?? 'http://www.w3.org/2000/svg';
-	const isolatedDoc = document.implementation.createDocument(svgNamespace, 'svg', null);
+	const isolatedDoc = new DOMParser().parseFromString(
+		`<svg xmlns="${svgNamespace}"></svg>`,
+		'image/svg+xml'
+	);
 	const isolatedRoot = isolatedDoc.documentElement as unknown as SVGSVGElement;
 
 	copySvgRootAttributes(sourceRoot, isolatedRoot);
@@ -504,62 +507,80 @@ async function renderSvgToBitmap(
 	width: number,
 	height: number
 ): Promise<PixelData> {
-	let context: CanvasRenderingContext2D;
-	try {
-		context = acquireRenderContext(width, height);
-	} catch (cause) {
-		throw new Error('Failed to acquire canvas context for overlap detection rendering', { cause });
+	const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+
+	if (typeof Image === 'undefined') {
+		return renderSvgToBitmapInWorker(blob, width, height);
 	}
-	context.clearRect(0, 0, width, height);
+
+	return renderSvgToBitmapInMainThread(blob, width, height);
+}
+
+async function renderSvgToBitmapInWorker(
+	blob: Blob,
+	width: number,
+	height: number
+): Promise<PixelData> {
+	const ctx = acquireRenderContext(width, height);
+	ctx.clearRect(0, 0, width, height);
+
+	const bitmap = await createImageBitmap(blob);
+	ctx.drawImage(bitmap, 0, 0, width, height);
+	bitmap.close();
+
+	const imageData = ctx.getImageData(0, 0, width, height).data;
+	return extractAlphaFromImageData(imageData, width, height);
+}
+
+async function renderSvgToBitmapInMainThread(
+	blob: Blob,
+	width: number,
+	height: number
+): Promise<PixelData> {
+	const canvas = document.createElement('canvas');
+	canvas.width = width;
+	canvas.height = height;
+	const ctx = canvas.getContext('2d', { willReadFrequently: true });
+	if (!ctx) {
+		throw new Error('Unable to acquire 2D canvas context for overlap detection');
+	}
 
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 		img.onload = () => {
-			context.drawImage(img, 0, 0, width, height);
-			const imageData = context.getImageData(0, 0, width, height).data;
-			const alpha = new Uint8ClampedArray(width * height);
-			for (let sourceIndex = 3, alphaIndex = 0; sourceIndex < imageData.length; sourceIndex += 4) {
-				alpha[alphaIndex] = imageData[sourceIndex];
-				alphaIndex += 1;
-			}
-
+			ctx.drawImage(img, 0, 0, width, height);
+			const imageData = ctx.getImageData(0, 0, width, height).data;
 			URL.revokeObjectURL(img.src);
-			resolve({ alpha, width, height });
+			resolve(extractAlphaFromImageData(imageData, width, height));
 		};
 		img.onerror = (error) => {
 			URL.revokeObjectURL(img.src);
 			reject(error);
 		};
-
-		const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-		img.src = URL.createObjectURL(svgBlob);
+		img.src = URL.createObjectURL(blob);
 	});
 }
 
-let pooledCanvas: HTMLCanvasElement | null = null;
-let pooledContext: CanvasRenderingContext2D | null = null;
-
-function acquireRenderContext(width: number, height: number): CanvasRenderingContext2D {
-	if (!pooledCanvas) {
-		pooledCanvas = document.createElement('canvas');
+function extractAlphaFromImageData(
+	imageData: Uint8ClampedArray,
+	width: number,
+	height: number
+): PixelData {
+	const alpha = new Uint8ClampedArray(width * height);
+	for (let sourceIndex = 3, alphaIndex = 0; sourceIndex < imageData.length; sourceIndex += 4) {
+		alpha[alphaIndex] = imageData[sourceIndex];
+		alphaIndex += 1;
 	}
+	return { alpha, width, height };
+}
 
-	if (!pooledContext) {
-		pooledContext = pooledCanvas.getContext('2d', { willReadFrequently: true });
-	}
-
-	if (!pooledContext) {
+function acquireRenderContext(width: number, height: number): OffscreenCanvasRenderingContext2D {
+	const canvas = new OffscreenCanvas(width, height);
+	const ctx = canvas.getContext('2d');
+	if (!ctx) {
 		throw new Error('Unable to acquire 2D canvas context for overlap detection');
 	}
-
-	if (pooledCanvas.width !== width) {
-		pooledCanvas.width = width;
-	}
-	if (pooledCanvas.height !== height) {
-		pooledCanvas.height = height;
-	}
-
-	return pooledContext;
+	return ctx;
 }
 
 function bitmapsOverlap(a: PixelData, b: PixelData): boolean {
