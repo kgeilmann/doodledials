@@ -10,7 +10,6 @@
 	import BruteforceResultDialog from '$lib/components/BruteforceResultDialog.svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
 	import { doodledialStore } from '$lib/stores/doodledial.svelte';
-	import { globalConfig } from '$lib/stores/global-config.svelte';
 	import { solverStore } from '$lib/stores/solver.svelte';
 
 	let globalConfigDialogOpen = $state(false);
@@ -123,10 +122,7 @@
 	<div class="flex-1 flex flex-col">
 		<div class="flex justify-end p-4 gap-3">
 			<button
-				onclick={() =>
-					solverStore.handleOpenSolverDialog(
-						globalConfig.forceDirectedSolverEnabled ? 'force-directed' : 'bruteforce'
-					)}
+				onclick={() => solverStore.handleOpenSolverDialog()}
 				disabled={!doodledialStore.svgContent || solverStore.solverPending}
 				class="px-5 py-2.5 bg-indigo-600 text-white border border-indigo-600 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 ease-out disabled:bg-indigo-300 disabled:border-indigo-300 disabled:cursor-not-allowed enabled:hover:bg-indigo-700 enabled:hover:border-indigo-700 enabled:active:scale-95"
 			>

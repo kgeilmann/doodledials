@@ -7,7 +7,6 @@ interface PersistedConfig {
 	diameter: number;
 	centerHoleDiameter: number;
 	autoLabelPlacementEnabled: boolean;
-	forceDirectedSolverEnabled: boolean;
 	solverGapDefault: number;
 	bruteforceTimeLimit: number;
 	defaultExportFormat: ExportFormat;
@@ -23,7 +22,6 @@ export const DEFAULTS = {
 	diameter: 100,
 	centerHoleDiameter: 0.5,
 	autoLabelPlacementEnabled: false,
-	forceDirectedSolverEnabled: false,
 	solverGapDefault: 3,
 	bruteforceTimeLimit: 120,
 	defaultExportFormat: 'laser-svg',
@@ -39,7 +37,6 @@ class GlobalConfigStore {
 	diameter: number = $state(DEFAULTS.diameter);
 	centerHoleDiameter: number = $state(DEFAULTS.centerHoleDiameter);
 	autoLabelPlacementEnabled: boolean = $state(DEFAULTS.autoLabelPlacementEnabled);
-	forceDirectedSolverEnabled: boolean = $state(DEFAULTS.forceDirectedSolverEnabled);
 	solverGapDefault: number = $state(DEFAULTS.solverGapDefault);
 	bruteforceTimeLimit: number = $state(DEFAULTS.bruteforceTimeLimit);
 	defaultExportFormat: ExportFormat = $state(DEFAULTS.defaultExportFormat);
@@ -56,7 +53,6 @@ class GlobalConfigStore {
 				void this.diameter;
 				void this.centerHoleDiameter;
 				void this.autoLabelPlacementEnabled;
-				void this.forceDirectedSolverEnabled;
 				void this.solverGapDefault;
 				void this.bruteforceTimeLimit;
 				void this.defaultExportFormat;
@@ -79,7 +75,6 @@ class GlobalConfigStore {
 		this.diameter = DEFAULTS.diameter;
 		this.centerHoleDiameter = DEFAULTS.centerHoleDiameter;
 		this.autoLabelPlacementEnabled = DEFAULTS.autoLabelPlacementEnabled;
-		this.forceDirectedSolverEnabled = DEFAULTS.forceDirectedSolverEnabled;
 		this.solverGapDefault = DEFAULTS.solverGapDefault;
 		this.bruteforceTimeLimit = DEFAULTS.bruteforceTimeLimit;
 		this.defaultExportFormat = DEFAULTS.defaultExportFormat;
@@ -101,8 +96,6 @@ class GlobalConfigStore {
 				this.centerHoleDiameter = parsed.centerHoleDiameter ?? DEFAULTS.centerHoleDiameter;
 				this.autoLabelPlacementEnabled =
 					parsed.autoLabelPlacementEnabled ?? DEFAULTS.autoLabelPlacementEnabled;
-				this.forceDirectedSolverEnabled =
-					parsed.forceDirectedSolverEnabled ?? DEFAULTS.forceDirectedSolverEnabled;
 				this.solverGapDefault = parsed.solverGapDefault ?? DEFAULTS.solverGapDefault;
 				this.bruteforceTimeLimit = parsed.bruteforceTimeLimit ?? DEFAULTS.bruteforceTimeLimit;
 				this.defaultExportFormat = parsed.defaultExportFormat ?? DEFAULTS.defaultExportFormat;
@@ -127,7 +120,6 @@ class GlobalConfigStore {
 				diameter: this.diameter,
 				centerHoleDiameter: this.centerHoleDiameter,
 				autoLabelPlacementEnabled: this.autoLabelPlacementEnabled,
-				forceDirectedSolverEnabled: this.forceDirectedSolverEnabled,
 				solverGapDefault: this.solverGapDefault,
 				bruteforceTimeLimit: this.bruteforceTimeLimit,
 				defaultExportFormat: this.defaultExportFormat,

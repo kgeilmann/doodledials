@@ -11,19 +11,17 @@
 			<div class="flex items-center text-xs text-slate-600 mb-2">
 				<span class="font-medium uppercase tracking-wide">{solverStore.solverProgressPhase}</span>
 			</div>
-			{#if solverStore.solverActiveMode === 'bruteforce'}
-				<div
-					class="mb-2 flex items-center justify-between text-xs text-slate-600"
-					data-testid="solver-time-counter"
-				>
-					<span>Elapsed {solverStore.formatDurationMs(solverStore.solverElapsedMs)}</span>
-					<span>
-						Max {solverStore.solverMaxRuntimeMs === null
-							? 'No limit'
-							: solverStore.formatDurationMs(solverStore.solverMaxRuntimeMs)}
-					</span>
-				</div>
-			{/if}
+			<div
+				class="mb-2 flex items-center justify-between text-xs text-slate-600"
+				data-testid="solver-time-counter"
+			>
+				<span>Elapsed {solverStore.formatDurationMs(solverStore.solverElapsedMs)}</span>
+				<span>
+					Max {solverStore.solverMaxRuntimeMs === null
+						? 'No limit'
+						: solverStore.formatDurationMs(solverStore.solverMaxRuntimeMs)}
+				</span>
+			</div>
 			<div
 				class="h-2 w-full rounded-full bg-indigo-100 overflow-hidden"
 				data-testid="solver-progress-track"

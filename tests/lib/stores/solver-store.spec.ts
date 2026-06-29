@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSolverStore, solverTuningDefaults } from '$lib/stores/solver.svelte';
+import { createSolverStore } from '$lib/stores/solver.svelte';
 import type { DialConfig, SVGContent, Layer, LayerGroup } from '$lib/types/doodledial';
 import { DEFAULT_DIAL_CONFIG } from '$lib/types/doodledial';
 
@@ -85,22 +85,10 @@ describe('solver store', () => {
 			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
 
-		it('has default random seed', () => {
-			const store = createTestStore();
-			store.reset();
-			expect(store.solverRandomSeedInput).toBe('42');
-		});
-
 		it('has round output angles enabled by default', () => {
 			const store = createTestStore();
 			store.reset();
 			expect(store.solverRoundOutputAngles).toBe(true);
-		});
-
-		it('has default mode as force-directed', () => {
-			const store = createTestStore();
-			store.reset();
-			expect(store.solverMode).toBe('force-directed');
 		});
 
 		it('has overlays hidden by default', () => {
@@ -121,12 +109,6 @@ describe('solver store', () => {
 			const store = createTestStore();
 			store.reset();
 			expect(store.solverMaxRuntimeMs).toBeNull();
-		});
-
-		it('has default tuning values', () => {
-			const store = createTestStore();
-			store.reset();
-			expect(store.solverTuning).toEqual(solverTuningDefaults);
 		});
 
 		it('has empty top layouts', () => {
@@ -209,21 +191,6 @@ describe('solver store', () => {
 	});
 
 	describe('resetSolverTuning', () => {
-		it('resets tuning to defaults', () => {
-			const store = createTestStore();
-			store.solverTuning.overlapMagnitudeWeight = 0.5;
-			store.solverTuning.timeStepDt = 1.0;
-			store.resetSolverTuning();
-			expect(store.solverTuning).toEqual(solverTuningDefaults);
-		});
-
-		it('resets initialize randomly', () => {
-			const store = createTestStore();
-			store.solverInitializeRandomly = true;
-			store.resetSolverTuning();
-			expect(store.solverInitializeRandomly).toBe(false);
-		});
-
 		it('resets round output angles', () => {
 			const store = createTestStore();
 			store.solverRoundOutputAngles = false;
@@ -238,13 +205,6 @@ describe('solver store', () => {
 			expect(store.solverGapMmInput).toBe('10');
 		});
 
-		it('resets random seed input', () => {
-			const store = createTestStore();
-			store.solverRandomSeedInput = '123';
-			store.resetSolverTuning();
-			expect(store.solverRandomSeedInput).toBe('42');
-		});
-
 		it('resets max runtime input', () => {
 			const store = createTestStore();
 			store.solverMaxRuntimeSInput = '999';
@@ -256,7 +216,7 @@ describe('solver store', () => {
 	describe('dialog state management', () => {
 		it('closes solver dialog via handleCloseSolverDialog', () => {
 			const store = createTestStoreWithSvg();
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			expect(store.solverRunDialogOpen).toBe(true);
 			store.handleCloseSolverDialog();
 			expect(store.solverRunDialogOpen).toBe(false);
@@ -283,27 +243,22 @@ describe('solver store', () => {
 
 		it('can be called multiple times', () => {
 			const store = createTestStore();
-			store.handleStopSolver();
-			store.handleStopSolver();
+			expect(() => {
+				store.handleStopSolver();
+				store.handleStopSolver();
+			}).not.toThrow();
 		});
 	});
 
 	describe('reset', () => {
 		it('resets all state to initial values', () => {
 			const store = createTestStoreWithSvg();
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			store.reset();
 			expect(store.solverPending).toBe(false);
 			expect(store.solverProgress).toBe(0);
 			expect(store.solverProgressPhase).toBe('Idle');
 			expect(store.solverRunDialogOpen).toBe(false);
-		});
-
-		it('resets tuning to defaults', () => {
-			const store = createTestStore();
-			store.solverTuning.overlapMagnitudeWeight = 999;
-			store.reset();
-			expect(store.solverTuning).toEqual(solverTuningDefaults);
 		});
 
 		it('resets inputs to global config defaults', () => {
@@ -318,15 +273,14 @@ describe('solver store', () => {
 	describe('handleOpenSolverDialog', () => {
 		it('does nothing when no svgContent', () => {
 			const store = createTestStore();
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			expect(store.solverRunDialogOpen).toBe(false);
 		});
 
 		it('does nothing when solver is pending', () => {
 			const store = createTestStoreWithSvg();
 			store.reset();
-			store.handleOpenSolverDialog('bruteforce');
-			expect(store.solverMode).toBe('bruteforce');
+			store.handleOpenSolverDialog();
 			expect(store.solverRunDialogOpen).toBe(true);
 		});
 
@@ -334,7 +288,7 @@ describe('solver store', () => {
 			const store = createTestStoreWithSvg();
 			store.solverGapMmInput = '99';
 			store.solverMaxRuntimeSInput = '999';
-			store.handleOpenSolverDialog('bruteforce');
+			store.handleOpenSolverDialog();
 			expect(store.solverGapMmInput).toBe('10');
 			expect(store.solverMaxRuntimeSInput).toBe('60');
 		});
@@ -382,7 +336,7 @@ describe('solver store', () => {
 				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
 				doodledialStore: ddStore
 			});
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			// g2 has no visible layers, so it should not be pre-selected
 			expect(store.solverSelectedGroupIds).toEqual(['g1']);
 		});
@@ -404,7 +358,7 @@ describe('solver store', () => {
 				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
 				doodledialStore: ddStore
 			});
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			expect(store.solverSelectedGroupIds).toEqual(['g1', 'g2']);
 		});
 
@@ -421,7 +375,7 @@ describe('solver store', () => {
 				globalConfig: { solverGapDefault: 10, bruteforceTimeLimit: 60 },
 				doodledialStore: ddStore
 			});
-			store.handleOpenSolverDialog('force-directed');
+			store.handleOpenSolverDialog();
 			expect(store.solverSelectedGroupIds).toEqual([]);
 		});
 	});

@@ -5,16 +5,12 @@ import {
 	type BruteforceResumeContext
 } from '$lib/solver/run-bruteforce-solver';
 import { combineSolverSvgTemplate, type SolverSvgTemplate } from '$lib/utils/doodledial';
-import { SolverCancelledError, runSolver, type SolverTuning } from '$lib/solver/run-solver';
 import type { DialConfig, Layer, LayerGroup, SVGContent } from '$lib/types/doodledial';
 import { doodledialStore as defaultDoodledialStore } from '$lib/stores/doodledial.svelte';
 import { globalConfig as defaultGlobalConfig } from '$lib/stores/global-config.svelte';
 
-const RANDOM_SEED_DEFAULT = '42';
 const OVERLAY_HIDE_DELAY_MS = 1200;
 const LIVE_TIMER_INTERVAL_MS = 100;
-
-export type SolverMode = 'force-directed' | 'bruteforce';
 
 export interface BruteforceRunSummary {
 	stopReason: BruteforceSolverStopReason;
@@ -39,20 +35,6 @@ export interface DoodledialStoreLike {
 	setSolverGapMm(gapMm: number): void;
 }
 
-export const solverTuningDefaults: Required<SolverTuning> = {
-	overlapMagnitudeWeight: 0.1,
-	overlapMagnitudePower: 1.2,
-	maxOverlapForceMagnitude: 8,
-	overlapTestStep: 1,
-	overlapDirectionSearchSteps: [1, 2, 4, 8],
-	timeStepDt: 0.5,
-	restoringForceWeight: 0.02,
-	maxRestoringForce: 2,
-	uniqueForceWeight: 0.02,
-	minUniqueAngleSeparation: 5,
-	maxUniqueForce: 2
-};
-
 export function createSolverStore(options?: {
 	globalConfig?: SolverGlobalConfigLike;
 	doodledialStore?: DoodledialStoreLike;
@@ -71,13 +53,9 @@ export function createSolverStore(options?: {
 	let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
 	let solverLiveTimer: ReturnType<typeof setInterval> | null = null;
 	let solverRunDialogOpen = $state(false);
-	let solverInitializeRandomly = $state(false);
 	let solverRoundOutputAngles = $state(true);
 	let solverGapMmInput = $state(String(globalConfig.solverGapDefault));
-	let solverRandomSeedInput = $state(RANDOM_SEED_DEFAULT);
 	let solverMaxRuntimeSInput = $state(String(globalConfig.bruteforceTimeLimit));
-	let solverMode = $state<SolverMode>('force-directed');
-	let solverActiveMode = $state<SolverMode>('force-directed');
 	let solverElapsedMs = $state(0);
 	let solverMaxRuntimeMs = $state<number | null>(null);
 	let bruteforceResultDialogOpen = $state(false);
@@ -91,7 +69,6 @@ export function createSolverStore(options?: {
 	let solverSelectedGroupIds: string[] = $state([]);
 	let solverMultiGroupQueue: string[] = $state([]);
 	let solverMultiGroupStarted = $state(false);
-	let solverTuning = $state({ ...solverTuningDefaults });
 
 	const solverThumbnailSvgs = $derived.by(() => {
 		const template = solverSvgTemplate;
@@ -110,11 +87,8 @@ export function createSolverStore(options?: {
 		return `${(durationMs / 1000).toFixed(1)}s`;
 	}
 
-	function formatProgressCountLabel(mode: SolverMode, total: number | string): string {
-		if (mode === 'bruteforce') {
-			return `Combinations ${solverIteration}/${total}`;
-		}
-		return `Iterations ${solverIteration}/${total}`;
+	function formatProgressCountLabel(total: number | string): string {
+		return `Combinations ${solverIteration}/${total}`;
 	}
 
 	function clearOverlayHideTimer() {
@@ -151,11 +125,7 @@ export function createSolverStore(options?: {
 			const elapsedMs = Date.now() - runStartedAtMs;
 			solverElapsedMs = elapsedMs;
 
-			if (
-				solverActiveMode === 'bruteforce' &&
-				typeof solverMaxRuntimeMs === 'number' &&
-				solverMaxRuntimeMs > 0
-			) {
+			if (typeof solverMaxRuntimeMs === 'number' && solverMaxRuntimeMs > 0) {
 				const runtimePercent = Math.min(99, Math.round((elapsedMs / solverMaxRuntimeMs) * 100));
 				solverProgress = Math.max(solverProgress, runtimePercent);
 			}
@@ -166,11 +136,8 @@ export function createSolverStore(options?: {
 	}
 
 	function resetSolverTuning() {
-		solverTuning = { ...solverTuningDefaults };
-		solverInitializeRandomly = false;
 		solverRoundOutputAngles = true;
 		solverGapMmInput = String(globalConfig.solverGapDefault);
-		solverRandomSeedInput = RANDOM_SEED_DEFAULT;
 		solverMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
 	}
 
@@ -178,29 +145,26 @@ export function createSolverStore(options?: {
 		bruteforceResultDialogOpen = false;
 		if (solverMultiGroupQueue.length > 0) {
 			solverOverlayVisible = true;
-			void handleRunSolver('bruteforce');
+			void handleRunSolver();
 		}
 	}
 
 	function handleContinueBruteforce() {
 		bruteforceResultDialogOpen = false;
 		solverMaxRuntimeSInput = bruteforceExtendRuntimeSInput;
-		void handleRunSolver('bruteforce', bruteforceResumeContext);
+		void handleRunSolver(bruteforceResumeContext);
 	}
 
 	function handleStopSolver() {
-		if (solverActiveMode === 'bruteforce') {
-			bruteforceUserStopped = true;
-		}
+		bruteforceUserStopped = true;
 		solverAbortController?.abort();
 	}
 
-	function handleOpenSolverDialog(mode: SolverMode) {
+	function handleOpenSolverDialog() {
 		if (!ddStore.svgContent || solverPending) {
 			return;
 		}
 
-		solverMode = mode;
 		solverGapMmInput = String(globalConfig.solverGapDefault);
 		solverMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
 		// Pre-populate from groups that have at least one visible layer
@@ -219,7 +183,7 @@ export function createSolverStore(options?: {
 	async function handleConfirmSolverDialogRun() {
 		solverRunDialogOpen = false;
 		bruteforceResumeContext = null;
-		await handleRunSolver(solverMode);
+		await handleRunSolver();
 	}
 
 	function handleApplyBruteforceLayout() {
@@ -233,14 +197,11 @@ export function createSolverStore(options?: {
 		if (solverMultiGroupQueue.length > 0) {
 			solverProgressMessage = `Solving next group...`;
 			solverOverlayVisible = true;
-			void handleRunSolver('bruteforce');
+			void handleRunSolver();
 		}
 	}
 
-	async function handleRunSolver(
-		mode: SolverMode = solverMode,
-		resumeContext: BruteforceResumeContext | null = null
-	) {
+	async function handleRunSolver(resumeContext: BruteforceResumeContext | null = null) {
 		if (!ddStore.svgContent || solverPending) {
 			return;
 		}
@@ -253,7 +214,6 @@ export function createSolverStore(options?: {
 		solverTotalIterations = 0;
 		solverElapsedMs = 0;
 		solverMaxRuntimeMs = null;
-		solverActiveMode = mode;
 		solverOverlayVisible = true;
 		solverTopLayouts = [];
 		solverSvgTemplate = null;
@@ -264,7 +224,6 @@ export function createSolverStore(options?: {
 		const runStartedAtMs = Date.now();
 
 		let solverApplied = false;
-		let solverCancelled = false;
 		let solverTimeLimited = false;
 		let solverNoFeasible = false;
 		let bruteforceRunStopReason: BruteforceSolverStopReason | null = null;
@@ -309,8 +268,6 @@ export function createSolverStore(options?: {
 					hiddenLayerIds
 				};
 			}
-			const parsedSeed = Number(solverRandomSeedInput);
-			const randomSeed = Number.isFinite(parsedSeed) ? parsedSeed : undefined;
 			const parsedMaxRuntimeS = Math.round(Number(solverMaxRuntimeSInput));
 			const maxRuntimeMs =
 				Number.isFinite(parsedMaxRuntimeS) && parsedMaxRuntimeS >= 0
@@ -343,113 +300,50 @@ export function createSolverStore(options?: {
 				}
 			};
 
-			if (mode === 'bruteforce') {
-				// Determine which group to solve this run
-				const targetGroupId =
-					solverMultiGroupQueue.length > 0 ? solverMultiGroupQueue[0] : groupsToSolve[0];
-				if (solverMultiGroupQueue.length > 0) {
-					solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
-				}
+			// Determine which group to solve this run
+			const targetGroupId =
+				solverMultiGroupQueue.length > 0 ? solverMultiGroupQueue[0] : groupsToSolve[0];
+			if (solverMultiGroupQueue.length > 0) {
+				solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
+			}
 
-				// Initialize queue for remaining groups on first call only
-				if (!solverMultiGroupStarted && groupsToSolve.length > 1) {
-					solverMultiGroupQueue = groupsToSolve.slice(1);
-					solverMultiGroupStarted = true;
-				}
+			// Initialize queue for remaining groups on first call only
+			if (!solverMultiGroupStarted && groupsToSolve.length > 1) {
+				solverMultiGroupQueue = groupsToSolve.slice(1);
+				solverMultiGroupStarted = true;
+			}
 
-				solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
-				startSolverLiveTimer(runStartedAtMs);
+			solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
+			startSolverLiveTimer(runStartedAtMs);
 
-				const singleGroupInput = buildSolverInputForGroups([targetGroupId]);
+			const singleGroupInput = buildSolverInputForGroups([targetGroupId]);
 
-				const bruteForceResult = await runBruteforceSolver(singleGroupInput, progressHandler, {
-					signal: solverAbortController.signal,
-					roundOutputAngles: solverRoundOutputAngles,
-					maxRuntimeMs,
-					resumeContext: resumeContext ?? undefined,
-					onSearchSnapshot: (snapshot) => {
-						if (snapshot.resumeContext) {
-							bruteforceResumeContext = snapshot.resumeContext;
-						}
+			const bruteForceResult = await runBruteforceSolver(singleGroupInput, progressHandler, {
+				signal: solverAbortController.signal,
+				roundOutputAngles: solverRoundOutputAngles,
+				maxRuntimeMs,
+				resumeContext: resumeContext ?? undefined,
+				onSearchSnapshot: (snapshot) => {
+					if (snapshot.resumeContext) {
+						bruteforceResumeContext = snapshot.resumeContext;
 					}
-				});
-
-				bruteforceRunStopReason = bruteForceResult.stopReason;
-				bruteforceRunFeasibleCount = bruteForceResult.feasibleSolutionsFound;
-				bruteforceResumeContext = bruteForceResult.resumeContext;
-				solverTimeLimited = bruteForceResult.stopReason === 'time_limit';
-				solverNoFeasible = bruteForceResult.stopReason === 'no_feasible_solution';
-				if (bruteForceResult.feasibleSolutionsFound > 0) {
-					solverApplied = false;
 				}
-			} else if (mode === 'force-directed') {
-				const groupIds = groupsToSolve.length > 0 ? groupsToSolve : [''];
-				solverTotalIterations = 500 * groupIds.length;
-				solverIteration = 0;
+			});
 
-				for (let gi = 0; gi < groupIds.length; gi++) {
-					const gid = groupIds[gi];
-					const groupName = ddStore.groups.find((g) => g.id === gid)?.name ?? `Group ${gi + 1}`;
-					const isMulti = groupIds.length > 1;
-
-					if (isMulti) {
-						solverProgressMessage = `Solving ${groupName} (${gi + 1}/${groupIds.length})...`;
-					}
-
-					const singleGroupInput = buildSolverInputForGroups([gid]);
-
-					const forceDirectedResult = await runSolver(
-						singleGroupInput,
-						(p) => {
-							progressHandler({
-								...p,
-								iteration: p.iteration + gi * 500,
-								totalIterations: 500 * groupIds.length,
-								message: isMulti ? `${groupName}: ${p.message}` : p.message
-							});
-						},
-						{
-							signal: solverAbortController.signal,
-							initializeRandomly: solverInitializeRandomly,
-							randomSeed: solverInitializeRandomly ? randomSeed : undefined,
-							roundOutputAngles: solverRoundOutputAngles,
-							tuning: {
-								overlapMagnitudeWeight: solverTuning.overlapMagnitudeWeight,
-								overlapMagnitudePower: solverTuning.overlapMagnitudePower,
-								maxOverlapForceMagnitude: solverTuning.maxOverlapForceMagnitude,
-								timeStepDt: solverTuning.timeStepDt,
-								restoringForceWeight: solverTuning.restoringForceWeight,
-								maxRestoringForce: solverTuning.maxRestoringForce,
-								uniqueForceWeight: solverTuning.uniqueForceWeight,
-								minUniqueAngleSeparation: solverTuning.minUniqueAngleSeparation,
-								maxUniqueForce: solverTuning.maxUniqueForce
-							}
-						}
-					);
-
-					ddStore.applyLayerRotations(forceDirectedResult.layout);
-					solverApplied = true;
-				}
+			bruteforceRunStopReason = bruteForceResult.stopReason;
+			bruteforceRunFeasibleCount = bruteForceResult.feasibleSolutionsFound;
+			bruteforceResumeContext = bruteForceResult.resumeContext;
+			solverTimeLimited = bruteForceResult.stopReason === 'time_limit';
+			solverNoFeasible = bruteForceResult.stopReason === 'no_feasible_solution';
+			if (bruteForceResult.feasibleSolutionsFound > 0) {
+				solverApplied = false;
 			}
 		} catch (error) {
-			if (
-				error instanceof SolverCancelledError ||
-				error instanceof BruteforceSolverCancelledError
-			) {
-				if (solverActiveMode === 'bruteforce') {
-					bruteforceRunStopReason = 'stopped';
-					bruteforceRunFeasibleCount = Math.max(
-						bruteforceRunFeasibleCount,
-						solverTopLayouts.length
-					);
-					solverProgressPhase = 'Stopped';
-					solverProgressMessage = `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || '?')} - optimisation stopped.`;
-				} else {
-					solverCancelled = true;
-					solverApplied = false;
-					solverProgressPhase = 'Cancelled';
-					solverProgressMessage = `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || '?')} - optimisation cancelled.`;
-				}
+			if (error instanceof BruteforceSolverCancelledError) {
+				bruteforceRunStopReason = 'stopped';
+				bruteforceRunFeasibleCount = Math.max(bruteforceRunFeasibleCount, solverTopLayouts.length);
+				solverProgressPhase = 'Stopped';
+				solverProgressMessage = `${formatProgressCountLabel(solverTotalIterations || '?')} - optimisation stopped.`;
 			} else {
 				solverProgressPhase = 'Error';
 				solverProgressMessage = 'Optimization failed. Please try again.';
@@ -463,24 +357,20 @@ export function createSolverStore(options?: {
 				solverProgress = 100;
 				solverProgressPhase = solverTimeLimited ? 'Time Limit' : 'Complete';
 				solverProgressMessage = solverTimeLimited
-					? `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || solverIteration)} - time limit reached, best feasible layout applied.`
-					: `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || solverIteration)} - layout applied.`;
+					? `${formatProgressCountLabel(solverTotalIterations || solverIteration)} - time limit reached, best feasible layout applied.`
+					: `${formatProgressCountLabel(solverTotalIterations || solverIteration)} - layout applied.`;
 			}
 
 			if (solverNoFeasible) {
 				solverProgress = 100;
 				solverProgressPhase = 'No Feasible Layout';
-				solverProgressMessage = `${formatProgressCountLabel(solverActiveMode, solverTotalIterations || solverIteration || '?')} - no feasible non-overlapping layout found.`;
-			}
-
-			if (solverCancelled && solverProgress === 0) {
-				solverProgressMessage = 'Optimization cancelled.';
+				solverProgressMessage = `${formatProgressCountLabel(solverTotalIterations || solverIteration || '?')} - no feasible non-overlapping layout found.`;
 			}
 
 			solverPending = false;
 			solverAbortController = null;
 			scheduleOverlayHide();
-			if (mode === 'bruteforce' && bruteforceRunStopReason !== null) {
+			if (bruteforceRunStopReason !== null) {
 				bruteforceRunSummary = {
 					stopReason: bruteforceRunStopReason,
 					feasibleSolutionsFound: bruteforceRunFeasibleCount,
@@ -512,13 +402,9 @@ export function createSolverStore(options?: {
 		clearOverlayHideTimer();
 		clearSolverLiveTimer();
 		solverRunDialogOpen = false;
-		solverInitializeRandomly = false;
 		solverRoundOutputAngles = true;
 		solverGapMmInput = String(globalConfig.solverGapDefault);
-		solverRandomSeedInput = RANDOM_SEED_DEFAULT;
 		solverMaxRuntimeSInput = String(globalConfig.bruteforceTimeLimit);
-		solverMode = 'force-directed';
-		solverActiveMode = 'force-directed';
 		solverElapsedMs = 0;
 		solverMaxRuntimeMs = null;
 		bruteforceResultDialogOpen = false;
@@ -532,7 +418,6 @@ export function createSolverStore(options?: {
 		solverSelectedGroupIds = [];
 		solverMultiGroupQueue = [];
 		solverMultiGroupStarted = false;
-		solverTuning = { ...solverTuningDefaults };
 	}
 
 	return {
@@ -560,12 +445,6 @@ export function createSolverStore(options?: {
 		get solverRunDialogOpen() {
 			return solverRunDialogOpen;
 		},
-		get solverInitializeRandomly() {
-			return solverInitializeRandomly;
-		},
-		set solverInitializeRandomly(v: boolean) {
-			solverInitializeRandomly = v;
-		},
 		get solverRoundOutputAngles() {
 			return solverRoundOutputAngles;
 		},
@@ -578,23 +457,11 @@ export function createSolverStore(options?: {
 		set solverGapMmInput(v: string) {
 			solverGapMmInput = v;
 		},
-		get solverRandomSeedInput() {
-			return solverRandomSeedInput;
-		},
-		set solverRandomSeedInput(v: string) {
-			solverRandomSeedInput = v;
-		},
 		get solverMaxRuntimeSInput() {
 			return solverMaxRuntimeSInput;
 		},
 		set solverMaxRuntimeSInput(v: string) {
 			solverMaxRuntimeSInput = v;
-		},
-		get solverMode() {
-			return solverMode;
-		},
-		get solverActiveMode() {
-			return solverActiveMode;
 		},
 		get solverElapsedMs() {
 			return solverElapsedMs;
@@ -625,9 +492,6 @@ export function createSolverStore(options?: {
 		},
 		set solverResultSelectedIndex(v: number) {
 			solverResultSelectedIndex = v;
-		},
-		get solverTuning() {
-			return solverTuning;
 		},
 		get solverSelectedGroupIds() {
 			return solverSelectedGroupIds;

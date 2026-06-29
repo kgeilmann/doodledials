@@ -36,145 +36,32 @@
 		>
 			<div>
 				<h2 id="solver-config-title" class="text-xl font-semibold text-gray-900">
-					{solverStore.solverMode === 'bruteforce' ? 'Run Brute Force Solver' : 'Run Solver'}
+					Run Brute Force Solver
 				</h2>
 				<p class="text-sm text-gray-600 mt-1">Configure options, then start optimization.</p>
 			</div>
 
 			<div class="grid grid-cols-2 gap-3 text-sm">
-				{#if solverStore.solverMode === 'force-directed'}
-					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={solverStore.solverRoundOutputAngles} />
-						<span>Round Output Angles</span>
-					</label>
-					<label class="col-span-2 flex items-center gap-2">
-						<input type="checkbox" bind:checked={solverStore.solverInitializeRandomly} />
-						<span>Initialize Randomly</span>
-					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Gap (mm)</span>
-						<input
-							type="number"
-							min="0.1"
-							step="0.1"
-							bind:value={solverStore.solverGapMmInput}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Random Seed</span>
-						<input
-							type="text"
-							bind:value={solverStore.solverRandomSeedInput}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-				{/if}
-				{#if solverStore.solverMode === 'bruteforce'}
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Gap (mm)</span>
-						<input
-							type="number"
-							min="0.1"
-							step="0.1"
-							bind:value={solverStore.solverGapMmInput}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Max Runtime (s)</span>
-						<input
-							type="number"
-							min="0"
-							step="1"
-							bind:value={solverStore.solverMaxRuntimeSInput}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-				{/if}
-				{#if solverStore.solverMode === 'force-directed'}
-					<label>
-						<span class="block text-gray-600 mb-1">Overlap Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={solverStore.solverTuning.overlapMagnitudeWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Overlap Power</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={solverStore.solverTuning.overlapMagnitudePower}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Max Overlap Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={solverStore.solverTuning.maxOverlapForceMagnitude}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Time Step</span>
-						<input
-							type="number"
-							step="0.05"
-							bind:value={solverStore.solverTuning.timeStepDt}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Restoring Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={solverStore.solverTuning.restoringForceWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Max Restoring Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={solverStore.solverTuning.maxRestoringForce}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Unique Weight</span>
-						<input
-							type="number"
-							step="0.01"
-							bind:value={solverStore.solverTuning.uniqueForceWeight}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label>
-						<span class="block text-gray-600 mb-1">Min Unique Separation</span>
-						<input
-							type="number"
-							step="0.5"
-							bind:value={solverStore.solverTuning.minUniqueAngleSeparation}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-					<label class="col-span-2">
-						<span class="block text-gray-600 mb-1">Max Unique Force</span>
-						<input
-							type="number"
-							step="0.1"
-							bind:value={solverStore.solverTuning.maxUniqueForce}
-							class="w-full rounded-lg border border-gray-300 px-2 py-1"
-						/>
-					</label>
-				{/if}
+				<label class="col-span-2">
+					<span class="block text-gray-600 mb-1">Gap (mm)</span>
+					<input
+						type="number"
+						min="0.1"
+						step="0.1"
+						bind:value={solverStore.solverGapMmInput}
+						class="w-full rounded-lg border border-gray-300 px-2 py-1"
+					/>
+				</label>
+				<label class="col-span-2">
+					<span class="block text-gray-600 mb-1">Max Runtime (s)</span>
+					<input
+						type="number"
+						min="0"
+						step="1"
+						bind:value={solverStore.solverMaxRuntimeSInput}
+						class="w-full rounded-lg border border-gray-300 px-2 py-1"
+					/>
+				</label>
 				{#if doodledialStore.groups.length > 1}
 					<div class="col-span-2">
 						<span class="text-xs font-medium text-gray-600">Select dials to solve</span>

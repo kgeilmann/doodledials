@@ -11,7 +11,6 @@ describe('doodledial store auto-placement trigger scheduler', () => {
 			close: vi.fn(),
 			reset: vi.fn(),
 			centerHoleDiameter: 0.5,
-			forceDirectedSolverEnabled: false,
 			solverGapDefault: 3,
 			bruteforceTimeLimit: 120,
 			defaultExportFormat: 'laser-svg' as const,
