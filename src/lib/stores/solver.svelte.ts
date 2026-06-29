@@ -90,6 +90,7 @@ export function createSolverStore(options?: {
 	let bruteforceUserStopped = $state(false);
 	let solverSelectedGroupIds: string[] = $state([]);
 	let solverMultiGroupQueue: string[] = $state([]);
+	let solverMultiGroupStarted = $state(false);
 	let solverTuning = $state({ ...solverTuningDefaults });
 
 	const solverThumbnailSvgs = $derived.by(() => {
@@ -207,6 +208,7 @@ export function createSolverStore(options?: {
 			.filter((g) => ddStore.layers.some((l) => l.groupId === g.id && l.visible))
 			.map((g) => g.id);
 		solverSelectedGroupIds = visibleGroupIds;
+		solverMultiGroupStarted = false;
 		solverRunDialogOpen = true;
 	}
 
@@ -349,9 +351,10 @@ export function createSolverStore(options?: {
 					solverMultiGroupQueue = solverMultiGroupQueue.slice(1);
 				}
 
-				// Initialize queue for remaining groups on first call
-				if (solverMultiGroupQueue.length === 0 && groupsToSolve.length > 1) {
+				// Initialize queue for remaining groups on first call only
+				if (!solverMultiGroupStarted && groupsToSolve.length > 1) {
 					solverMultiGroupQueue = groupsToSolve.slice(1);
+					solverMultiGroupStarted = true;
 				}
 
 				solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
@@ -528,6 +531,7 @@ export function createSolverStore(options?: {
 		bruteforceUserStopped = false;
 		solverSelectedGroupIds = [];
 		solverMultiGroupQueue = [];
+		solverMultiGroupStarted = false;
 		solverTuning = { ...solverTuningDefaults };
 	}
 
