@@ -49,8 +49,8 @@
 								style="background-color: {group?.color ?? '#999'}"
 								aria-hidden="true"
 							></span>
-							<span>{isCompleted ? '✓' : isCurrent ? '◉' : '○'}</span>
 							<span>{group?.name ?? groupId}</span>
+							<span>{isCompleted ? '✓' : isCurrent ? '◉' : '○'}</span>
 						</span>
 					{/each}
 				</div>
