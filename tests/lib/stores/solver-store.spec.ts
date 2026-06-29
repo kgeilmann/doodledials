@@ -140,6 +140,18 @@ describe('solver store', () => {
 			store.reset();
 			expect(store.solverSelectedGroupIds).toEqual([]);
 		});
+
+		it('has null current group id by default', () => {
+			const store = createTestStore();
+			store.reset();
+			expect(store.solverCurrentGroupId).toBeNull();
+		});
+
+		it('has empty completed group ids by default', () => {
+			const store = createTestStore();
+			store.reset();
+			expect(store.solverMultiGroupCompletedIds).toEqual([]);
+		});
 	});
 
 	describe('fitSvg', () => {

@@ -69,6 +69,8 @@ export function createSolverStore(options?: {
 	let solverSelectedGroupIds: string[] = $state([]);
 	let solverMultiGroupQueue: string[] = $state([]);
 	let solverMultiGroupStarted = $state(false);
+	let solverCurrentGroupId = $state<string | null>(null);
+	let solverMultiGroupCompletedIds: string[] = $state([]);
 
 	const solverThumbnailSvgs = $derived.by(() => {
 		const template = solverSvgTemplate;
@@ -144,6 +146,7 @@ export function createSolverStore(options?: {
 	function handleCloseBruteforceResultDialog() {
 		bruteforceResultDialogOpen = false;
 		if (solverMultiGroupQueue.length > 0) {
+			solverMultiGroupCompletedIds = [...solverMultiGroupCompletedIds, solverCurrentGroupId!];
 			solverOverlayVisible = true;
 			void handleRunSolver();
 		}
@@ -183,6 +186,8 @@ export function createSolverStore(options?: {
 	async function handleConfirmSolverDialogRun() {
 		solverRunDialogOpen = false;
 		bruteforceResumeContext = null;
+		solverMultiGroupCompletedIds = [];
+		solverCurrentGroupId = null;
 		await handleRunSolver();
 	}
 
@@ -196,6 +201,7 @@ export function createSolverStore(options?: {
 		// If more groups to solve, start next one
 		if (solverMultiGroupQueue.length > 0) {
 			solverProgressMessage = `Solving next group...`;
+			solverMultiGroupCompletedIds = [...solverMultiGroupCompletedIds, solverCurrentGroupId!];
 			solverOverlayVisible = true;
 			void handleRunSolver();
 		}
@@ -313,6 +319,8 @@ export function createSolverStore(options?: {
 				solverMultiGroupStarted = true;
 			}
 
+			solverCurrentGroupId = targetGroupId;
+
 			solverMaxRuntimeMs = typeof maxRuntimeMs === 'number' ? maxRuntimeMs : null;
 			startSolverLiveTimer(runStartedAtMs);
 
@@ -418,6 +426,8 @@ export function createSolverStore(options?: {
 		solverSelectedGroupIds = [];
 		solverMultiGroupQueue = [];
 		solverMultiGroupStarted = false;
+		solverCurrentGroupId = null;
+		solverMultiGroupCompletedIds = [];
 	}
 
 	return {
@@ -501,6 +511,12 @@ export function createSolverStore(options?: {
 		},
 		get solverMultiGroupQueue() {
 			return solverMultiGroupQueue;
+		},
+		get solverCurrentGroupId() {
+			return solverCurrentGroupId;
+		},
+		get solverMultiGroupCompletedIds() {
+			return solverMultiGroupCompletedIds;
 		},
 		get solverThumbnailSvgs() {
 			return solverThumbnailSvgs;
